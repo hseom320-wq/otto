@@ -29,29 +29,37 @@ HIGH = '1.2::from above::'  # 레나처럼 위에서 내려다보는 구도
 
 # 수현: 「남수현 복장 프롬프트」(characters/kit/ns_outfits.json)의 01 프롬프트를 바탕으로 장면만 바꾼다.
 # 밤(a)은 실제 원본 그림(야간) 메타데이터를 쓴다 (키트의 a 01은 주간판).
+WARM = '1.3::warm lighting::, 1.2::orange tint::, morning sunlight'  # 아침·낮: 주황빛
+WARM_NEG = ', 1.4::blue tint::, 1.3::cool lighting::, 1.2::blue theme::'
+SOFT_VIBE = 0.35  # 바이브(야경)의 파란 색감이 덜 따라오게
+
+# 수현 성격: 시크·털털 톰보이. 무표정=도도, 웃으면 부드러워짐. 애교·큰 웃음 없음.
 SPECS = [
-    dict(code='ns', slot='morning', base='kit:d', vibe='ns-a',
-         label='아침 · 🩳실내복 · 칫솔 물고 현관문 열어 줌, 졸린 눈',
-         scene=f'cowboy shot, {HIGH}, standing, 1.2::opening door::, hand on door, doorway, 1.4::toothbrush in mouth::, '
-               '1.3::sleepy::, half-closed eyes, 1.2::messy hair::, bedhead, looking at viewer, morning, indoors, '
-               'apartment entrance, 1.3::bright::, daylight, sunlight through window, bright room, well-lit room, '
-               '1.3::blurry background::'),
-    dict(code='ns', slot='day', base='kit:e', vibe='ns-a', variety=True,
-         label='낮 · 👓캠퍼스룩 · 도서관 노트필기하다 안경 너머로 올려봄',
-         scene=f'cowboy shot, {HIGH}, sitting, at table, holding pen, notebook, open book, 1.3::looking over eyewear::, '
-               '1.2::looking up::, looking at viewer, light blush, day, indoors, library, bookshelf, '
-               '1.2::sunlight through window::, daylight, 1.3::blurry background::'),
+    dict(code='ns', slot='morning', base='kit:d', vibe='ns-a', vibe_strength=SOFT_VIBE, neg_add=WARM_NEG,
+         label='아침 · 🩳실내복 · 문 뒤에서 반쯤 내밀고 칫솔 문 채 귀찮은 무표정',
+         scene='1.3::upper body::, 1.4::peeking out::, 1.3::behind door::, 1.3::partially hidden::, door, '
+               'hand on door, leaning out, 1.4::toothbrush in mouth::, 1.3::sleepy::, half-closed eyes, '
+               'expressionless, 1.2::messy hair::, bedhead, looking at viewer, morning, indoors, apartment entrance, '
+               f'1.3::bright::, daylight, {WARM}, sunlight through window, 1.3::blurry background::'),
+    dict(code='ns', slot='day', base='kit:e', vibe='ns-a', vibe_strength=SOFT_VIBE, neg_add=WARM_NEG, variety=True,
+         label='낮 · 👓캠퍼스룩 · 책장 앞에 서서 필기하다 고개만 돌려 옅은 눈웃음',
+         scene='cowboy shot, standing, 1.3::from side::, 1.2::facing left::, 1.3::holding notebook::, '
+               '1.3::writing::, holding pen, 1.2::turning head::, looking at viewer, 1.2::looking over eyewear::, '
+               '1.1::light smile::, closed mouth, half-closed eyes, day, indoors, library, bookshelf, '
+               f'1.2::sunlight through window::, daylight, {WARM}, 1.3::blurry background::'),
     dict(code='ns', slot='evening', base='kit:b', vibe='ns-b',
-         label='저녁 · 🍸바텐더복 · 바 알바, 셰이커 흔들다 씩',
-         scene=f'cowboy shot, {HIGH}, standing, behind bar counter, 1.4::cocktail shaker::, holding cocktail shaker, '
-               '1.2::smirk::, looking at viewer, indoors, bar, dim lighting, warm lighting, evening, bar counter, '
-               'bottles, 1.3::blurry background::'),
+         label='저녁 · 🍸바텐더복 · 바 뒤에 똑바로 서서 셰이커 닦으며 옅은 미소',
+         scene='cowboy shot, pov, standing, straight-on, behind bar counter, 1.3::wiping cocktail shaker::, '
+               '1.2::holding cloth::, cocktail shaker, 1.2::looking down at viewer::, 1.1::light smile::, '
+               'closed mouth, head tilt, indoors, bar, dim lighting, warm lighting, evening, bar counter, bottles, '
+               '1.3::blurry background::'),
     dict(code='ns', slot='night', base='ns-a', vibe='ns-a',
-         label='밤 · 👕후드카고 · 거실 게임하다 패드 든 채 돌아봄',
+         label='밤 · 👕후드카고 · 소파에서 게임하다 컨트롤러 든 채 손 흔들며 올려다봄',
          fix=[('glowing city lights, neon lights, ', '')],
-         scene=f'cowboy shot, {HIGH}, sitting on floor, 1.3::holding game controller::, turning head, looking at viewer, '
-               '1.2::smirk::, blush, night, indoors, living room, 1.3::dark room::, 1.3::screen light::, '
-               '1.2::light on face::, television, couch, cushion, 1.3::blurry background::'),
+         scene=f'cowboy shot, {HIGH}, sitting on couch, 1.3::holding game controller::, 1.3::waving::, '
+               '1.2::looking up at viewer::, 1.1::light smile::, half-closed eyes, relaxed, night, indoors, '
+               'living room, 1.3::dark room::, 1.3::screen light::, 1.2::light on face::, television, cushion, '
+               '1.3::blurry background::'),
     dict(code='ys', slot='day', base='ys-a', vibe='ys-a',
          label='낮 · 🧥깔깔이 · 태블릿 펜 문 채 의자 돌려 봄',
          scene='cowboy shot, sitting on office chair, 1.2::turning around::, 1.3::stylus in mouth::, '
@@ -133,7 +141,7 @@ def params(meta, size, vibe):
         'v4_negative_prompt': {'caption': {'base_caption': neg, 'char_captions': []}, 'legacy_uc': False},
         'negative_prompt': neg,
         'reference_image_multiple': [vibe],
-        'reference_strength_multiple': [VIBE_STRENGTH],
+        'reference_strength_multiple': [meta['vibe']['strength']],
         'reference_information_extracted_multiple': [VIBE_INFO],
     }
 
@@ -180,7 +188,7 @@ def make_meta(s):
         'seed': random.randint(1, 2**32 - 1), 'width': GEN_SIZE[0], 'height': GEN_SIZE[1],
             'steps': base['steps'], 'scale': base['scale'], 'cfg_rescale': CFG_RESCALE,
             'sampler': base['sampler'], 'noise_schedule': base['noise_schedule'],
-            'vibe': {'image': f"characters/vibes/{s['vibe']}.webp", 'strength': VIBE_STRENGTH,
+            'vibe': {'image': f"characters/vibes/{s['vibe']}.webp", 'strength': s.get('vibe_strength', VIBE_STRENGTH),
                      'information_extracted': VIBE_INFO},
             'prompt': build_prompt(base, s), 'negative': base['negative'] + s.get('neg_add', ''),
             **({'skip_cfg_above_sigma': 19, 'variety_plus': True} if s.get('variety') else {}),
