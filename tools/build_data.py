@@ -128,9 +128,16 @@ def main():
             if not m and code == 'ns':  # 수현은 예전 가로 그림이라도 쓴다
                 m = media(f'assets/ns/{r["from"]}/cover')
                 if m: m['focus'] = FOCUS.get(f'ns/{r["from"]}', 50)
+            if (w := media(f'assets/{code}/reward-wide/{r["key"]}')):
+                m['wide'] = w
             rewards.append({k: v for k, v in r.items() if k != 'from'} | m)
         c['rewards'] = rewards
-        c['scenes'] = {slot: m for slot in SLOTS if (m := media(f'assets/{code}/scene/{slot}'))}
+        # 세로(폰) scene/, 가로(태블릿) scene-wide/ — 앱이 화면 방향에 맞춰 고른다
+        c['scenes'] = {}
+        for slot in SLOTS:
+            m, w = media(f'assets/{code}/scene/{slot}'), media(f'assets/{code}/scene-wide/{slot}')
+            if w: m['wide'] = w
+            if m: c['scenes'][slot] = m
         c['outfits'] = outfits
         c['special_images'] = specials
         c['app'] = {k: v for k, v in app.items() if k not in ('extra_outfits', 'hidden_outfits')}

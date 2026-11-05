@@ -64,10 +64,10 @@ function look(c) {
   const s = st(c.code);
   if (s.wear && s.wear.day === today()) {
     const r = c.rewards.find(x => x.key === s.wear.key);
-    if (r && s.got.includes(r.key) && hasMedia(r)) return { img: r.img, video: r.video, focus: r.focus || 50, label: `${r.emoji} ${r.name}`, reward: r.key };
+    if (r && s.got.includes(r.key) && hasMedia(r)) return { img: r.img, video: r.video, wide: r.wide, focus: r.focus || 50, label: `${r.emoji} ${r.name}`, reward: r.key };
   }
   const o = timeOutfit(c), sc = c.scenes[slot()];
-  if (hasMedia(sc)) return { img: sc.img, video: sc.video, focus: 50, label: `${SLOT_NAME[slot()]} · ${o.name}` };
+  if (hasMedia(sc)) return { img: sc.img, video: sc.video, wide: sc.wide, focus: 50, label: `${SLOT_NAME[slot()]} · ${o.name}` };
   return { img: o.cover, focus: o.focus, label: `${o.emoji || ''} ${o.name}` };
 }
 
@@ -152,7 +152,10 @@ function renderHome() {
   $('todoBadge').textContent = left || '';
 }
 // 배경: 움직이는 영상이 있으면 영상, 없으면 그림
+// 가로 화면(태블릿·눕힌 폰)이면 가로용 그림(wide)을, 세로면 세로용 그림을 쓴다
+const isWide = () => innerWidth > innerHeight;
 function setMedia(img, vid, lk, fallbackColor) {
+  if (isWide() && lk.wide && hasMedia(lk.wide)) lk = { ...lk, img: lk.wide.img, video: lk.wide.video, focus: 50 };
   const pos = `${lk.focus || 50}% 30%`;
   img.style.objectPosition = vid.style.objectPosition = pos;
   if (lk.video) {
@@ -248,7 +251,7 @@ function showReward(r, isNew) {
   $('rwEmpty').hidden = hasMedia(r);
   $('rwEmpty').innerHTML = `<i>${r.emoji}</i><b>그림 준비 중</b><small>NovelAI로 뽑으면 여기에 나와요</small>`;
   const img = $('rwImg'), vid = $('rwVid');
-  if (hasMedia(r)) setMedia(img, vid, { img: r.img, video: r.video, focus: r.focus || 50 }, C.app.color);
+  if (hasMedia(r)) setMedia(img, vid, { img: r.img, video: r.video, wide: r.wide, focus: r.focus || 50 }, C.app.color);
   else { img.hidden = true; vid.hidden = true; vid.pause(); }
   $('rwWear').hidden = !hasMedia(r);
   $('rwWear').onclick = () => { st(C.code).wear = { day: today(), key: r.key }; save(); closeReward(); renderHome(); toast(`오늘은 ${r.name}`); };
@@ -453,5 +456,12 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible' || !DATA) return;
   cleanTodos();
   if (!(S.pick && S.pick.day === today()) && $('home').classList.contains('on')) { closeSheet(); renderLift(); show('lift'); }
+});
+// 화면을 돌리면(세로↔가로) 맞는 그림으로 바꾼다
+let wasWide = isWide();
+addEventListener('resize', () => {
+  if (isWide() === wasWide || !DATA) return;
+  wasWide = isWide();
+  if ($('home').classList.contains('on')) renderHome();
 });
 init();
