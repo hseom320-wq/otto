@@ -32,5 +32,17 @@
    2560,
    1536
   ]
+ },
+ "extend": {
+  "method": "outpaint top/bottom",
+  "canvas": [
+   1920,
+   1344
+  ],
+  "pad": 96,
+  "final": [
+   2560,
+   1792
+  ]
  }
 }

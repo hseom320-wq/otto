@@ -21,7 +21,8 @@ GEN_SIZE = (704, 1472)      # 무료(넓이 1024x1024 이하) 중 화면 비율�
 UP_SIZE = (832, 1792)       # 키우기 크기 (Anlas 사용)
 FINAL = (1080, 2340)        # 갤럭시 S26 화면
 UP_SIZE_WIDE = (1920, 1152)  # 태블릿 키우기 (1280x768 → 1.5배 다시 그림)
-FINAL_WIDE = (2560, 1536)    # 태블릿 최종 (탭 A11 1340x800 · iPad 2360x1640 둘 다 덮음)
+FINAL_WIDE = (2560, 1536)    # 태블릿 키운 크기 (탭 A11 비율)
+FINAL_TALLWIDE = (2560, 1792)  # 위아래를 늘린 태블릿 최종: iPad(1.44)에서 전부 보이고, 탭 A11은 늘린 띠만 잘림
 UP_STRENGTH = 0.45          # 키우기 때 다시 그리는 정도 (낮을수록 원본 유지)
 VIBE_STRENGTH, VIBE_INFO = 0.6, 1.0
 CFG_RESCALE = 0.5
@@ -57,13 +58,14 @@ SPECS = [
                '1.2::turning head::, looking at viewer, 1.2::looking over eyewear::, 1.1::light smile::, '
                'closed mouth, half-closed eyes, day, indoors, library, bookshelf, '
                f'1.2::sunlight through window::, daylight, {WARM}, 1.3::blurry background::'),
-    dict(code='ns', slot='evening', base='kit:b', vibe='ns-b', neg_add=NO_LEGS,
-         label='저녁 · 🍸바텐더복 · 바 카운터 뒤, 정자세로 셰이커 닦으며 옅은 미소', fix=UPPER_FIX,
-         scene='1.4::upper body::, pov, eye level, straight-on, 1.4::behind bar counter::, '
+    dict(code='ns', slot='evening', base='kit:b', vibe='ns-b', neg_add=NO_LEGS + ', 1.2::shaking::, pouring, 1.2::grin::, teeth',
+         label='저녁 · 🍸바텐더복 · 바 카운터 뒤, 셰이커를 천으로 닦으며 내려다보는 눈웃음', fix=UPPER_FIX,
+         scene='1.4::upper body::, pov, 1.2::from below::, 1.4::behind bar counter::, '
                '1.5::bar counter in foreground::, 1.4::counter covering lower body::, standing, '
-               '1.3::wiping cocktail shaker::, 1.2::holding cloth::, cocktail shaker, 1.1::light smile::, '
-               'closed mouth, head tilt, looking at viewer, indoors, bar, dim lighting, 1.2::warm lighting::, '
-               'amber lighting, evening, bottles, 1.3::blurry background::'),
+               '1.5::wiping cocktail shaker with cloth::, 1.3::holding cloth::, 1.2::holding cocktail shaker::, '
+               '1.3::looking down at viewer::, 1.2::light smile::, closed mouth, 1.2::half-closed eyes::, '
+               'gentle eyes, head tilt, indoors, bar, dim lighting, 1.2::warm lighting::, amber lighting, evening, '
+               'bottles, 1.3::blurry background::'),
     dict(code='ns', slot='night', base='ns-a', vibe='ns-a', neg_add=NO_LEGS,
          label='밤 · 👕후드카고 · 소파에서 컨트롤러 든 채 손 흔들며 올려다봄',
          fix=[('glowing city lights, neon lights, ', '')] + UPPER_FIX,
@@ -267,6 +269,32 @@ def up(src, key, meta_src=None, wide=False):
     print('up', key, 'wide' if wide else 'phone', out.size)
 
 
+
+def extend_wide(key):
+    """태블릿 그림 위아래를 아웃페인트로 늘려 iPad 비율로 만든다 (1920x1152 → 1920x1344 → 2560x1792).
+    iPad에서는 그림 전체가 보이고, 탭 A11에서는 늘린 띠만 잘려 원래 그림이 그대로 보인다."""
+    code, slot = key.split('-')
+    path = os.path.join(PROMPTS, f'{code}-scene-wide-{slot}.json')
+    meta = json.load(open(path))
+    W, H, PAD, OV = 1920, 1344, 96, 24
+    final = os.path.join(ROOT, 'assets', code, 'scene-wide', slot + '.webp')
+    src = Image.open(final).convert('RGB').resize((W, 1152), Image.LANCZOS)
+    canvas = Image.new('RGB', (W, H)); canvas.paste(src, (0, PAD))
+    canvas.paste(src.crop((0, 0, W, 1)).resize((W, PAD)), (0, 0))
+    canvas.paste(src.crop((0, 1151, W, 1152)).resize((W, PAD)), (0, PAD + 1152))
+    mask = Image.new('L', (W, H), 0)
+    mask.paste(255, (0, 0, W, PAD + OV)); mask.paste(255, (0, PAD + 1152 - OV, W, H))
+    p = params(meta, (W, H), encode_vibe(os.path.basename(meta['vibe']['image'])[:-5]))
+    p.update({'image': b64png(canvas), 'mask': b64png(mask.convert('RGB')), 'add_original_image': True,
+              'strength': 1, 'noise': 0, 'inpaintImg2ImgStrength': 1, 'extra_noise_seed': meta['seed']})
+    data = post('/ai/generate-image', {'input': meta['prompt'], 'model': MODEL + '-inpainting', 'action': 'infill', 'parameters': p})
+    z = zipfile.ZipFile(io.BytesIO(data))
+    out = Image.open(io.BytesIO(z.read(z.namelist()[0]))).convert('RGB')
+    fit(out, FINAL_TALLWIDE).save(final, 'WEBP', quality=90, method=6)
+    meta['extend'] = {'method': 'outpaint top/bottom', 'canvas': [W, H], 'pad': PAD, 'final': list(FINAL_TALLWIDE)}
+    json.dump(meta, open(path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    print('extend', key, FINAL_TALLWIDE)
+
 if __name__ == '__main__':
     if sys.argv[1] == 'gen':
         gen(set(sys.argv[2:]))
@@ -274,5 +302,7 @@ if __name__ == '__main__':
         cand(sys.argv[2], sys.argv[3], set(sys.argv[4:]), 5)
     elif sys.argv[1] == 'pick':  # pick <후보.png> <후보.json> <코드>-<시간대>
         pick(sys.argv[2], sys.argv[3], sys.argv[4])
+    elif sys.argv[1] == 'extend-wide':  # extend-wide <코드>-<시간대>
+        extend_wide(sys.argv[2])
     elif sys.argv[1] in ('up', 'up-wide'):  # up[-wide] <그림.png> <코드>-<시간대> [후보.json]
         up(sys.argv[2], sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else None, wide=sys.argv[1] == 'up-wide')
