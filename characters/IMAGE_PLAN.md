@@ -60,3 +60,11 @@
 3. 보상씬 43장 (복장 하나씩 5명 묶어서)
 4. PixAI로 영상 (장면 20 + 보상 43)
 5. 표정 컷
+
+## PixAI 영상 API 메모 (11/5 문서 확인)
+- 키: 환경 비밀값 `PIXAI_API_KEY`, 헤더 `Authorization: Bearer <키>`, 주소 `https://api.pixai.art/v2`
+- 그림 올리기: `POST /v2/media/image/upload-url` → 받은 주소로 PUT → 등록 → media id
+- 영상 만들기: `POST /v2/frame-video/create` — model `tbkv1.0.1`, `firstFrameMediaId`, `duration` 5~15초, `mode` basic/professional(1080p 업스케일, 더 비쌈), `generateAudio` 기본 true → **false로**
+- 결과: `GET /v2/task/{id}` (1.5초 이상 간격) → `outputs.videoMediaId`. 결과물은 오래 안 남으니 바로 받는다
+- 영상 비율은 첫 프레임 그림 비율을 따른다 → S26 비율 그대로 나온다
+- 영상은 멤버십 필요, 만들 때 크레딧 차감
