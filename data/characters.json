@@ -544,7 +544,11 @@
      "emoji": "🎡"
     }
    ],
-   "scenes": {},
+   "scenes": {
+    "night": {
+     "img": "assets/ns/scene/night.webp"
+    }
+   },
    "special_images": [],
    "app": {
     "reward": [
@@ -750,7 +754,11 @@
      "need_aff": 240
     }
    ],
-   "scenes": {},
+   "scenes": {
+    "day": {
+     "img": "assets/ys/scene/day.webp"
+    }
+   },
    "special_images": [],
    "app": {
     "reward": [
@@ -953,7 +961,11 @@
      "need_aff": 240
     }
    ],
-   "scenes": {},
+   "scenes": {
+    "morning": {
+     "img": "assets/hr/scene/morning.webp"
+    }
+   },
    "special_images": [],
    "app": {
     "reward": [
@@ -1151,7 +1163,11 @@
      "need_aff": 240
     }
    ],
-   "scenes": {},
+   "scenes": {
+    "evening": {
+     "img": "assets/sy/scene/evening.webp"
+    }
+   },
    "special_images": [],
    "app": {
     "reward": [
@@ -1364,7 +1380,11 @@
      "need_aff": 240
     }
    ],
-   "scenes": {},
+   "scenes": {
+    "day": {
+     "img": "assets/tr/scene/day.webp"
+    }
+   },
    "special_images": [
     {
      "code": "s01",

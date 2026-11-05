@@ -1,0 +1,22 @@
+{
+ "character": "tr",
+ "scene": "day",
+ "label": "낮 · 🧤과외룩 · 과외 가는 길, 장갑 끼며 돌아봄",
+ "source": "NovelAI Diffusion V4.5 (nai-diffusion-4-5-full)",
+ "based_on": "characters/prompts/tr-b.json",
+ "seed": 418893799,
+ "width": 640,
+ "height": 1408,
+ "steps": 28,
+ "scale": 6.0,
+ "cfg_rescale": 0.5,
+ "sampler": "k_euler_ancestral",
+ "noise_schedule": "karras",
+ "vibe": {
+  "image": "tr-b 과외룩 원본 (seed 1340765741)",
+  "strength": 0.6,
+  "information_extracted": 1.0
+ },
+ "prompt": "masterpiece, best quality, amazing quality, very aesthetic, incredibly absurdres, highres, novel illustration, best illustration, no text, game cg, glossy skin, 1.2::shiny hair::, shiny skin, 1.5::detailed shadows::, 1.4::thick outlines::, 1.3::cel shading::, perfect anatomy, 1.3::backlighting::, 1.3::rim light::, 1.4::high contrast::, year 2025, year 2024, 0.5::artist:m m pb::, 0.9::artist:ratatatat74 ::, artist:channel (caststation), artist:modare, 1.3::artist:kithera::, 1.3::artist:yd (orange maru)::, 1.7::artist:sushispin::, 2::jaggy lines::, -6::artist collaboration::, depth of field, solo, 1.3::solo focus::, character focus, 1girl, 0.6::mature female::, 1.3::tall female::, 1.3::medium hair::, 1.3::wolf cut::, 1.4::blonde hair::, 1.2::low ponytail::, hair behind ear, hair between eyes, 1.4::red eyes::, ear piercing, 1.2::multiple piercings::, stud earrings, large breasts, 1.2::wide hips::, thick thighs, curvy, hourglass figure, 1.1::toned::, 1.4::black long coat::, open coat, 1.3::beige turtleneck sweater::, ribbed sweater, 1.1::thin gold necklace::, 1.3::black leather gloves::, 1.2::wristwatch::, single watch, watch on left wrist, 1.3::sunglasses::, eyewear on head, 1.3::black miniskirt::, 1.2::black pantyhose::, 1.3::black knee boots::, cowboy shot, standing, 1.2::adjusting gloves::, turning head, looking at viewer, 1.2::smirk::, sharp teeth, day, outdoors, city street, sidewalk, winter, sunlight, 1.3::blurry background::, -2::upscaled, blurry::, -1::clean text::, -1::censored::, -2::multiple views::, -2::multiple others::, -3::simple illustration::, very aesthetic, masterpiece, no text",
+ "negative": "nsfw, lowres, artistic error, film grain, scan artifacts, worst quality, bad quality, jpeg artifacts, very displeasing, chromatic aberration, dithering, halftone, screentone, multiple views, logo, too many watermarks, negative space, blank page, blank page, text, logo, watermark, too many watermarks, reference, signature, artist name, dated, artistic error, scan artifacts, jpeg artifacts, upscaled, aliasing, film grain, heavy film grain, dithering, chromatic aberration, digital dissolve, halftone, screentones, artist:xinzoruo, artist:milkpanda, artist:kurukurumagical, artist collaboration, one-hour drawing challenge, toon (style), 1990s (style), 4koma, 2koma, overexposed, washed out, flat lighting, hoop earrings, dangle earrings, drop earrings, spiked choker, collar, o-ring, heart choker, lace choker, cross, 1.4::blue hair::, gradient hair, multicolored hair, streaked hair, mutation, deformed, distorted, disfigured, bad anatomy, unnatural hair, bad face, mob face, bad eyes, empty eyes, bad proportions, bad limbs, amputee, bad arm, bad hands, bad hand structure, extra digits, fewer digits, bad leg, extra leg, distorted composition, bad perspective, multiple views, disorganized colors, unfinished, incomplete, displeasing, very displeasing, unsatisfactory, inadequate, deficient, subpar, poor, blurry, lowres, worst quality, bad quality, fewer details, multiple others, heavy chromatic aberration, outer glow, colored inner hair, mismatched pupils, chibi, unrealistic colors, negative space, duplicate, cross-eyed, bad portrait, bad illustration, lazy eye, extra eyes, asymmetrical eyes, long neck, muted color, bad neck, cleavage, male with breasts, manboobs, trap, genderswap (mtf), crossdressing (mtf), genderswap, crossdressing, from behind, other focus, ambiguous gender, very big eyes, eyes invisible through hair, colored eyelashes, thin eyelashes, lower eyelashes only, cutout eyelashes, mismatched eyelashes, long eyelashes, glans, tongue, tongue out, sketch, bracelet, 1.3::multiple watches::, leather jacket, tattoo, midriff, crop top, navel, red shirt, 1.2::long hair::, very long hair"
+}
