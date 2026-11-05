@@ -67,7 +67,8 @@ function look(c) {
     if (r && s.got.includes(r.key) && hasMedia(r)) return { img: r.img, video: r.video, wide: r.wide, focus: r.focus || 50, label: `${r.emoji} ${r.name}`, reward: r.key };
   }
   const o = timeOutfit(c), sc = c.scenes[slot()];
-  if (hasMedia(sc)) return { img: sc.img, video: sc.video, wide: sc.wide, focus: 50, label: `${SLOT_NAME[slot()]} · ${o.name}` };
+  // 가로 그림만 있는 장면도 가로 화면에서는 쓴다
+  if (hasMedia(sc) || (sc && isWide() && hasMedia(sc.wide))) return { img: sc.img || o.cover, video: sc.video, wide: sc.wide, focus: 50, label: `${SLOT_NAME[slot()]} · ${o.name}` };
   return { img: o.cover, focus: o.focus, label: `${o.emoji || ''} ${o.name}` };
 }
 
