@@ -17,8 +17,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROMPTS = os.path.join(ROOT, 'characters', 'prompts')
 API = 'https://image.novelai.net'
 MODEL = 'nai-diffusion-4-5-full'
-GEN_SIZE = (1088, 2368)     # 처음부터 화면용 (1080x2340 + 여유 몇 px). Anlas 사용
-FREE_SIZE = (640, 1408)     # 무료 범위 시험용
+GEN_SIZE = (704, 1472)      # 무료(넓이 1024x1024 이하) 중 화면 비율에 가장 가까움. 좌우 3%만 잘림
 UP_SIZE = (832, 1792)       # 키우기 크기 (Anlas 사용)
 FINAL = (1080, 2340)        # 갤럭시 S26 화면
 UP_STRENGTH = 0.45          # 키우기 때 다시 그리는 정도 (낮을수록 원본 유지)
@@ -33,35 +32,39 @@ HIGH = '1.2::from above::'  # 레나처럼 위에서 내려다보는 구도
 WARM = '1.3::warm lighting::, 1.2::orange tint::, morning sunlight'  # 아침·낮: 주황빛
 WARM_NEG = ', 1.4::blue tint::, 1.3::cool lighting::, 1.2::blue theme::'
 SOFT_VIBE = 0.35  # 바이브(야경)의 파란 색감이 덜 따라오게
+NO_LEGS = ', 1.4::thighs::, 1.3::legs::, 1.3::lower body::, cowboy shot, full body, knees'  # 하반신 안 나오게
+NO_KNEES = ', 1.3::legs::, full body, knees'  # 골반선에서 끊는 컷
+# 상반신 컷에서는 체형 태그의 thick thighs가 허벅지를 화면에 끌어들인다 → 빼고 골반 가중치를 낮춘다
+UPPER_FIX = [('thick thighs, ', ''), ('1.2::wide hips::', 'wide hips')]
 
 # 수현 성격: 시크·털털 톰보이. 무표정=도도, 웃으면 부드러워짐. 애교·큰 웃음 없음.
 # 연출: 상반신 위주로 가깝게(얼굴이 화면 위 1/3), 앞쪽 물건(문·바·소파)으로 "문 열자 마주친" 느낌,
 #       손은 움직이는 중간 동작(나중에 영상 반복용).
 SPECS = [
-    dict(code='ns', slot='morning', base='kit:d', vibe='ns-a', vibe_strength=SOFT_VIBE, neg_add=WARM_NEG,
-         label='아침 · 🩳실내복 · 문 뒤에서 상체만 내밀고 칫솔 문 채 귀찮은 무표정',
+    dict(code='ns', slot='morning', base='kit:d', vibe='ns-a', vibe_strength=SOFT_VIBE, neg_add=WARM_NEG + NO_LEGS,
+         label='아침 · 🩳실내복 · 문 뒤에서 상체만 내밀고 칫솔 문 채 귀찮은 무표정', fix=UPPER_FIX,
          scene='1.5::upper body::, 1.1::dutch angle::, 1.5::peeking out::, 1.4::behind door::, '
                '1.4::door covering half of body::, door edge, hand on door, leaning out, head tilt, '
                '1.4::toothbrush in mouth::, 1.3::sleepy::, half-closed eyes, expressionless, 1.2::messy hair::, '
                'bedhead, looking at viewer, morning, indoors, apartment entrance, 1.3::bright::, '
                f'{WARM}, 1.2::sunlight from behind::, 1.3::blurry background::'),
-    dict(code='ns', slot='day', base='kit:e', vibe='ns-a', vibe_strength=SOFT_VIBE, neg_add=WARM_NEG, variety=True,
+    dict(code='ns', slot='day', base='kit:e', vibe='ns-a', vibe_strength=SOFT_VIBE, neg_add=WARM_NEG + NO_KNEES, variety=True,
          label='낮 · 👓캠퍼스룩 · 비스듬히 내려다본 구도, 필기하다 고개만 돌려 옅은 눈웃음',
          scene='1.3::upper body::, 1.1::hips::, 1.4::dutch angle::, 1.3::from above::, 1.2::from side::, '
                'standing, 1.2::facing left::, 1.3::holding notebook::, 1.3::writing::, holding pen, '
                '1.2::turning head::, looking at viewer, 1.2::looking over eyewear::, 1.1::light smile::, '
                'closed mouth, half-closed eyes, day, indoors, library, bookshelf, '
                f'1.2::sunlight through window::, daylight, {WARM}, 1.3::blurry background::'),
-    dict(code='ns', slot='evening', base='kit:b', vibe='ns-b',
-         label='저녁 · 🍸바텐더복 · 바 카운터 뒤, 정자세로 셰이커 닦으며 옅은 미소',
+    dict(code='ns', slot='evening', base='kit:b', vibe='ns-b', neg_add=NO_LEGS,
+         label='저녁 · 🍸바텐더복 · 바 카운터 뒤, 정자세로 셰이커 닦으며 옅은 미소', fix=UPPER_FIX,
          scene='1.4::upper body::, pov, eye level, straight-on, 1.4::behind bar counter::, '
-               '1.4::bar counter in foreground::, 1.3::counter covering lower body::, standing, '
+               '1.5::bar counter in foreground::, 1.4::counter covering lower body::, standing, '
                '1.3::wiping cocktail shaker::, 1.2::holding cloth::, cocktail shaker, 1.1::light smile::, '
                'closed mouth, head tilt, looking at viewer, indoors, bar, dim lighting, 1.2::warm lighting::, '
                'amber lighting, evening, bottles, 1.3::blurry background::'),
-    dict(code='ns', slot='night', base='ns-a', vibe='ns-a',
+    dict(code='ns', slot='night', base='ns-a', vibe='ns-a', neg_add=NO_LEGS,
          label='밤 · 👕후드카고 · 소파에서 컨트롤러 든 채 손 흔들며 올려다봄',
-         fix=[('glowing city lights, neon lights, ', '')],
+         fix=[('glowing city lights, neon lights, ', '')] + UPPER_FIX,
          scene=f'1.3::upper body::, 1.3::from above::, 1.1::dutch angle::, sitting on couch, couch armrest, '
                '1.3::holding game controller::, 1.3::waving::, 1.2::looking up at viewer::, 1.1::light smile::, '
                'closed mouth, half-closed eyes, relaxed, night, indoors, living room, 1.3::dark room::, '
