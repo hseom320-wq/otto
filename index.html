@@ -32,17 +32,18 @@
   <!-- 메인: 오늘의 비서 -->
   <section id="home" class="screen">
     <img id="bg" class="bg" alt="">
+    <video id="bgv" class="bg" muted loop playsinline autoplay hidden></video>
     <div class="shade"></div>
     <header class="hud">
       <button id="hudFloor" class="floor-chip" aria-label="층 바꾸기"></button>
       <div class="who"><b id="hudName"></b><small id="hudTemp"></small></div>
-      <div class="stats"><span id="hudAff" title="호감도"></span><span id="hudHeart" title="옷장 하트"></span></div>
+      <div class="stats"><span id="hudAff" title="호감도"></span><span id="hudHeart" title="모은 보상씬"></span></div>
     </header>
     <div id="bubble" class="bubble"><b id="bubName"></b><p id="bubText"></p></div>
     <nav class="dock">
       <button data-open="chat"><i>💬</i>대화</button>
       <button data-open="todo"><i>📋</i>할 일<em id="todoBadge"></em></button>
-      <button data-open="closet"><i>👗</i>옷장</button>
+      <button data-open="album"><i>📸</i>앨범</button>
       <button id="btnLift"><i>🛗</i>층 바꾸기</button>
       <button data-open="set"><i>⚙️</i>설정</button>
     </nav>
@@ -54,6 +55,20 @@
     <div class="sheet-head"><b id="sheetTitle"></b><small id="sheetSub"></small><button id="sheetX" aria-label="닫기">✕</button></div>
     <div id="sheetBody" class="sheet-body"></div>
     <div id="sheetFoot" class="sheet-foot"></div>
+  </section>
+
+  <!-- 보상씬 -->
+  <section id="reward" class="reward" role="dialog" aria-modal="true">
+    <img id="rwImg" class="bg" alt="" hidden>
+    <video id="rwVid" class="bg" muted loop playsinline hidden></video>
+    <div id="rwEmpty" class="rw-empty"></div>
+    <div class="shade"></div>
+    <span id="rwBadge" class="rw-badge"></span>
+    <div class="rw-card">
+      <b id="rwTitle"></b>
+      <p id="rwLine"></p>
+      <div class="row"><button id="rwClose" class="btn ghost">닫기</button><button id="rwWear" class="btn">오늘은 이 모습으로</button></div>
+    </div>
   </section>
 
   <!-- 엘리베이터 문 -->

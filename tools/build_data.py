@@ -13,6 +13,7 @@ CODE = {'nam_suhyun': 'ns', 'ji_yeonseo': 'ys', 'yu_hyerin': 'hr', 'gil_soyoung'
 # 앱에서만 쓰는 설정 (시트에는 없는 것)
 APP = {
     'ns': {
+        'reward': ['…뭘 봐. 내기 진 거니까 입은 거야.', '한 번만 보여 주는 거다. 그니까 빨리 봐.', '어울리냐…? 아, 대답하지 마.'],
         'color': '#6f8cff',
         'assistant': '결과보다 과정을 알아봐 준다. 할 일을 내기·승부처럼 걸고, 끝내면 "그니까, 너 오늘 꽤 했잖아" 식으로 짧게 인정한다. 미루면 과거 실수를 꺼내 놀린다.',
         'greet': ['야, 일어났냐. 오늘 뭐 할 건데.', '오늘 내가 봐준다. 할 거 불러 봐.', '그니까, 오늘은 뭐부터 할 건데?'],
@@ -20,6 +21,7 @@ APP = {
         'alldone': ['다 했네. …수고했어, 진짜로.', '오늘 너 이겼다. 인정.'],
     },
     'ys': {
+        'reward': ['이거어… 다음 화 의상 자료로… 입어 본 거야아.', '저기… 이상하면… 말해 줘어…', '럽코였으면… 여기서 서비스 컷이야아.'],
         'color': '#e0b25a',
         'assistant': '옆에서 같이 해 준다. "나도 원고 할 테니까아… 같이 해" 식으로 함께 일하는 느낌을 준다. 끝내면 담담하게, 망상·작품 얘기로 칭찬한다.',
         'greet': ['아… 왔어어? 오늘은… 뭐 해야 돼?', '저기… 오늘도 옆에 있어 줄 거지이…', '밥… 먹었어어? 할 거… 같이 정하자아.'],
@@ -27,6 +29,7 @@ APP = {
         'alldone': ['다 했어어…? 그럼… 같이 쉬자아.', '오늘 회차… 해피엔딩이네에.'],
     },
     'hr': {
+        'reward': ['어머, {user} 씨 수고했으니까~ 특별히~', '이런 거 입는 거 오랜만이네~ 어때~?', '다른 사람한텐 비밀이야~'],
         'color': '#b07cff',
         'assistant': '밥·잠·건강부터 참견하고, 질문으로 시작해 결론까지 내 준다("그건 내일 해~ 오늘은 이거부터~"). 끝내면 넉살 좋게 칭찬하고 반찬 얘기를 꺼낸다.',
         'greet': ['{user} 씨, 밥은 먹었어~? 안 먹었지~', '오늘 할 거 뭐야~? 내가 순서 정해 줄게~', '어머, 일찍 일어났네~ 오늘 뭐부터 할까~?'],
@@ -35,6 +38,7 @@ APP = {
         'outfit_by_time': {'b': {'from': 19, 'to': 4}},
     },
     'sy': {
+        'reward': ['…오늘 고생했으니까. 보상. 회사엔 비밀.', '이거 입으니까 더 피곤하다아… 칭찬해 줘어.', '잘했어. 이건… 그냥 서비스야.'],
         'color': '#3fbf8f',
         'assistant': '엘리트 모드로 일정을 깔끔하게 정리해 준다(결론부터, 짧게). 동시에 "쉬어도 된다"는 허락을 준다. 퇴근 시간 이후엔 방전 모드로 같이 늘어진다.',
         'greet': ['응, 오늘 일정부터 보자. 할 거 말해.', '좋은 아침. 우선순위 세 개만 정하자.', '…일어났어? 오늘 거 같이 정리하자.'],
@@ -44,6 +48,7 @@ APP = {
         'default_outfit': 'b',
     },
     'tr': {
+        'reward': ['갚는 거다. 오해하지 마.', '뭘 봐, 새끼야. …어울리냐?', '닥쳐. 한 번만 보여 준다.'],
         'color': '#ff5a4f',
         'assistant': '할 일을 장부에 적듯 받아 적고 끝까지 받아낸다. 짧은 명령형("먹어", "해"). 끝내면 칭찬 대신 "갚았네" 식으로 인정. 유저에게 손대거나 진짜 겁주지 않는다.',
         'greet': ['일어났냐. 오늘 할 거 불러. 장부에 적는다.', '밥은? 안 먹었으면 먹고 시작해.', '야. 오늘 거 미루면 알지?'],
@@ -63,6 +68,34 @@ FOCUS = {
 
 UNLOCK_COST = {'daily': 3, 'cos': 6, 'w': 12}
 COS = {'nr', 'bn', 'xm', 'nn', 'md', 't'}
+
+# 보상씬: 할 일을 하나 끝낼 때마다 하나씩 나온다. 5명 공용 복장 (수현의 서비스 복장 기준)
+REWARDS = [
+    {'key': 'bt', 'name': '바텐더', 'emoji': '🍸', 'from': 'b'},
+    {'key': 'md', 'name': '메이드', 'emoji': '🧹', 'from': 'md'},
+    {'key': 'nr', 'name': '간호사', 'emoji': '🩺', 'from': 'nr'},
+    {'key': 'bn', 'name': '바니', 'emoji': '🐰', 'from': 'bn'},
+    {'key': 'xm', 'name': '산타', 'emoji': '🎄', 'from': 'xm'},
+    {'key': 'nn', 'name': '수녀', 'emoji': '📿', 'from': 'nn'},
+    {'key': 't', 'name': '비키니', 'emoji': '👙', 'from': 't'},
+    {'key': 'w', 'name': '웨딩드레스', 'emoji': '💍', 'from': 'w', 'need_aff': 240},
+]
+# 수현만 더 있는 보상 (일상 복장)
+REWARDS_EXTRA = {'ns': [
+    {'key': 'c', 'name': '겨울코트', 'emoji': '🧥', 'from': 'c'},
+    {'key': 'g', 'name': '헬스복', 'emoji': '🎽', 'from': 'g'},
+    {'key': 'p', 'name': '놀이공원룩', 'emoji': '🎡', 'from': 'p'},
+]}
+SLOTS = ['morning', 'day', 'evening', 'night']  # 아침 6~11 · 낮 11~17 · 저녁 17~21 · 밤 21~6
+
+
+def media(rel):
+    """그림(.webp)과 움직이는 영상(.mp4)이 있으면 경로를 돌려준다."""
+    out = {}
+    for ext, k in (('webp', 'img'), ('mp4', 'video')):
+        if os.path.exists(os.path.join(ROOT, f'{rel}.{ext}')):
+            out[k] = f'{rel}.{ext}'
+    return out
 
 
 def main():
@@ -89,6 +122,15 @@ def main():
             if d.startswith('s') and d[1:].isdigit():
                 specials.append({'code': d, 'cover': f'assets/{code}/{d}/cover.webp', 'focus': FOCUS.get(f'{code}/{d}', 50)})
         c['code'] = code
+        rewards = []
+        for r in REWARDS + REWARDS_EXTRA.get(code, []):
+            m = media(f'assets/{code}/reward/{r["key"]}')
+            if not m and code == 'ns':  # 수현은 예전 가로 그림이라도 쓴다
+                m = media(f'assets/ns/{r["from"]}/cover')
+                if m: m['focus'] = FOCUS.get(f'ns/{r["from"]}', 50)
+            rewards.append({k: v for k, v in r.items() if k != 'from'} | m)
+        c['rewards'] = rewards
+        c['scenes'] = {slot: m for slot in SLOTS if (m := media(f'assets/{code}/scene/{slot}'))}
         c['outfits'] = outfits
         c['special_images'] = specials
         c['app'] = {k: v for k, v in app.items() if k not in ('extra_outfits', 'hidden_outfits')}

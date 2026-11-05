@@ -16,7 +16,7 @@ const S = Object.assign({
   pick: null,        // {day, code}
   todos: [],         // [{id, text, done, day, doneDay}]
   memory: [],        // [{text, at}] — 5명이 함께 씀
-  ch: {},            // code -> {aff, hearts, owned:[], wear:{day, code}|null, auto:true, log:[]}
+  ch: {},            // code -> {aff, got:[보상씬 key], wear:{day, key}|null, log:[]}
 }, load());
 function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -31,8 +31,9 @@ const uid = () => Math.random().toString(36).slice(2, 8);
 // ---------------- 캐릭터 상태 ----------------
 function st(code) {
   const c = DATA.characters.find(x => x.code === code);
-  if (!S.ch[code]) S.ch[code] = { aff: c.affection.start, hearts: 0, owned: [], wear: null, auto: true, log: [] };
-  return S.ch[code];
+  if (!S.ch[code]) S.ch[code] = { aff: c.affection.start, got: [], wear: null, log: [] };
+  const s = S.ch[code]; if (!s.got) s.got = [];
+  return s;
 }
 const userName = () => S.me || '이웃';
 const fill = t => String(t).replace(/\{user\}/g, userName());
@@ -43,22 +44,31 @@ function stageOf(c) {
   return s[Math.min(i, s.length - 1)] || '';
 }
 
-// 시간대에 따라 자동으로 입는 옷
+// 시간대: 아침 6~11 · 낮 11~17 · 저녁 17~21 · 밤 21~6
+function slot() { const h = new Date().getHours(); return h >= 6 && h < 11 ? 'morning' : h >= 11 && h < 17 ? 'day' : h >= 17 && h < 21 ? 'evening' : 'night'; }
+const SLOT_NAME = { morning: '아침', day: '낮', evening: '저녁', night: '밤' };
+// 시간대에 따라 자동으로 입는 옷 (장면 그림이 아직 없을 때)
 function timeOutfit(c) {
   const rules = c.app.outfit_by_time || {}, d = new Date(), h = d.getHours(), wk = d.getDay() > 0 && d.getDay() < 6;
   for (const [code, r] of Object.entries(rules)) {
     if (r.weekday && !wk) continue;
     const inRange = r.from <= r.to ? h >= r.from && h < r.to : h >= r.from || h < r.to;
-    if (inRange) return code;
+    if (inRange) return c.outfits.find(o => o.code === code);
   }
-  return c.app.default_outfit || (c.outfits.find(o => o.default) || c.outfits[0]).code;
+  const code = c.app.default_outfit || (c.outfits.find(o => o.default) || c.outfits[0]).code;
+  return c.outfits.find(o => o.code === code);
 }
-function freeOutfits(c) { return new Set([...(c.outfits.filter(o => o.default).map(o => o.code)), ...Object.keys(c.app.outfit_by_time || {}), c.app.default_outfit].filter(Boolean)); }
-const owns = (c, code) => freeOutfits(c).has(code) || st(c.code).owned.includes(code);
-function wearing(c) {
+const hasMedia = r => !!(r && (r.img || r.video));
+// 지금 화면에 보일 것: 오늘 고른 보상씬 > 시간대 장면 > 시간대 옷
+function look(c) {
   const s = st(c.code);
-  if (s.wear && s.wear.day === today() && owns(c, s.wear.code)) return c.outfits.find(o => o.code === s.wear.code);
-  return c.outfits.find(o => o.code === timeOutfit(c));
+  if (s.wear && s.wear.day === today()) {
+    const r = c.rewards.find(x => x.key === s.wear.key);
+    if (r && s.got.includes(r.key) && hasMedia(r)) return { img: r.img, video: r.video, focus: r.focus || 50, label: `${r.emoji} ${r.name}`, reward: r.key };
+  }
+  const o = timeOutfit(c), sc = c.scenes[slot()];
+  if (hasMedia(sc)) return { img: sc.img, video: sc.video, focus: 50, label: `${SLOT_NAME[slot()]} · ${o.name}` };
+  return { img: o.cover, focus: o.focus, label: `${o.emoji || ''} ${o.name}` };
 }
 
 // ---------------- 화면 전환 ----------------
@@ -91,12 +101,13 @@ function renderLift() {
   $('meRow').style.display = S.me ? 'none' : '';
   const box = $('floors'); box.innerHTML = '';
   [...DATA.characters].sort((a, b) => b.floor - a.floor).forEach(c => {
-    const o = c.outfits.find(x => x.default) || c.outfits[0];
+    const o = c.outfits.find(x => x.default) || c.outfits[0], sc = c.scenes[slot()];
     const b = document.createElement('button'); b.className = 'fl';
     const picked = S.pick && S.pick.day === today() && S.pick.code === c.code;
     b.innerHTML = `<span class="btn">${c.floor}</span><span class="face"></span><span class="txt"><b>${c.name}</b><small>${c.temperature} · ${c.job.split(' (')[0]}</small></span>${picked ? '<span class="today">오늘</span>' : ''}`;
     const f = b.querySelector('.face');
-    if (o.cover) { f.style.backgroundImage = `url(${o.cover})`; f.style.backgroundPosition = `${o.focus}% 18%`; }
+    const face = sc && sc.img ? { img: sc.img, focus: 50 } : { img: o.cover, focus: o.focus };
+    if (face.img) { f.style.backgroundImage = `url(${face.img})`; f.style.backgroundPosition = `${face.focus}% 18%`; }
     b.onclick = () => choose(c, b);
     box.appendChild(b);
   });
@@ -128,33 +139,39 @@ function enter(code) {
   const last = st(code).log.filter(m => m.who === 'her').pop();
   if (last) setBubble(last.text);
 }
-function renderHome(cut) {
-  const s = st(C.code), o = wearing(C);
+function renderHome() {
+  const s = st(C.code), lk = look(C);
   $('hudFloor').textContent = `${C.floor}F`;
   $('hudName').textContent = C.name;
-  $('hudTemp').textContent = `${o.emoji || ''} ${o.name} · ${stageOf(C)}`;
+  $('hudTemp').textContent = `${lk.label} · ${stageOf(C)}`;
   $('hudAff').textContent = `♥ ${s.aff}`;
-  $('hudHeart').textContent = `👗 하트 ${s.hearts}`;
+  $('hudHeart').textContent = `📸 ${s.got.length}/${C.rewards.length}`;
   $('bubName').textContent = C.name;
-  const src = cut && o.cuts && o.cuts.includes(cut) ? `assets/${C.code}/${o.code}/${pad(cut)}.webp` : o.cover;
-  setBg(src, o.focus);
+  setBg(lk);
   const left = S.todos.filter(t => !t.done).length;
   $('todoBadge').textContent = left || '';
 }
-function setBg(src, focus) {
-  const bg = $('bg');
-  bg.style.objectPosition = `${focus || 50}% 30%`;
-  if (!src) { bg.removeAttribute('src'); bg.style.background = `radial-gradient(circle at 50% 35%, ${C.app.color}55, #000 70%)`; return; }
-  if (bg.getAttribute('src') === src) return;
-  bg.classList.add('fade');
-  const im = new Image(); im.onload = () => { bg.src = src; bg.classList.remove('fade'); }; im.src = src;
+// 배경: 움직이는 영상이 있으면 영상, 없으면 그림
+function setMedia(img, vid, lk, fallbackColor) {
+  const pos = `${lk.focus || 50}% 30%`;
+  img.style.objectPosition = vid.style.objectPosition = pos;
+  if (lk.video) {
+    if (vid.getAttribute('src') !== lk.video) { vid.src = lk.video; if (lk.img) vid.poster = lk.img; }
+    vid.hidden = false; img.hidden = true; vid.play().catch(() => {});
+    return;
+  }
+  vid.hidden = true; vid.pause(); img.hidden = false;
+  if (!lk.img) { img.removeAttribute('src'); img.style.background = `radial-gradient(circle at 50% 35%, ${fallbackColor}55, #000 70%)`; return; }
+  if (img.getAttribute('src') === lk.img) return;
+  img.classList.add('fade');
+  const im = new Image(); im.onload = () => { img.src = lk.img; img.classList.remove('fade'); }; im.src = lk.img;
 }
+function setBg(lk) { setMedia($('bg'), $('bgv'), lk, C.app.color); }
 function setBubble(t) { $('bubText').textContent = t; }
 // 말하기: 말풍선 + 대화 기록
-function say(text, cut) {
+function say(text) {
   setBubble(text);
   st(C.code).log.push({ who: 'her', text, at: Date.now() }); trimLog(); save();
-  if (cut) renderHome(cut);
   if (sheetOpen === 'chat') renderChat();
 }
 function trimLog() { const s = st(C.code); if (s.log.length > 60) s.log = s.log.slice(-60); }
@@ -179,7 +196,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 function cleanTodos() { const d = today(); S.todos = S.todos.filter(t => !t.done || t.doneDay === d); }
 SHEETS.todo = {
   title: () => '할 일',
-  sub: () => { const a = S.todos.filter(t => !t.done).length; return a ? `남은 것 ${a}개 · 끝내면 하트 1개` : '오늘 거 끝!'; },
+  sub: () => { const a = S.todos.filter(t => !t.done).length; return a ? `남은 것 ${a}개 · 하나 끝낼 때마다 보상씬` : '오늘 거 끝!'; },
   render() {
     const b = body(); b.innerHTML = '';
     if (!S.todos.length) b.appendChild(el('div', 'empty', `아직 없어요. ${C.name}에게 오늘 할 일을 알려 주세요.`));
@@ -203,49 +220,61 @@ function toggleTodo(id, quiet) {
   t.done = !t.done; t.doneDay = t.done ? today() : null;
   const s = st(C.code);
   if (t.done) {
-    s.hearts += 1; s.aff = Math.min(C.affection.range[1], s.aff + 2);
+    s.aff = Math.min(C.affection.range[1], s.aff + 2);
     const left = S.todos.filter(x => !x.done).length;
     if (left === 0) allDone(); else if (!quiet) say(fill(pick(C.app.praise)));
-  } else { s.hearts = Math.max(0, s.hearts - 1); s.aff = Math.max(C.affection.range[0], s.aff - 2); }
+    if (!t.rewarded) { t.rewarded = true; setTimeout(drawReward, 450); } // 할 일 하나 = 보상씬 하나 (같은 일로 두 번은 안 나옴)
+  } else s.aff = Math.max(C.affection.range[0], s.aff - 2);
   save(); refresh(); renderHome();
 }
-// 다 끝내면: 보너스 하트 + 보상 의상으로 갈아입기
-function allDone() {
-  const s = st(C.code); s.hearts += 2;
-  const cur = wearing(C).code;
-  const reward = C.outfits.filter(o => o.cover && o.code !== cur && owns(C, o.code) && !freeOutfits(C).has(o.code));
-  if (reward.length) { const o = pick(reward); s.wear = { day: today(), code: o.code }; toast(`보상 의상: ${o.emoji || ''} ${o.name}`); }
-  else toast('오늘 할 일 끝! 하트 +2');
-  say(fill(pick(C.app.alldone)));
-}
+function allDone() { say(fill(pick(C.app.alldone))); setTimeout(() => toast('오늘 할 일 끝! 수고했어요'), 300); }
 
-// ----- 옷장 -----
-SHEETS.closet = {
-  title: () => `${C.name}의 옷장`,
-  sub: () => `👗 하트 ${st(C.code).hearts}개 · 할 일을 끝내면 모여요`,
+// ---------------- 보상씬 ----------------
+// 아직 못 본 것 중 그림이 있는 것 > 아직 못 본 것 > 본 것 다시
+function drawReward() {
+  const s = st(C.code);
+  const pool = C.rewards.filter(r => !r.need_aff || s.aff >= r.need_aff);
+  const fresh = pool.filter(r => !s.got.includes(r.key)), ready = fresh.filter(hasMedia);
+  const r = ready.length ? pick(ready) : fresh.length ? pick(fresh) : pick(pool);
+  const isNew = !s.got.includes(r.key);
+  if (isNew) s.got.push(r.key);
+  save(); renderHome(); showReward(r, isNew);
+}
+function showReward(r, isNew) {
+  const box = $('reward');
+  $('rwBadge').textContent = isNew ? 'NEW 보상씬' : '보상씬';
+  $('rwTitle').textContent = `${C.name} · ${r.emoji} ${r.name}`;
+  $('rwLine').textContent = fill(pick(C.app.reward));
+  $('rwEmpty').hidden = hasMedia(r);
+  $('rwEmpty').innerHTML = `<i>${r.emoji}</i><b>그림 준비 중</b><small>NovelAI로 뽑으면 여기에 나와요</small>`;
+  const img = $('rwImg'), vid = $('rwVid');
+  if (hasMedia(r)) setMedia(img, vid, { img: r.img, video: r.video, focus: r.focus || 50 }, C.app.color);
+  else { img.hidden = true; vid.hidden = true; vid.pause(); }
+  $('rwWear').hidden = !hasMedia(r);
+  $('rwWear').onclick = () => { st(C.code).wear = { day: today(), key: r.key }; save(); closeReward(); renderHome(); toast(`오늘은 ${r.name}`); };
+  box.classList.add('on');
+}
+function closeReward() { $('reward').classList.remove('on'); $('rwVid').pause(); if (sheetOpen) refresh(); }
+
+// ----- 보상 앨범 -----
+SHEETS.album = {
+  title: () => `${C.name} 보상 앨범`,
+  sub: () => `모은 것 ${st(C.code).got.length}/${C.rewards.length} · 할 일 하나 = 보상씬 하나`,
   tall: true,
   render() {
-    const b = body(), s = st(C.code), cur = wearing(C); b.innerHTML = ''; foot().innerHTML = '';
-    const auto = el('button', 'btn ghost auto', s.wear && s.wear.day === today() ? '🕘 시간대에 맞춰 입기로 돌아가기' : '🕘 지금은 시간대에 맞춰 입는 중');
+    const b = body(), s = st(C.code), lk = look(C); b.innerHTML = '';
+    const auto = el('button', 'btn ghost auto', lk.reward ? '🕘 시간대 장면으로 돌아가기' : '🕘 지금은 시간대 장면');
     auto.onclick = () => { s.wear = null; save(); refresh(); renderHome(); };
     b.appendChild(auto);
     const g = el('div', 'grid');
-    C.outfits.forEach(o => {
-      const own = owns(C, o.code), on = cur.code === o.code;
+    C.rewards.forEach(r => {
+      const got = s.got.includes(r.key), on = lk.reward === r.key;
       const card = el('button', 'oc' + (on ? ' on' : ''));
-      const ph = el('div', 'ph' + (own ? '' : ' lock'), o.cover ? '' : (o.emoji || '👗'));
-      if (o.cover) { ph.style.backgroundImage = `url(${o.cover})`; ph.style.backgroundPosition = `${o.focus}% 30%`; }
-      const state = on ? '입는 중' : own ? (o.cover ? '입기' : '그림 준비 중') : `🔒 하트 ${o.cost}개`;
-      card.append(ph, el('div', 'meta', `<b>${o.emoji || ''} ${esc(o.name)}</b><small>${esc(o.use || '')}</small>`), el('span', 'tag', state));
-      card.onclick = () => {
-        if (on) return;
-        if (!own) {
-          if (s.hearts < o.cost) { toast(`하트가 ${o.cost - s.hearts}개 더 필요해요`); return; }
-          s.hearts -= o.cost; s.owned.push(o.code); save(); toast(`${o.name} 열었어요!`);
-        }
-        if (o.cover) { s.wear = { day: today(), code: o.code }; save(); renderHome(); }
-        refresh();
-      };
+      const ph = el('div', 'ph' + (got ? '' : ' lock'), got && hasMedia(r) ? '' : (got ? r.emoji : '🔒'));
+      if (got && r.img) { ph.style.backgroundImage = `url(${r.img})`; ph.style.backgroundPosition = `${r.focus || 50}% 30%`; }
+      const state = on ? '지금 화면' : got ? (hasMedia(r) ? '보기' : '그림 준비 중') : r.need_aff ? `♥ ${r.need_aff} 이상` : '할 일을 끝내면';
+      card.append(ph, el('div', 'meta', `<b>${r.emoji} ${esc(r.name)}</b>`), el('span', 'tag', state));
+      card.onclick = () => { if (got) showReward(r, false); else toast(r.need_aff ? `호감도 ${r.need_aff} 이상부터 나와요` : '할 일을 끝내면 나와요'); };
       g.appendChild(card);
     });
     b.appendChild(g);
@@ -296,7 +325,7 @@ async function send(text) {
     const r = await gemini(C, s.log);
     thinking = false;
     applyActions(r.actions || []);
-    say(r.say || '…', r.cut);
+    say(r.say || '…');
   } catch (e) {
     thinking = false; renderChat();
     toast(e.message || '연결이 안 됐어요');
@@ -307,7 +336,7 @@ async function send(text) {
 const MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
 const CUTS = () => DATA.world.cut_numbers.common_01_29;
 function sysPrompt(c) {
-  const sp = c.speech || {}, o = wearing(c);
+  const sp = c.speech || {}, o = { name: look(c).label };
   const todos = S.todos.map(t => `- [${t.done ? 'x' : ' '}] (${t.id}) ${t.text}`).join('\n') || '(없음)';
   const mem = S.memory.slice(-30).map(m => `- ${m.text}`).join('\n') || '(없음)';
   const ex = Object.entries(sp.examples || {}).map(([k, v]) => `  ${k}: ${fill(v)}`).join('\n');
@@ -413,6 +442,7 @@ async function init() {
   document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openSheet(b.dataset.open));
   $('btnLift').onclick = $('hudFloor').onclick = openLift;
   $('sheetX').onclick = $('scrim').onclick = closeSheet;
+  $('rwClose').onclick = closeReward;
   $('bubble').onclick = () => openSheet('chat');
   if (S.pick && S.pick.day === today()) { enter(S.pick.code); show('home'); }
   else { renderLift(); show('lift'); }
