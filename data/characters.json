@@ -208,7 +208,7 @@
      "use": "바 알바 중 (P1 이후)",
      "scene": "indoors, bar, dim lighting, warm lighting, night, bar counter, bottles",
      "nai_tags": "1.4::bartender::, black vest, white dress shirt, long sleeves, 1.3::black bow tie::, black slacks, rolled-up sleeves",
-     "source": "[출처 주의] 9/6 초기 빌드 코드, 최종본 미확인",
+     "source": "그림 메타데이터로 확정 (11/5, seed 1493688012) — 9/6 코드와 같음",
      "cuts_56": [
       "병따르기",
       "셰이커",
@@ -367,7 +367,7 @@
       "셀카",
       "거울앞"
      ],
-     "cover": null,
+     "cover": "assets/ns/bn/cover.webp",
      "focus": 46,
      "cuts": [],
      "cost": 6
@@ -400,8 +400,8 @@
      "use": "코스 (자택, 계기 있을 때만)",
      "lighting_override": "1.4::rim light::, 1.4::high contrast::, warm lighting, 1.2::soft shadows::",
      "scene": "1.3::warm indoor lighting::, lamp light, night, indoors",
-     "nai_tags": "1.4::nun::, black habit, white coif, long sleeves, long dress, rosary",
-     "source": "[출처 주의] 9/6 통합본. 9/7 분류기에 1.3::nun:: 변형도 있음",
+     "nai_tags": "1.4::nun::, 1.5::black long dress::, 1.5::side slit::, 1.4::high slit dress::, 1.5::white turtleneck top::, 1.4::high neck::, 1.4::covered chest::, 1.3::white collared shirt::, 1.3::closed neckline::, 1.2::modest::, 1.3::black veil::, white headscarf, 1.3::detached sleeves::, black detached sleeves, white cuffs, 1.4::cross necklace::, silver cross, 1.4::white thighhighs::, 1.3::zettai ryouiki::, black shoes",
+     "source": "그림 메타데이터로 확정 (11/5, seed 3360012713). 9/6 통합본과 다름",
      "cuts_56": [
       "기도",
       "묵주",
@@ -449,7 +449,7 @@
       "아이스크림",
       "노을"
      ],
-     "cover": null,
+     "cover": "assets/ns/t/cover.webp",
      "focus": 46,
      "cuts": [],
      "cost": 6
@@ -459,7 +459,11 @@
      "name": "메이드복",
      "emoji": "🧹",
      "use": "코스 (자택, 계기 있을 때만)",
-     "note": "시트에 없음 — 그림 메타데이터에서 추가",
+     "lighting_override": "1.4::rim light::, 1.4::high contrast::, warm lighting, 1.2::soft shadows::",
+     "scene": "indoors, living room, couch, low table, night, dark outside window, city lights through window, 1.3::warm indoor lighting::, lamp light",
+     "nai_tags": "1.4::victorian maid::, 1.5::long maid dress::, 1.4::black long dress::, 1.4::floor length skirt::, 1.3::high collar::, 1.3::stand collar::, 1.4::long sleeves::, 1.3::white cuffs::, 1.4::frilled shoulders::, white shoulder frills, 1.5::full length white apron::, 1.4::white apron::, 1.3::white trim on hem::, maid headdress, 1.2::modest::, 1.2::buttoned front::",
+     "source": "그림 메타데이터 (11/5, seed 2380174403)",
+     "cuts_56": [],
      "cover": "assets/ns/md/cover.webp",
      "focus": 52,
      "cuts": [],
@@ -742,7 +746,7 @@
      "emoji": "🍳",
      "use": "낮·자택·이웃",
      "default": true,
-     "nai_tags": "1.3::white ribbed sweater::, turtleneck, long sleeves, 1.2::sleeves rolled up::, 1.3::yellow apron::, 1.2::blue jeans::, 1.3::wedding ring::",
+     "nai_tags": "1.3::white ribbed sweater::, turtleneck, long sleeves, 1.2::sleeves rolled up::, 1.3::red apron::, 1.2::blue jeans::, 1.3::wedding ring::",
      "scene": "indoors, kitchen, stove, pot, steam, window, 1.3::bright::, daylight, sunlight through window, bright room, well-lit room, day, light rays",
      "negative": "N3",
      "cover": "assets/hr/a/cover.webp",

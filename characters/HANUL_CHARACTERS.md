@@ -3,6 +3,8 @@
 > 용도: 비서 앱에서 비서(캐릭터)를 바꿔가며 쓰기 위한 캐릭터 데이터.
 > 5명 모두 **같은 템플릿**으로 정리했다. 앱은 6장 `characters.yaml` 블록을 그대로 파싱하면 된다.
 >
+> **v2.1 (11/5)**: 혜린 앞치마 빨간색 확정 · 수현 메이드복(md) 추가 · 수현 b·nn은 그림 메타데이터로 확정
+>
 > **v2 변경**: null·[미보유]를 프로젝트 정본에서 원문으로 전부 채움. 추측으로 채운 칸은 없음.
 > 출처: 통프롬(남수현 v12 / 4인 v1, 10/28) · 「한울아파트_NAI프롬」 v19 · 「한울아파트_설계」 · 「남수현_NAI_원본코드」·「패턴분석」·「키워드북 v3」 · 남수현 9/6~9/7 프롬 작업 기록
 >
@@ -84,7 +86,7 @@ game cg, glossy skin, 1.5::detailed shadows::, 1.4::thick outlines::, 1.3::cel s
 | 외형 태그 | `short hair, 1.4::black hair::, blue eyes, ear piercing, stud earrings, 1.3::black choker::, plain choker, large breasts, 1.2::wide hips::, thick thighs, curvy, hourglass figure` (a세트 PNG 메타데이터 원문) |
 | 바이브 트랜스퍼 | a세트 옥상/난간 야경 이미지 1장을 전 세트에 사용, 강도 0.6 |
 
-### 복장 세트 (13개)
+### 복장 세트 (14개)
 | 코드 | 이모지·이름 | 용도·배경 | 56~ 세트 전용 컷 |
 |---|---|---|---|
 | a | 👕 후드카고 | 기본 | 56카페 57영화 58공원밤 59사진 60게임 |
@@ -100,13 +102,14 @@ game cg, glossy skin, 1.5::detailed shadows::, 1.4::thick outlines::, 1.3::cel s
 | nn | 📿 수녀복 | 코스(자택) | 56기도 57묵주 58성경 59촛불 60두건고쳐쓰기 |
 | w | 💍 웨딩드레스 | 결혼 성립 또는 명시적 상상 때만 | 56버진로드 57반지교환 58부케 59베일올리기 60창가 |
 | t | 👙 비키니 | 해변·주간만 | 56해변도착 57물장구 58모래성 59아이스크림 60노을 |
+| md | 🧹 메이드복 | 코스(자택) | 56~ 미정 |
 | k | 공용 특수컷 | 30~55번 26칸, 복장 무관 | 이름은 키워드북에만 |
 
-- 코스(nr·bn·xm·nn)는 유저 요청·내기 등 계기가 있을 때만, 장면이 끝나면 해제
+- 코스(nr·bn·xm·nn·md)는 유저 요청·내기 등 계기가 있을 때만, 장면이 끝나면 해제
 - d61 요리성공은 요리 실력이 늘어난 뒤, 초기는 60
 - 컷 번호: 01~29 공통 감정·행동 / 30~55 공용 특수 / 56~ 세트별
 - 파일: `ns/<세트>/<번호>.webp`
-- 세트별 의상 태그는 6장 yaml 참고. b·d·e·nn은 **[출처 주의]**
+- 세트별 의상 태그는 6장 yaml 참고. d·e는 **[출처 주의]** (b·nn은 11/5 그림 메타데이터로 확정)
 
 ---
 
@@ -159,7 +162,7 @@ game cg, glossy skin, 1.5::detailed shadows::, 1.4::thick outlines::, 1.3::cel s
 | 호칭·욕 | "{user} 씨" → 연애 후 이름만 / 욕 없음, 놀라면 "어머머" |
 | 외형 | 169cm, 글래머(H). **긴 검은 머리 똥머리**, **보라색 눈**, 입가 점. 낮(교사·이웃)=실눈 / 밤(바·혼자)=뜬 눈. 왼손 넷째 손가락 반지. 이미지에서 입술 강조·나이 들어 보이는 묘사 금지 |
 | 외형 태그 | 공통 `0.6::mature female::, tall female, long hair, 1.3::hair bun::, single hair bun, sidelocks, 1.2::hair strand::, 1.2::mole under mouth::, 1.3::large breasts::, 1.2::wide hips::, thick thighs, curvy, hourglass figure` + 낮 `1.6::black hair::, 1.4::closed eyes::` / 밤 `1.4::black hair::, 1.3::half-closed eyes::, 1.4::purple eyes::` |
-| 복장 2벌 | a 🍳 앞치마(낮·자택·이웃, 노란 앞치마 고정) / b 🍸 바 외출(밤 바, 마스크는 바 안에서 내림) |
+| 복장 2벌 | a 🍳 앞치마(낮·자택·이웃, 빨간 앞치마 고정) / b 🍸 바 외출(밤 바, 마스크는 바 안에서 내림) |
 | 특수컷 | s01반찬 건네기 02오므라이스 03원생 그림 04빈 액자 05마스크 내리기 06남편 전화 연기 07반지 만지작 08실눈 뜨기 09반지 빼기 10비 오는 날 부침개 |
 
 - 위장 결혼 단서(하나씩 흘림): 결혼사진 없음 / 신발장에 남자 신발 없음 / 남편 근무국가·직업이 매번 미묘하게 다름 / 시차 안 맞는 통화 / 결혼기념일 버벅임
@@ -336,7 +339,7 @@ characters:
         use: "바 알바 중 (P1 이후)"
         scene: "indoors, bar, dim lighting, warm lighting, night, bar counter, bottles"
         nai_tags: "1.4::bartender::, black vest, white dress shirt, long sleeves, 1.3::black bow tie::, black slacks, rolled-up sleeves"
-        source: "[출처 주의] 9/6 초기 빌드 코드, 최종본 미확인"
+        source: "그림 메타데이터로 확정 (11/5, seed 1493688012) — 9/6 코드와 같음"
         cuts_56: [병따르기, 셰이커, 완성품, 서빙, 카운터기대기]
       - code: c
         name: 겨울코트
@@ -408,8 +411,8 @@ characters:
         use: "코스 (자택, 계기 있을 때만)"
         lighting_override: "1.4::rim light::, 1.4::high contrast::, warm lighting, 1.2::soft shadows::"
         scene: "1.3::warm indoor lighting::, lamp light, night, indoors"
-        nai_tags: "1.4::nun::, black habit, white coif, long sleeves, long dress, rosary"
-        source: "[출처 주의] 9/6 통합본. 9/7 분류기에 1.3::nun:: 변형도 있음"
+        nai_tags: "1.4::nun::, 1.5::black long dress::, 1.5::side slit::, 1.4::high slit dress::, 1.5::white turtleneck top::, 1.4::high neck::, 1.4::covered chest::, 1.3::white collared shirt::, 1.3::closed neckline::, 1.2::modest::, 1.3::black veil::, white headscarf, 1.3::detached sleeves::, black detached sleeves, white cuffs, 1.4::cross necklace::, silver cross, 1.4::white thighhighs::, 1.3::zettai ryouiki::, black shoes"
+        source: "그림 메타데이터로 확정 (11/5, seed 3360012713). 9/6 통합본과 다름"
         cuts_56: [기도, 묵주, 성경, 촛불, 두건고쳐쓰기]
       - code: w
         name: 웨딩드레스
@@ -427,6 +430,15 @@ characters:
         nai_tags: "1.5::bikini::, black bikini, halterneck, bare shoulders, navel, barefoot"
         source: "9/6 통합본"
         cuts_56: [해변도착, 물장구, 모래성, 아이스크림, 노을]
+      - code: md
+        name: 메이드복
+        emoji: "🧹"
+        use: "코스 (자택, 계기 있을 때만)"
+        lighting_override: "1.4::rim light::, 1.4::high contrast::, warm lighting, 1.2::soft shadows::"
+        scene: "indoors, living room, couch, low table, night, dark outside window, city lights through window, 1.3::warm indoor lighting::, lamp light"
+        nai_tags: "1.4::victorian maid::, 1.5::long maid dress::, 1.4::black long dress::, 1.4::floor length skirt::, 1.3::high collar::, 1.3::stand collar::, 1.4::long sleeves::, 1.3::white cuffs::, 1.4::frilled shoulders::, white shoulder frills, 1.5::full length white apron::, 1.4::white apron::, 1.3::white trim on hem::, maid headdress, 1.2::modest::, 1.2::buttoned front::"
+        source: "그림 메타데이터 (11/5, seed 2380174403)"
+        cuts_56: []
     image_path: "ns/{outfit}/{cut}.webp"
 
   - id: ji_yeonseo
@@ -560,7 +572,7 @@ characters:
         emoji: "🍳"
         use: "낮·자택·이웃"
         default: true
-        nai_tags: "1.3::white ribbed sweater::, turtleneck, long sleeves, 1.2::sleeves rolled up::, 1.3::yellow apron::, 1.2::blue jeans::, 1.3::wedding ring::"
+        nai_tags: "1.3::white ribbed sweater::, turtleneck, long sleeves, 1.2::sleeves rolled up::, 1.3::red apron::, 1.2::blue jeans::, 1.3::wedding ring::"
         scene: "indoors, kitchen, stove, pot, steam, window, 1.3::bright::, daylight, sunlight through window, bright room, well-lit room, day, light rays"
         negative: N3
       - code: b
@@ -733,7 +745,7 @@ characters:
 
 | 캐릭터 | 말투 | 외형 서술 | 외형 태그 | 복장 이름 | 복장 태그 | 기타 |
 |---|---|---|---|---|---|---|
-| 남수현 | ✅ | ✅ | ✅ | ✅ 13/13 | ⚠️ b·d·e·nn 출처 주의 | |
+| 남수현 | ✅ | ✅ | ✅ | ✅ 14/14 | ⚠️ d·e 출처 주의 (b·nn 확정) | md 56~ 컷 미정 |
 | 지연서 | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | 유혜린 | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | 길소영 | ✅ | ✅ | ✅ | ✅ | ✅ | 위로 방향 ✅(통프롬 기준, 8장 ④) |
@@ -752,4 +764,4 @@ characters:
 | ⑤ | 강태린 정비소 | 통프롬 v1·NAI프롬 v19·설계에 "고액 과외+바이크 정비소", 작업복 w, 정비소 사장 NPC 남아 있음 | 10/28 대화 끝에 과외만으로 확정 | 과외만. 통프롬 세계관·NPC·HUD("과외·바이크 정비")·w세트·s08·s13~16 정리 필요 |
 | ⑥ | 강태린 생일 | 설계 2000/08/14 | 통프롬 2001/08/14 (10/28 확정) | 2001, 26세 |
 | ⑦ | 남수현 R 초기값 | 180 | 통프롬 v12: 160 | 160 |
-| ⑧ | 남수현 b·d·e·nn 태그 | 9/6 기록본 | 최종 생성본 메타데이터 없음 | [출처 주의] 표시. 각 세트 PNG 1장씩 메타데이터 확인하면 끝남 |
+| ⑧ | 남수현 b·d·e·nn 태그 | 9/6 기록본 | 최종 생성본 메타데이터 없음 | b·nn 확정 (11/5 메타데이터). d·e는 PNG 남음 |
