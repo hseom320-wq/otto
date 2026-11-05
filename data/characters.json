@@ -546,6 +546,7 @@
    ],
    "scenes": {
     "morning": {
+     "img": "assets/ns/scene/morning.webp",
      "wide": {
       "img": "assets/ns/scene-wide/morning.webp"
      }
@@ -556,8 +557,17 @@
       "img": "assets/ns/scene-wide/day.webp"
      }
     },
+    "evening": {
+     "img": "assets/ns/scene/evening.webp",
+     "wide": {
+      "img": "assets/ns/scene-wide/evening.webp"
+     }
+    },
     "night": {
-     "img": "assets/ns/scene/night.webp"
+     "img": "assets/ns/scene/night.webp",
+     "wide": {
+      "img": "assets/ns/scene-wide/night.webp"
+     }
     }
    },
    "special_images": [],
