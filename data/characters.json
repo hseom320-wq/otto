@@ -249,8 +249,8 @@
      "emoji": "🩳",
      "use": "자택",
      "scene": "indoors, bedroom (컷에 따라 욕실·주방·거실)",
-     "nai_tags": "1.4::oversized t-shirt::, black t-shirt, short sleeves, 1.3::dolphin shorts::, black shorts, bare legs",
-     "source": "[출처 주의] 9/6 통합본. 9/7 분류기 키는 'oversized black t-shirt'라 최종 표기가 다를 수 있음",
+     "nai_tags": "oversized black t-shirt, black t-shirt, short shorts",
+     "source": "원본 (d 특수컷 기상 PNG, 11/5 「남수현 복장 프롬프트」 확인)",
      "cuts_56": [
       "수면",
       "기상",
@@ -273,8 +273,8 @@
      "emoji": "👓",
      "use": "캠퍼스",
      "scene": "indoors, classroom",
-     "nai_tags": "1.4::glasses::, 1.2::beige cardigan::, cardigan, white blouse, collared shirt, long sleeves, black slacks, black pants, loafers, 1.2::tote bag::, casual",
-     "source": "[출처 주의] 9/6 통합본 + 사용자 지시로 안경 추가. 안경 태그 표기는 이전 E 버전의 1.4::glasses::를 씀. e세트만 Variety+ 켬",
+     "nai_tags": "1.3::glasses::, 1.2::beige cardigan::, cardigan, white blouse, collared shirt, long sleeves, black slacks, black pants, loafers, 1.2::tote bag::, casual",
+     "source": "9월 마지막 수정본 (「남수현 복장 프롬프트」). e세트만 Variety+ 켜고, 조명에서 dramatic·cinematic 뺌",
      "cuts_56": [
       "강의실",
       "도서관",
@@ -379,8 +379,8 @@
      "use": "코스 (자택, 계기 있을 때만)",
      "lighting_override": "1.7::warm lighting::, 1.6::orange glow::, 1.5::warm color palette::, 1.4::orange rim light::, 1.3::soft shadows::, 1.2::high contrast::, 1.3::bokeh from string lights::, 1.4::warm skin tone::, 1.3::firelight on face::",
      "nai_tags": "1.4::santa costume::, red dress, 1.3::fur-trimmed dress::, 1.2::santa hat::, 1.5::red elbow gloves::, elbow gloves, 1.3::red gloves::, red thighhighs, 1.3::black choker::, plain choker, 1.4::strapless dress::, strapless",
-     "negative_extra": "1.6::blue tint::, 1.5::cool lighting::",
-     "source": "9/7 최종 (폼폼 제거 포기 후 되돌린 버전)",
+     "negative_extra": "1.6::blue tint::, 1.5::cool lighting::, 1.4::pom pom (clothes)::",
+     "source": "santa costume 버전 + 폼폼만 제거 (11/5 사용자 확정)",
      "cuts_56": [
       "트리장식",
       "선물건네기",

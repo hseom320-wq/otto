@@ -24,35 +24,32 @@ UP_STRENGTH = 0.45          # 키우기 때 다시 그리는 정도 (낮을수�
 VIBE_STRENGTH, VIBE_INFO = 0.6, 1.0
 CFG_RESCALE = 0.5
 
-NS_A_OUTFIT = ('1.3::cropped hoodie::, white hoodie, open hoodie, long sleeves, 1.3::black crop top::, '
-               'black shirt under hoodie, midriff, navel, cargo pants, olive pants')
-NS_D_OUTFIT = '1.4::oversized t-shirt::, black t-shirt, short sleeves, 1.3::dolphin shorts::, black shorts, bare legs'
-NS_E_OUTFIT = ('1.4::glasses::, 1.2::beige cardigan::, cardigan, white blouse, collared shirt, long sleeves, '
-               'black slacks, black pants, loafers, 1.2::tote bag::, casual')
-DAY_NEG = ', dark, dim lighting, low light'  # 수현 주간 네거티브 = 기본 + 이것
+KIT = os.path.join(ROOT, 'characters', 'kit')
+HIGH = '1.2::from above::'  # 레나처럼 위에서 내려다보는 구도
 
+# 수현: 「남수현 복장 프롬프트」(characters/kit/ns_outfits.json)의 01 프롬프트를 바탕으로 장면만 바꾼다.
+# 밤(a)은 실제 원본 그림(야간) 메타데이터를 쓴다 (키트의 a 01은 주간판).
 SPECS = [
-    dict(code='ns', slot='morning', base='ns-a', vibe='ns-a', neg_add=DAY_NEG,
+    dict(code='ns', slot='morning', base='kit:d', vibe='ns-a',
          label='아침 · 🩳실내복 · 칫솔 물고 현관문 열어 줌, 졸린 눈',
-         fix=[('glowing city lights, neon lights, ', ''), (NS_A_OUTFIT, NS_D_OUTFIT)],
-         scene='cowboy shot, standing, 1.2::opening door::, hand on door, doorway, 1.4::toothbrush in mouth::, '
+         scene=f'cowboy shot, {HIGH}, standing, 1.2::opening door::, hand on door, doorway, 1.4::toothbrush in mouth::, '
                '1.3::sleepy::, half-closed eyes, 1.2::messy hair::, bedhead, looking at viewer, morning, indoors, '
-               'apartment entrance, 1.2::bright::, daylight, sunlight, 1.3::blurry background::'),
-    dict(code='ns', slot='day', base='ns-a', vibe='ns-a', neg_add=DAY_NEG,
+               'apartment entrance, 1.3::bright::, daylight, sunlight through window, bright room, well-lit room, '
+               '1.3::blurry background::'),
+    dict(code='ns', slot='day', base='kit:e', vibe='ns-a', variety=True,
          label='낮 · 👓캠퍼스룩 · 도서관 노트필기하다 안경 너머로 올려봄',
-         fix=[('glowing city lights, neon lights, ', ''), (NS_A_OUTFIT, NS_E_OUTFIT)],
-         scene='cowboy shot, sitting, at table, holding pen, notebook, open book, 1.3::looking over eyewear::, '
+         scene=f'cowboy shot, {HIGH}, sitting, at table, holding pen, notebook, open book, 1.3::looking over eyewear::, '
                '1.2::looking up::, looking at viewer, light blush, day, indoors, library, bookshelf, '
                '1.2::sunlight through window::, daylight, 1.3::blurry background::'),
-    dict(code='ns', slot='evening', base='ns-b', vibe='ns-b',
+    dict(code='ns', slot='evening', base='kit:b', vibe='ns-b',
          label='저녁 · 🍸바텐더복 · 바 알바, 셰이커 흔들다 씩',
-         scene='cowboy shot, standing, behind bar counter, 1.4::cocktail shaker::, holding cocktail shaker, '
+         scene=f'cowboy shot, {HIGH}, standing, behind bar counter, 1.4::cocktail shaker::, holding cocktail shaker, '
                '1.2::smirk::, looking at viewer, indoors, bar, dim lighting, warm lighting, evening, bar counter, '
                'bottles, 1.3::blurry background::'),
     dict(code='ns', slot='night', base='ns-a', vibe='ns-a',
          label='밤 · 👕후드카고 · 거실 게임하다 패드 든 채 돌아봄',
          fix=[('glowing city lights, neon lights, ', '')],
-         scene='cowboy shot, sitting on floor, 1.3::holding game controller::, turning head, looking at viewer, '
+         scene=f'cowboy shot, {HIGH}, sitting on floor, 1.3::holding game controller::, turning head, looking at viewer, '
                '1.2::smirk::, blush, night, indoors, living room, 1.3::dark room::, 1.3::screen light::, '
                '1.2::light on face::, television, couch, cushion, 1.3::blurry background::'),
     dict(code='ys', slot='day', base='ys-a', vibe='ys-a',
@@ -128,7 +125,8 @@ def params(meta, size, vibe):
         'cfg_rescale': CFG_RESCALE, 'noise_schedule': meta['noise_schedule'],
         'ucPreset': 4, 'qualityToggle': False,  # 품질 태그·UC 프리셋은 원문에 이미 들어 있음
         'dynamic_thresholding': False, 'controlnet_strength': 1, 'legacy': False,
-        'add_original_image': True, 'legacy_v3_extend': False, 'skip_cfg_above_sigma': None,
+        'add_original_image': True, 'legacy_v3_extend': False,
+        'skip_cfg_above_sigma': meta.get('skip_cfg_above_sigma'),  # Variety+
         'use_coords': False, 'legacy_uc': False, 'normalize_reference_strength_multiple': True,
         'deliberate_euler_ancestral_bug': False, 'prefer_brownian': True, 'characterPrompts': [],
         'v4_prompt': {'caption': {'base_caption': prompt, 'char_captions': []}, 'use_coords': False, 'use_order': True},
@@ -160,17 +158,32 @@ def save_final(im, code, slot):
     fit(im, FINAL).save(os.path.join(d, slot + '.webp'), 'WEBP', quality=90, method=6)
 
 
+def load_base(name):
+    """'kit:<세트>' = 수현 복장 프롬프트(키트), 그 외 = characters/prompts/<이름>.json (실제 그림 메타데이터).
+    키트 글은 UC 프리셋 켠 상태라 네거티브 앞에 프리셋을 붙인다 (메타데이터와 같아진다)."""
+    if name.startswith('kit:'):
+        o = {x['code']: x for x in json.load(open(os.path.join(KIT, 'ns_outfits.json')))}[name[4:]]
+        pre = json.load(open(os.path.join(KIT, 'negatives.json')))['uc_preset']
+        return {'prompt': o['pos'], 'negative': pre + o['neg'], 'steps': 28, 'scale': 6.0,
+                'sampler': 'k_euler_ancestral', 'noise_schedule': 'karras',
+                'path': f"characters/kit/ns_outfits.json#{name[4:]}"}
+    d = json.load(open(os.path.join(PROMPTS, name + '.json')))
+    d['path'] = f'characters/prompts/{name}.json'
+    return d
+
+
 def make_meta(s):
-    base = json.load(open(os.path.join(PROMPTS, s['base'] + '.json')))
+    base = load_base(s['base'])
     return {
             'character': s['code'], 'scene': s['slot'], 'label': s['label'],
-            'source': f'NovelAI Diffusion V4.5 ({MODEL})', 'based_on': f"characters/prompts/{s['base']}.json",
+            'source': f'NovelAI Diffusion V4.5 ({MODEL})', 'based_on': base['path'],
         'seed': random.randint(1, 2**32 - 1), 'width': GEN_SIZE[0], 'height': GEN_SIZE[1],
             'steps': base['steps'], 'scale': base['scale'], 'cfg_rescale': CFG_RESCALE,
             'sampler': base['sampler'], 'noise_schedule': base['noise_schedule'],
             'vibe': {'image': f"characters/vibes/{s['vibe']}.webp", 'strength': VIBE_STRENGTH,
                      'information_extracted': VIBE_INFO},
             'prompt': build_prompt(base, s), 'negative': base['negative'] + s.get('neg_add', ''),
+            **({'skip_cfg_above_sigma': 19, 'variety_plus': True} if s.get('variety') else {}),
         }
 
 

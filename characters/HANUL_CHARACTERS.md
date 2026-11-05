@@ -109,7 +109,7 @@ game cg, glossy skin, 1.5::detailed shadows::, 1.4::thick outlines::, 1.3::cel s
 - d61 요리성공은 요리 실력이 늘어난 뒤, 초기는 60
 - 컷 번호: 01~29 공통 감정·행동 / 30~55 공용 특수 / 56~ 세트별
 - 파일: `ns/<세트>/<번호>.webp`
-- 세트별 의상 태그는 6장 yaml 참고. d·e는 **[출처 주의]** (b·nn은 11/5 그림 메타데이터로 확정)
+- 세트별 의상 태그는 6장 yaml 참고. 원문 프롬프트는 `characters/kit/ns_outfits.json` (11/5 전부 확정)
 
 ---
 
@@ -354,16 +354,16 @@ characters:
         emoji: "🩳"
         use: 자택
         scene: "indoors, bedroom (컷에 따라 욕실·주방·거실)"
-        nai_tags: "1.4::oversized t-shirt::, black t-shirt, short sleeves, 1.3::dolphin shorts::, black shorts, bare legs"
-        source: "[출처 주의] 9/6 통합본. 9/7 분류기 키는 'oversized black t-shirt'라 최종 표기가 다를 수 있음"
+        nai_tags: "oversized black t-shirt, black t-shirt, short shorts"
+        source: "원본 (d 특수컷 기상 PNG, 11/5 「남수현 복장 프롬프트」 확인)"
         cuts_56: [수면, 기상, 칫솔질, 빨래, 요리실패, 요리성공, TV, 샤워후, 일기장]
       - code: e
         name: 캠퍼스룩
         emoji: "👓"
         use: 캠퍼스
         scene: "indoors, classroom"
-        nai_tags: "1.4::glasses::, 1.2::beige cardigan::, cardigan, white blouse, collared shirt, long sleeves, black slacks, black pants, loafers, 1.2::tote bag::, casual"
-        source: "[출처 주의] 9/6 통합본 + 사용자 지시로 안경 추가. 안경 태그 표기는 이전 E 버전의 1.4::glasses::를 씀. e세트만 Variety+ 켬"
+        nai_tags: "1.3::glasses::, 1.2::beige cardigan::, cardigan, white blouse, collared shirt, long sleeves, black slacks, black pants, loafers, 1.2::tote bag::, casual"
+        source: "9월 마지막 수정본 (「남수현 복장 프롬프트」). e세트만 Variety+ 켜고, 조명에서 dramatic·cinematic 뺌"
         cuts_56: [강의실, 도서관, 노트필기, 이어폰공부, 발표, 캠퍼스]
       - code: g
         name: 헬스복
@@ -402,8 +402,8 @@ characters:
         use: "코스 (자택, 계기 있을 때만)"
         lighting_override: "1.7::warm lighting::, 1.6::orange glow::, 1.5::warm color palette::, 1.4::orange rim light::, 1.3::soft shadows::, 1.2::high contrast::, 1.3::bokeh from string lights::, 1.4::warm skin tone::, 1.3::firelight on face::"
         nai_tags: "1.4::santa costume::, red dress, 1.3::fur-trimmed dress::, 1.2::santa hat::, 1.5::red elbow gloves::, elbow gloves, 1.3::red gloves::, red thighhighs, 1.3::black choker::, plain choker, 1.4::strapless dress::, strapless"
-        negative_extra: "1.6::blue tint::, 1.5::cool lighting::"
-        source: "9/7 최종 (폼폼 제거 포기 후 되돌린 버전)"
+        negative_extra: "1.6::blue tint::, 1.5::cool lighting::, 1.4::pom pom (clothes)::"
+        source: "santa costume 버전 + 폼폼만 제거 (11/5 사용자 확정)"
         cuts_56: [트리장식, 선물건네기, 선물상자, 양말걸기, 창밖눈보기]
       - code: nn
         name: 수녀복
@@ -745,7 +745,7 @@ characters:
 
 | 캐릭터 | 말투 | 외형 서술 | 외형 태그 | 복장 이름 | 복장 태그 | 기타 |
 |---|---|---|---|---|---|---|
-| 남수현 | ✅ | ✅ | ✅ | ✅ 14/14 | ⚠️ d·e 출처 주의 (b·nn 확정) | md 56~ 컷 미정 |
+| 남수현 | ✅ | ✅ | ✅ | ✅ 14/14 | ✅ (11/5 전부 확정) | md 56~ 컷 미정 |
 | 지연서 | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | 유혜린 | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | 길소영 | ✅ | ✅ | ✅ | ✅ | ✅ | 위로 방향 ✅(통프롬 기준, 8장 ④) |
@@ -764,4 +764,4 @@ characters:
 | ⑤ | 강태린 정비소 | 통프롬 v1·NAI프롬 v19·설계에 "고액 과외+바이크 정비소", 작업복 w, 정비소 사장 NPC 남아 있음 | 10/28 대화 끝에 과외만으로 확정 | 과외만. 통프롬 세계관·NPC·HUD("과외·바이크 정비")·w세트·s08·s13~16 정리 필요 |
 | ⑥ | 강태린 생일 | 설계 2000/08/14 | 통프롬 2001/08/14 (10/28 확정) | 2001, 26세 |
 | ⑦ | 남수현 R 초기값 | 180 | 통프롬 v12: 160 | 160 |
-| ⑧ | 남수현 b·d·e·nn 태그 | 9/6 기록본 | 최종 생성본 메타데이터 없음 | b·nn 확정 (11/5 메타데이터). d·e는 PNG 남음 |
+| ⑧ | 남수현 b·d·e·nn 태그 | 9/6 기록본 | 11/5 메타데이터·복장 프롬프트 | 전부 확정. d=원본, e=9월 수정본, c=초커 없이 실버 목걸이, xm=santa costume−폼폼, w=실제 그림 |
