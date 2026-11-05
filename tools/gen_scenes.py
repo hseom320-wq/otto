@@ -20,6 +20,8 @@ MODEL = 'nai-diffusion-4-5-full'
 GEN_SIZE = (704, 1472)      # 무료(넓이 1024x1024 이하) 중 화면 비율에 가장 가까움. 좌우 3%만 잘림
 UP_SIZE = (832, 1792)       # 키우기 크기 (Anlas 사용)
 FINAL = (1080, 2340)        # 갤럭시 S26 화면
+UP_SIZE_WIDE = (1920, 1152)  # 태블릿 키우기 (1280x768 → 1.5배 다시 그림)
+FINAL_WIDE = (2560, 1536)    # 태블릿 최종 (탭 A11 1340x800 · iPad 2360x1640 둘 다 덮음)
 UP_STRENGTH = 0.45          # 키우기 때 다시 그리는 정도 (낮을수록 원본 유지)
 VIBE_STRENGTH, VIBE_INFO = 0.6, 1.0
 CFG_RESCALE = 0.5
@@ -170,9 +172,9 @@ def fit(im, size):
     return im.crop((x, y, x + size[0], y + size[1]))
 
 
-def save_final(im, code, slot):
-    d = os.path.join(ROOT, 'assets', code, 'scene'); os.makedirs(d, exist_ok=True)
-    fit(im, FINAL).save(os.path.join(d, slot + '.webp'), 'WEBP', quality=90, method=6)
+def save_final(im, code, slot, wide=False):
+    d = os.path.join(ROOT, 'assets', code, 'scene-wide' if wide else 'scene'); os.makedirs(d, exist_ok=True)
+    fit(im, FINAL_WIDE if wide else FINAL).save(os.path.join(d, slot + '.webp'), 'WEBP', quality=90, method=6)
 
 
 def load_base(name):
@@ -247,20 +249,22 @@ def pick(src_png, meta_src, key):
     print('pick', key, meta['seed'])
 
 
-def up(src, key, meta_src=None):
-    """1단계 그림을 832x1792로 다시 그려(img2img) 디테일을 올리고 1080x2340으로 맞춘다.
+def up(src, key, meta_src=None, wide=False):
+    """고른 후보를 다시 그려(img2img) 디테일을 올리고 최종 크기로 맞춘다.
+    폰: 832x1792로 다시 그림 → 1080x2340 / 태블릿(wide): 1920x1152 → 2560x1536.
     meta_src: 후보의 .json (고른 후보의 프롬프트·시드를 characters/prompts/로 옮긴다)"""
     code, slot = key.split('-')
-    path = os.path.join(PROMPTS, f'{code}-scene-{slot}.json')
+    path = os.path.join(PROMPTS, f"{code}-scene{'-wide' if wide else ''}-{slot}.json")
     meta = json.load(open(meta_src or path))
-    im = fit(Image.open(src).convert('RGB'), UP_SIZE)
-    out = run('img2img', meta, UP_SIZE, encode_vibe(os.path.basename(meta['vibe']['image'])[:-5]),
+    size = UP_SIZE_WIDE if wide else UP_SIZE
+    im = fit(Image.open(src).convert('RGB'), size)
+    out = run('img2img', meta, size, encode_vibe(os.path.basename(meta['vibe']['image'])[:-5]),
               {'image': b64png(im), 'strength': UP_STRENGTH, 'noise': 0, 'extra_noise_seed': meta['seed']})
-    save_final(out, code, slot)
-    meta['upscale'] = {'method': 'img2img', 'size': list(UP_SIZE), 'strength': UP_STRENGTH, 'noise': 0,
-                       'seed': meta['seed'], 'final': list(FINAL)}
+    save_final(out, code, slot, wide)
+    meta['upscale'] = {'method': 'img2img', 'size': list(size), 'strength': UP_STRENGTH, 'noise': 0,
+                       'seed': meta['seed'], 'final': list(FINAL_WIDE if wide else FINAL)}
     json.dump(meta, open(path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    print('up', key, out.size, '->', FINAL)
+    print('up', key, 'wide' if wide else 'phone', out.size)
 
 
 if __name__ == '__main__':
@@ -270,5 +274,5 @@ if __name__ == '__main__':
         cand(sys.argv[2], sys.argv[3], set(sys.argv[4:]), 5)
     elif sys.argv[1] == 'pick':  # pick <후보.png> <후보.json> <코드>-<시간대>
         pick(sys.argv[2], sys.argv[3], sys.argv[4])
-    elif sys.argv[1] == 'up':  # up <그림.png> <코드>-<시간대> [후보.json]
-        up(sys.argv[2], sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else None)
+    elif sys.argv[1] in ('up', 'up-wide'):  # up[-wide] <그림.png> <코드>-<시간대> [후보.json]
+        up(sys.argv[2], sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else None, wide=sys.argv[1] == 'up-wide')

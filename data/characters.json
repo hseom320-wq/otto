@@ -545,6 +545,17 @@
     }
    ],
    "scenes": {
+    "morning": {
+     "wide": {
+      "img": "assets/ns/scene-wide/morning.webp"
+     }
+    },
+    "day": {
+     "img": "assets/ns/scene/day.webp",
+     "wide": {
+      "img": "assets/ns/scene-wide/day.webp"
+     }
+    },
     "night": {
      "img": "assets/ns/scene/night.webp"
     }
