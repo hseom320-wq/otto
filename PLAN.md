@@ -103,5 +103,5 @@
 - 수현 bn(바니복)·t(비키니): 공개 저장소라 올리지 않음 (사용자 결정 대기)
 
 **다음**
-- 세로 704×1472 그림 생성 → PixAI 영상 (`characters/IMAGE_PLAN.md`, NovelAI 토큰 필요)
+- 시험 5장 완료 (1080×2340, 11/5). 다음: 나머지 시간대 장면 15장 → 보상씬 43장 → PixAI 영상 (`characters/IMAGE_PLAN.md`)
 - GitHub Pages 켜기 → 폰에서 홈 화면에 추가
