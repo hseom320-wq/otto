@@ -109,7 +109,7 @@ button { cursor: pointer; border: 0; background: none; }
 .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .oc { position: relative; border-radius: 14px; overflow: hidden; background: #1c2130; border: 2px solid transparent; text-align: left; }
 .oc.on { border-color: var(--glow); }
-.oc .ph { aspect-ratio: 4 / 5; background-size: cover; background-color: #232838; display: grid; place-items: center; font-size: 34px; }
+.oc .ph { aspect-ratio: 9 / 16; background-size: cover; background-color: #232838; display: grid; place-items: center; font-size: 34px; }
 .oc .ph.lock { filter: grayscale(.9) brightness(.45); }
 .oc .meta { padding: 8px 10px 10px; }
 .oc .meta b { display: block; font-size: 14px; }
