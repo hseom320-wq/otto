@@ -5,7 +5,8 @@
 바이브는 캐릭터당 1장 (characters/vibes/<코드>-<세트>.webp).
 
   python3 tools/gen_scenes.py gen ns ys        # 새로 뽑기 (640x1408, 무료 범위)
-  python3 tools/gen_scenes.py up  <그림.png> ns-night   # 키우기: 832x1792 img2img → 1080x2340
+  python3 tools/gen_scenes.py cand <폴더> ns [morning…]  # 검수용 후보 5장씩
+  python3 tools/gen_scenes.py up  <그림.png> ns-night [후보.json]  # 키우기: 832x1792 img2img → 1080x2340
 
 필요: 환경 변수 NOVELAI_TOKEN. 요청은 curl로 보낸다.
 """
@@ -23,7 +24,31 @@ UP_STRENGTH = 0.45          # 키우기 때 다시 그리는 정도 (낮을수�
 VIBE_STRENGTH, VIBE_INFO = 0.6, 1.0
 CFG_RESCALE = 0.5
 
+NS_A_OUTFIT = ('1.3::cropped hoodie::, white hoodie, open hoodie, long sleeves, 1.3::black crop top::, '
+               'black shirt under hoodie, midriff, navel, cargo pants, olive pants')
+NS_D_OUTFIT = '1.4::oversized t-shirt::, black t-shirt, short sleeves, 1.3::dolphin shorts::, black shorts, bare legs'
+NS_E_OUTFIT = ('1.4::glasses::, 1.2::beige cardigan::, cardigan, white blouse, collared shirt, long sleeves, '
+               'black slacks, black pants, loafers, 1.2::tote bag::, casual')
+DAY_NEG = ', dark, dim lighting, low light'  # 수현 주간 네거티브 = 기본 + 이것
+
 SPECS = [
+    dict(code='ns', slot='morning', base='ns-a', vibe='ns-a', neg_add=DAY_NEG,
+         label='아침 · 🩳실내복 · 칫솔 물고 현관문 열어 줌, 졸린 눈',
+         fix=[('glowing city lights, neon lights, ', ''), (NS_A_OUTFIT, NS_D_OUTFIT)],
+         scene='cowboy shot, standing, 1.2::opening door::, hand on door, doorway, 1.4::toothbrush in mouth::, '
+               '1.3::sleepy::, half-closed eyes, 1.2::messy hair::, bedhead, looking at viewer, morning, indoors, '
+               'apartment entrance, 1.2::bright::, daylight, sunlight, 1.3::blurry background::'),
+    dict(code='ns', slot='day', base='ns-a', vibe='ns-a', neg_add=DAY_NEG,
+         label='낮 · 👓캠퍼스룩 · 도서관 노트필기하다 안경 너머로 올려봄',
+         fix=[('glowing city lights, neon lights, ', ''), (NS_A_OUTFIT, NS_E_OUTFIT)],
+         scene='cowboy shot, sitting, at table, holding pen, notebook, open book, 1.3::looking over eyewear::, '
+               '1.2::looking up::, looking at viewer, light blush, day, indoors, library, bookshelf, '
+               '1.2::sunlight through window::, daylight, 1.3::blurry background::'),
+    dict(code='ns', slot='evening', base='ns-b', vibe='ns-b',
+         label='저녁 · 🍸바텐더복 · 바 알바, 셰이커 흔들다 씩',
+         scene='cowboy shot, standing, behind bar counter, 1.4::cocktail shaker::, holding cocktail shaker, '
+               '1.2::smirk::, looking at viewer, indoors, bar, dim lighting, warm lighting, evening, bar counter, '
+               'bottles, 1.3::blurry background::'),
     dict(code='ns', slot='night', base='ns-a', vibe='ns-a',
          label='밤 · 👕후드카고 · 거실 게임하다 패드 든 채 돌아봄',
          fix=[('glowing city lights, neon lights, ', '')],
@@ -135,21 +160,25 @@ def save_final(im, code, slot):
     fit(im, FINAL).save(os.path.join(d, slot + '.webp'), 'WEBP', quality=90, method=6)
 
 
-def gen(codes):
-    for s in SPECS:
-        if codes and s['code'] not in codes:
-            continue
-        base = json.load(open(os.path.join(PROMPTS, s['base'] + '.json')))
-        meta = {
+def make_meta(s):
+    base = json.load(open(os.path.join(PROMPTS, s['base'] + '.json')))
+    return {
             'character': s['code'], 'scene': s['slot'], 'label': s['label'],
             'source': f'NovelAI Diffusion V4.5 ({MODEL})', 'based_on': f"characters/prompts/{s['base']}.json",
-            'seed': random.randint(1, 2**32 - 1), 'width': GEN_SIZE[0], 'height': GEN_SIZE[1],
+        'seed': random.randint(1, 2**32 - 1), 'width': GEN_SIZE[0], 'height': GEN_SIZE[1],
             'steps': base['steps'], 'scale': base['scale'], 'cfg_rescale': CFG_RESCALE,
             'sampler': base['sampler'], 'noise_schedule': base['noise_schedule'],
             'vibe': {'image': f"characters/vibes/{s['vibe']}.webp", 'strength': VIBE_STRENGTH,
                      'information_extracted': VIBE_INFO},
-            'prompt': build_prompt(base, s), 'negative': base['negative'],
+            'prompt': build_prompt(base, s), 'negative': base['negative'] + s.get('neg_add', ''),
         }
+
+
+def gen(codes):
+    for s in SPECS:
+        if codes and s['code'] not in codes:
+            continue
+        meta = make_meta(s)
         im = run('generate', meta, GEN_SIZE, encode_vibe(s['vibe']))
         im.save(os.path.join(ROOT, f"{s['code']}-{s['slot']}.png"))  # 키우기 단계 입력 (커밋하지 않음)
         save_final(im, s['code'], s['slot'])
@@ -159,11 +188,29 @@ def gen(codes):
         time.sleep(3)
 
 
-def up(src, key):
-    """1단계 그림을 832x1792로 다시 그려(img2img) 디테일을 올리고 1080x2340으로 맞춘다."""
+def cand(out_dir, code, slots, n):
+    """검수용 후보: 장면마다 n장 (시드만 다름). out_dir/<코드>-<시간대>-<번호>.png + .json"""
+    os.makedirs(out_dir, exist_ok=True)
+    vibes = {}
+    for s in SPECS:
+        if s['code'] != code or (slots and s['slot'] not in slots):
+            continue
+        vibes.setdefault(s['vibe'], encode_vibe(s['vibe']))
+        for i in range(1, n + 1):
+            meta = make_meta(s)
+            name = f"{code}-{s['slot']}-{i}"
+            run('generate', meta, GEN_SIZE, vibes[s['vibe']]).save(os.path.join(out_dir, name + '.png'))
+            json.dump(meta, open(os.path.join(out_dir, name + '.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+            print('cand', name, meta['seed'], flush=True)
+            time.sleep(2)
+
+
+def up(src, key, meta_src=None):
+    """1단계 그림을 832x1792로 다시 그려(img2img) 디테일을 올리고 1080x2340으로 맞춘다.
+    meta_src: 후보의 .json (고른 후보의 프롬프트·시드를 characters/prompts/로 옮긴다)"""
     code, slot = key.split('-')
     path = os.path.join(PROMPTS, f'{code}-scene-{slot}.json')
-    meta = json.load(open(path))
+    meta = json.load(open(meta_src or path))
     im = fit(Image.open(src).convert('RGB'), UP_SIZE)
     out = run('img2img', meta, UP_SIZE, encode_vibe(os.path.basename(meta['vibe']['image'])[:-5]),
               {'image': b64png(im), 'strength': UP_STRENGTH, 'noise': 0, 'extra_noise_seed': meta['seed']})
@@ -177,5 +224,7 @@ def up(src, key):
 if __name__ == '__main__':
     if sys.argv[1] == 'gen':
         gen(set(sys.argv[2:]))
-    elif sys.argv[1] == 'up':
-        up(sys.argv[2], sys.argv[3])
+    elif sys.argv[1] == 'cand':  # cand <출력폴더> <코드> [시간대…]
+        cand(sys.argv[2], sys.argv[3], set(sys.argv[4:]), 5)
+    elif sys.argv[1] == 'up':  # up <그림.png> <코드>-<시간대> [후보.json]
+        up(sys.argv[2], sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else None)
