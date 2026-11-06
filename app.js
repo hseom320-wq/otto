@@ -17,6 +17,18 @@ const S = Object.assign({
   todos: [],         // [{id, text, done, day, doneDay}]
   memory: [],        // [{text, at}] — 5명이 함께 씀
   ch: {},            // code -> {aff, got:[보상씬 key], wear:{day, key}|null, log:[]}
+  // 레나식 비서 기능 (features.js)
+  reps: [],          // 매주 반복 일정 [{id, text, days:[0~6], time:'HH:MM'}]
+  morning: { on: false, time: '07:30' }, // 인터폰 모닝콜
+  mcDay: '',         // 모닝콜을 받았거나 놓친 날
+  mail: [],          // 우편함 [{id, at, kind, code, title, text, read}]
+  follow: [],        // 대화 후속 질문 [{id, code, q, date, asked}]
+  fired: {},         // 이미 보낸 알림
+  hist: {},          // 날짜 -> {code, done:[할 일]} (일기용)
+  fortune: {},       // '날짜-코드' -> {stars, item, text}
+  diary: {},         // '날짜-코드' -> 글
+  wx: { on: false, lat: null, lon: null, data: null, at: 0 },
+  notify: false,
 }, load());
 function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -193,7 +205,8 @@ function greetLine(c) {
   const g = (c.app.greet_time && c.app.greet_time[slot()]) || c.app.greet;
   const left = S.todos.filter(t => !t.done).length;
   const t = left ? (c.app.todo_left || '할 일 {n}개 남았어.').replace('{n}', left) : c.app.todo_none;
-  return [fill(pick(g)), t ? fill(t) : ''].filter(Boolean).join('\n');
+  const extra = window.greetExtra ? greetExtra(c) : [];
+  return [fill(pick(g)), ...extra, t ? fill(t) : ''].filter(Boolean).join('\n');
 }
 function openLift() { renderLift(); doors(() => show('lift')); }
 
@@ -216,6 +229,7 @@ function renderHome() {
   setBg(lk);
   const left = S.todos.filter(t => !t.done).length;
   $('todoBadge').textContent = left || '';
+  if (window.renderHomeExtra) renderHomeExtra();
 }
 // 배경: 움직이는 영상이 있으면 영상, 없으면 그림
 // 가로 화면(태블릿·눕힌 폰)이면 가로용 그림(wide)을, 세로면 세로용 그림을 쓴다
@@ -238,8 +252,9 @@ function setMedia(img, vid, lk, fallbackColor) {
 function setBg(lk) { setMedia($('bg'), $('bgv'), lk, C.app.color); }
 function setBubble(t, typed) { if (typed) typeInto($('bubText'), t, 'bub'); else { clearInterval(typeT.bub); $('bubText').textContent = t; } }
 // 말하기: 말풍선 + 대화 기록
-function say(text) {
+function say(text, mood) {
   setBubble(text, true);
+  if (mood && window.popSticker) popSticker(mood);
   st(C.code).log.push({ who: 'her', text, at: Date.now() }); trimLog(); save();
   if (sheetOpen === 'chat') renderChat();
 }
@@ -283,12 +298,14 @@ SHEETS.todo = {
     row.append(i, add); f.appendChild(row);
   },
 };
-function addTodo(text) { S.todos.push({ id: uid(), text, done: false, day: today() }); save(); refresh(); renderHome(); }
+function addTodo(text, due) { S.todos.push({ id: uid(), text, done: false, day: today(), due: due || null }); save(); refresh(); renderHome(); }
 function toggleTodo(id, quiet) {
   const t = S.todos.find(x => x.id === id); if (!t) return;
   t.done = !t.done; t.doneDay = t.done ? today() : null;
   const s = st(C.code);
   if (t.done) {
+    const h = S.hist[today()] || (S.hist[today()] = { code: C.code, done: [] });
+    h.code = C.code; if (!h.done.includes(t.text)) h.done.push(t.text);
     s.aff = Math.min(C.affection.range[1], s.aff + 2);
     const left = S.todos.filter(x => !x.done).length;
     if (left === 0) allDone(); else if (!quiet) say(fill(pick(C.app.praise)));
@@ -394,7 +411,7 @@ async function send(text) {
     const r = await gemini(C, s.log);
     thinking = false;
     applyActions(r.actions || []);
-    say(r.say || '…');
+    say(r.say || '…', r.mood);
   } catch (e) {
     thinking = false; renderChat();
     toast(e.message || '연결이 안 됐어요');
@@ -406,7 +423,8 @@ const MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
 const CUTS = () => DATA.world.cut_numbers.common_01_29;
 function sysPrompt(c) {
   const sp = c.speech || {}, o = { name: look(c).label };
-  const todos = S.todos.map(t => `- [${t.done ? 'x' : ' '}] (${t.id}) ${t.text}`).join('\n') || '(없음)';
+  const todos = S.todos.map(t => `- [${t.done ? 'x' : ' '}] (${t.id}) ${t.due ? `[${t.due.replace('T', ' ')}] ` : ''}${t.text}`).join('\n') || '(없음)';
+  const more = window.promptExtra ? promptExtra(c) : '';
   const mem = S.memory.slice(-30).map(m => `- ${m.text}`).join('\n') || '(없음)';
   const ex = Object.entries(sp.examples || {}).map(([k, v]) => `  ${k}: ${fill(v)}`).join('\n');
   return `너는 「${c.name}」이다. 한울아파트 ${c.floor}층에 사는 ${c.age}세, ${c.job}.
@@ -430,11 +448,14 @@ ${ex}
 ${todos}
 [기억하는 것 (5명이 함께 앎)]
 ${mem}
+${more}
 
 규칙:
 - 반드시 캐릭터 말투로, 1~3문장. 메신저처럼 짧게. 지문·괄호 서술·이모지 남발 금지.
 - 성적 묘사 금지. 순애 톤 유지. 사용자가 진심으로 싫어하면 바로 물러난다.
-- 할 일을 새로 말하면 actions에 {"type":"add_todo","text":"..."}. 끝냈다고 하면 {"type":"done_todo","id":"할 일 id"}.
+- 할 일을 새로 말하면 actions에 {"type":"add_todo","text":"...","due":"YYYY-MM-DDTHH:MM(시간을 말했을 때만)"}. 끝냈다고 하면 {"type":"done_todo","id":"할 일 id"}.
+- 나중에 결과가 궁금한 일(면접, 시험, 약속, 병원)을 말하면 그날 이후 물어볼 질문을 {"type":"follow","text":"그거 어땠어? 같은 질문","date":"YYYY-MM-DD"}로.
+- mood는 지금 대사의 기분: none, happy, sweat, angry, sparkle, sleepy, confused 중 하나.
 - 사용자에 대해 오래 기억할 만한 사실(이름, 일정, 취향)은 {"type":"remember","text":"..."}.
 - cut은 지금 표정에 맞는 번호(1~29): ${CUTS().map((n, i) => `${i + 1}${n}`).join(', ')}. 17~20은 실제 스킨십일 때만, 26~29는 실제로 술 마실 때만.`;
 }
@@ -450,7 +471,8 @@ async function gemini(c, log) {
         type: 'OBJECT', required: ['say'],
         properties: {
           say: { type: 'STRING' }, cut: { type: 'INTEGER' },
-          actions: { type: 'ARRAY', items: { type: 'OBJECT', required: ['type'], properties: { type: { type: 'STRING', enum: ['add_todo', 'done_todo', 'remember'] }, text: { type: 'STRING' }, id: { type: 'STRING' } } } },
+          mood: { type: 'STRING', enum: ['none', 'happy', 'sweat', 'angry', 'sparkle', 'sleepy', 'confused'] },
+          actions: { type: 'ARRAY', items: { type: 'OBJECT', required: ['type'], properties: { type: { type: 'STRING', enum: ['add_todo', 'done_todo', 'remember', 'follow'] }, text: { type: 'STRING' }, id: { type: 'STRING' }, due: { type: 'STRING' }, date: { type: 'STRING' } } } },
         },
       },
     },
@@ -472,7 +494,8 @@ async function gemini(c, log) {
 }
 function applyActions(list) {
   list.forEach(a => {
-    if (a.type === 'add_todo' && a.text) { S.todos.push({ id: uid(), text: a.text, done: false, day: today() }); toast(`할 일 추가: ${a.text}`); }
+    if (a.type === 'add_todo' && a.text) { const due = /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(a.due || '') ? a.due : null; S.todos.push({ id: uid(), text: a.text, done: false, day: today(), due }); toast(due ? `일정 추가: ${a.text} (${due.slice(5).replace('T', ' ')})` : `할 일 추가: ${a.text}`); }
+    if (a.type === 'follow' && a.text && /^\d{4}-\d\d-\d\d$/.test(a.date || '')) S.follow.push({ id: uid(), code: C.code, q: a.text, date: a.date, asked: false });
     if (a.type === 'done_todo' && a.id) { const t = S.todos.find(x => x.id === a.id && !x.done); if (t) toggleTodo(t.id, true); }
     if (a.type === 'remember' && a.text) { S.memory.push({ text: a.text, at: Date.now() }); if (S.memory.length > 50) S.memory.shift(); }
   });
@@ -509,7 +532,7 @@ async function init() {
   DATA = await (await fetch('data/characters.json')).json();
   cleanTodos(); save();
   document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openSheet(b.dataset.open));
-  $('btnLift').onclick = $('hudFloor').onclick = openLift;
+  $('hudFloorBtn').onclick = openLift;
   $('sheetX').onclick = $('scrim').onclick = closeSheet;
   $('rwClose').onclick = closeReward;
   $('bubble').onclick = () => openSheet('chat');
@@ -519,8 +542,9 @@ async function init() {
   $('tapHit').onclick = () => {
     if (!C) return;
     tapN++; clearTimeout(tapT); tapT = setTimeout(() => tapN = 0, 6000);
-    if (tapN >= 5) { tapN = 0; setBubble(fill(C.app.tap_stop || '…그만.'), true); return; }
+    if (tapN >= 5) { tapN = 0; setBubble(fill(C.app.tap_stop || '…그만.'), true); if (window.popSticker) popSticker('angry'); return; }
     setBubble(fill(pick(C.app.taps || C.app.praise)), true);
+    if (window.popSticker && Math.random() < .6) popSticker(pick(['happy', 'sweat', 'confused']));
   };
   if (S.pick && S.pick.day === today()) { enter(S.pick.code); show('home'); }
   else { renderLift(); show('lift'); }

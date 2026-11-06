@@ -1,6 +1,6 @@
 // 한울아파트 — 서비스 워커. 앱 파일을 바꿔서 올릴 때마다 V를 1 올린다.
-const V = 'hanul-v5';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'data/characters.json', 'manifest.json', 'icon-192.png', 'icon-512.png', 'assets/ui/elevator.webp', 'assets/ui/elevator-wide.webp'];
+const V = 'hanul-v6';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'features.js', 'data/characters.json', 'manifest.json', 'icon-192.png', 'icon-512.png', 'assets/ui/elevator.webp', 'assets/ui/elevator-wide.webp'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
