@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="한울아파트">
+<title>한울아파트</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;500&family=Gowun+Batang:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 엘리베이터: 오늘의 비서 고르기 (1~10층은 못 감, 11~15층이 비서들) -->
+  <section id="lift" class="screen">
+    <div id="liftCam" class="lift-cam"><img id="liftBg" class="bg lift-bg" alt=""></div>
+    <div id="ind" class="ind" aria-live="polite"><span id="ledArrow" class="ind-arrow"></span><b id="ledNum">1</b></div>
+    <p id="liftDate" class="lift-date"></p>
+    <div class="panel" role="group" aria-label="층 버튼"><div id="floors" class="keys"></div></div>
+    <div class="cap">
+      <b id="liftWho" class="cap-who"></b>
+      <p id="liftText" class="cap-text"></p>
+      <label class="me" id="meRow"><span>뭐라고 불러 줄까</span><input id="meName" maxlength="12" placeholder="이름" autocomplete="nickname"></label>
+    </div>
+  </section>
+
+  <!-- 메인: 오늘의 비서 -->
+  <section id="home" class="screen">
+    <img id="bg" class="bg" alt="">
+    <video id="bgv" class="bg" muted loop playsinline autoplay hidden></video>
+    <div class="shade"></div>
+    <button id="tapHit" class="tap-hit" aria-label="캐릭터 건드리기"></button>
+    <header class="hud">
+      <button id="hudFloorBtn" class="hud-floor" aria-label="엘리베이터로 돌아가기"><span id="hudFloor"></span><small>층 바꾸기</small></button>
+      <div class="who"><b id="hudName"></b><small id="hudTemp"></small></div>
+      <div class="stats"><span id="hudAff" title="호감도"></span><span id="hudHeart" title="모은 보상씬"></span></div>
+    </header>
+    <button id="nextUp" class="next-up" hidden></button>
+    <div id="bubble" class="line" role="button" tabindex="0" aria-label="대화 열기"><b id="bubName"></b><p id="bubText"></p></div>
+    <nav class="dock">
+      <button data-open="chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10H9l-4 3.5v-3.5H4z"/></svg>대화</button>
+      <button data-open="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M8.5 3.5V7M15.5 3.5V7M8 14h3"/></svg>일정<em id="todoBadge"></em></button>
+      <button data-open="study"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5c3-1 5.5-1 8 .8 2.5-1.8 5-1.8 8-.8v13c-3-1-5.5-1-8 .8-2.5-1.8-5-1.8-8-.8zM12 6.3v13.8"/></svg>공부</button>
+      <button data-open="mail"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h17v11h-17zM3.5 8l8.5 6 8.5-6"/></svg>우편함<em id="mailBadge"></em></button>
+      <button data-open="album"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.6-2h6.8L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.6"/></svg>앨범</button>
+      <button data-open="set"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>설정</button>
+    </nav>
+  </section>
+
+  <!-- 바텀 시트 -->
+  <div id="scrim" class="scrim"></div>
+  <section id="sheet" class="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-head"><b id="sheetTitle"></b><small id="sheetSub"></small><button id="sheetX" aria-label="닫기">✕</button></div>
+    <div id="sheetBody" class="sheet-body"></div>
+    <div id="sheetFoot" class="sheet-foot"></div>
+  </section>
+
+  <!-- 보상씬 -->
+  <section id="reward" class="reward" role="dialog" aria-modal="true">
+    <img id="rwImg" class="bg" alt="" hidden>
+    <video id="rwVid" class="bg" muted loop playsinline hidden></video>
+    <div id="rwEmpty" class="rw-empty"></div>
+    <div class="shade"></div>
+    <span id="rwBadge" class="rw-badge"></span>
+    <div class="rw-card">
+      <b id="rwTitle"></b>
+      <p id="rwLine"></p>
+      <div class="row"><button id="rwClose" class="btn ghost">닫기</button><button id="rwWear" class="btn">오늘은 이 모습으로</button></div>
+    </div>
+  </section>
+
+  <!-- 공부 타이머 -->
+  <section id="focus" class="focus" role="dialog" aria-modal="true" aria-label="공부 타이머" hidden>
+    <div class="focus-top"><b id="focusSub"></b><small id="focusPhase"></small></div>
+    <div class="focus-time" id="focusTime">50:00</div>
+    <div class="focus-bar"><i id="focusBar"></i></div>
+    <div class="focus-line"><b id="focusWho"></b><p id="focusLine"></p></div>
+    <div class="focus-keys"><button id="focusStop" class="pk">그만하기</button><button id="focusPause" class="pk go">잠깐 멈춤</button></div>
+  </section>
+
+  <!-- 인터폰: 모닝콜 -->
+  <section id="call" class="call" role="dialog" aria-modal="true" aria-label="인터폰" hidden>
+    <div class="phone">
+      <div class="phone-top"><b id="callWho"></b><small id="callUnit"></small></div>
+      <div class="phone-screen"><img id="callImg" alt=""><span class="rec">현관</span></div>
+      <p id="callLine" class="phone-line"></p>
+      <div class="phone-keys">
+        <button id="callSnooze" class="pk">5분만</button>
+        <button id="callAnswer" class="pk go">받기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 엘리베이터 문 -->
+  <div id="doors" class="doors"><i></i><i></i></div>
+  <div id="toast" class="toast"></div>
+</div>
+<script src="app.js"></script>
+<script src="features.js"></script>
+<script src="study.js"></script>
+</body>
+</html>
