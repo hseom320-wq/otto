@@ -564,6 +564,7 @@
      }
     },
     "night": {
+     "img": "assets/ns/scene/night.webp",
      "wide": {
       "img": "assets/ns/scene-wide/night.webp"
      }
