@@ -27,7 +27,8 @@ function itemsOn(day) {
   const wd = new Date(day + 'T12:00').getDay();
   const a = S.todos.filter(t => t.due && t.due.slice(0, 10) === day).map(t => ({ kind: 'todo', id: t.id, time: t.due.slice(11, 16), text: t.text, done: t.done }));
   const r = S.reps.filter(x => x.days.includes(wd)).map(x => ({ kind: 'rep', id: x.id, time: x.time, text: x.text }));
-  return [...a, ...r].sort((x, y) => (x.time || '').localeCompare(y.time || ''));
+  const st2 = window.extraItems ? extraItems(day) : []; // 공부 계획 (study.js)
+  return [...a, ...r, ...st2].sort((x, y) => (x.time || '').localeCompare(y.time || ''));
 }
 const lateOnes = () => S.todos.filter(t => !t.done && t.due && new Date(t.due) < new Date());
 function nextToday() {
@@ -56,12 +57,15 @@ SHEETS.plan = {
 function itemRow(x) {
   const t = x.kind === 'todo' ? S.todos.find(y => y.id === x.id) : null;
   const r = el('div', 'item' + (x.done ? ' done' : '') + (t && !t.done && t.due && new Date(t.due) < new Date() ? ' late' : ''));
-  r.innerHTML = `<span class="tm">${x.time || ''}</span><span class="tx">${esc(x.text)}</span>${x.kind === 'rep' ? '<span class="rep">매주</span>' : ''}`;
+  r.innerHTML = `<span class="tm">${x.time || ''}</span><span class="tx">${esc(x.text)}</span>${x.kind === 'rep' ? '<span class="rep">매주</span>' : x.kind === 'study' ? '<span class="rep">공부</span>' : ''}`;
   if (t) {
     const ck = el('button', 'ck', t.done ? '✓' : ''); ck.setAttribute('aria-label', t.done ? '안 한 걸로' : '끝냈어요');
     ck.onclick = () => toggleTodo(t.id); r.prepend(ck);
     const del = el('button', 'del', '✕'); del.setAttribute('aria-label', '지우기');
     del.onclick = () => { S.todos = S.todos.filter(y => y.id !== t.id); save(); refresh(); renderHome(); }; r.appendChild(del);
+  } else if (x.kind === 'study') {
+    const ck = el('button', 'ck', x.done ? '✓' : ''); ck.setAttribute('aria-label', x.done ? '안 한 걸로' : '끝냈어요');
+    ck.onclick = () => { if (S.sdone[x.id]) delete S.sdone[x.id]; else S.sdone[x.id] = S.study.len; save(); refresh(); renderHome(); }; r.prepend(ck);
   } else r.prepend(el('span', 'ck ghost'));
   return r;
 }
@@ -192,7 +196,7 @@ function tick() {
     if (ms > 0 && ms <= 10 * 60e3 && !S.fired[t.id + ':pre']) { S.fired[t.id + ':pre'] = 1; remindLine(t.text, t.due.slice(11, 16)); }
     if (ms < -30 * 60e3 && !S.fired[t.id + ':late'] && homeOn() && !document.hidden) { S.fired[t.id + ':late'] = 1; say(fillT(C.app.late, { text: t.text }), 'angry'); }
   });
-  itemsOn(day).filter(x => x.kind === 'rep').forEach(x => {
+  itemsOn(day).filter(x => x.kind !== 'todo' && !x.done).forEach(x => {
     const ms = new Date(`${day}T${x.time}`) - now, k = `${x.id}:${day}`;
     if (ms > 0 && ms <= 10 * 60e3 && !S.fired[k]) { S.fired[k] = 1; remindLine(x.text, x.time); }
   });
@@ -269,24 +273,17 @@ function wxToday() { const w = S.wx; if (!w.on || !w.data) return null; const d 
 
 // ---------- 운세 · 일기 ----------
 const ITEMS = ['딸기우유', '검정 볼펜', '접이식 우산', '이어폰', '따뜻한 국물', '손수건', '500원짜리 동전', '편의점 삼각김밥', '립밤', '보조배터리', '파란 양말', '민트 사탕'];
-async function gemJSON(prompt, schema) {
-  for (const m of MODELS) {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(S.key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 1, maxOutputTokens: 400, responseMimeType: 'application/json', responseSchema: schema } }) });
-    if (r.status === 404 || (!r.ok && r.status >= 500)) continue;
-    if (!r.ok) throw new Error('키를 확인해 주세요');
-    const j = await r.json(); const t = j.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('');
-    return JSON.parse(t);
-  }
-  throw new Error('연결이 안 됐어요');
-}
+// 한 줄짜리 글 받기 (askJSON은 app.js)
+const TEXT = { type: 'object', additionalProperties: false, required: ['text'], properties: { text: { type: 'string' } } };
+const aiText = prompt => askJSON({ messages: [{ role: 'user', content: prompt }], schema: TEXT, effort: 'low', maxTokens: 3000 });
 const voiceOf = c => `너는 ${c.name}. 말투: ${c.speech?.register || ''}. 호칭: ${fill(c.speech?.address || '')}. 예시: ${Object.values(c.speech?.examples || {}).slice(0, 4).map(fill).join(' / ')}`;
 async function makeFortune(c) {
   const key = `${calToday()}-${c.code}`; if (S.fortune[key]) return S.fortune[key];
   const rnd = seeded(key), stars = 2 + Math.floor(rnd() * 4), item = ITEMS[Math.floor(rnd() * ITEMS.length)];
   let f = { stars, item, text: fillT(c.app.fortune[Math.floor(rnd() * c.app.fortune.length)], { item }) };
-  if (S.key) {
+  if (hasAI()) {
     try {
-      const g = await gemJSON(`${voiceOf(c)}\n오늘(${dayLabel(calToday())}) 옆집 이웃 ${userName()}에게 오늘의 운세를 캐릭터 말투로 2~3문장. 별점 ${stars}개(5개 만점), 행운의 물건 "${item}"을 꼭 넣고, 일·사람·건강 중 하나를 짚어 줘. 이모지 금지.`, { type: 'OBJECT', required: ['text'], properties: { text: { type: 'STRING' } } });
+      const g = await aiText(`${voiceOf(c)}\n오늘(${dayLabel(calToday())}) 옆집 이웃 ${userName()}에게 오늘의 운세를 캐릭터 말투로 2~3문장. 별점 ${stars}개(5개 만점), 행운의 물건 "${item}"을 꼭 넣고, 일·사람·건강 중 하나를 짚어 줘. 이모지 금지.`);
       if (g.text) f.text = g.text;
     } catch (e) {}
   }
@@ -297,10 +294,10 @@ async function makeDiary(day) {
   const h = S.hist[day]; if (!h) return null;
   const c = CH(h.code), key = `${day}-${h.code}`; if (S.diary[key]) return { c, text: S.diary[key] };
   let text = h.done.length ? fillT(c.app.diary, { n: h.done.length, list: h.done.slice(0, 4).join(', ') }) : fillT(c.app.diary_none);
-  if (S.key) {
+  if (hasAI()) {
     try {
       const log = st(c.code).log.filter(m => dk(new Date(m.at)) === day).slice(-12).map(m => `${m.who === 'me' ? userName() : c.name}: ${m.text}`).join('\n');
-      const g = await gemJSON(`${voiceOf(c)}\n${dayLabel(day)}에 옆집 이웃 ${userName()}의 비서를 하루 맡았다. 그날 밤 ${c.name}이 쓰는 짧은 일기를 1인칭으로 3~4문장. 속마음이 살짝 드러나게. 끝낸 일: ${h.done.join(', ') || '없음'}\n나눈 얘기:\n${log || '(별로 없음)'}\n이모지·제목 금지.`, { type: 'OBJECT', required: ['text'], properties: { text: { type: 'STRING' } } });
+      const g = await aiText(`${voiceOf(c)}\n${dayLabel(day)}에 옆집 이웃 ${userName()}의 비서를 하루 맡았다. 그날 밤 ${c.name}이 쓰는 짧은 일기를 1인칭으로 3~4문장. 속마음이 살짝 드러나게. 끝낸 일: ${h.done.join(', ') || '없음'}\n나눈 얘기:\n${log || '(별로 없음)'}\n이모지·제목 금지.`);
       if (g.text) text = g.text;
     } catch (e) {}
   }

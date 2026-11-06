@@ -532,16 +532,6 @@
      "emoji": "🧥",
      "img": "assets/ns/c/cover.webp",
      "focus": 47
-    },
-    {
-     "key": "g",
-     "name": "헬스복",
-     "emoji": "🎽"
-    },
-    {
-     "key": "p",
-     "name": "놀이공원룩",
-     "emoji": "🎡"
     }
    ],
    "scenes": {
@@ -572,6 +562,10 @@
    },
    "special_images": [],
    "app": {
+    "study_start": "{subject}? 50분이다. 나도 옆에서 과제 할 테니까, 딴짓하면 바로 안다.",
+    "study_half": "반 왔다. 그니까, 폰 내려놔.",
+    "study_end": "끝. …오늘 꽤 했네. 10분 쉬어.",
+    "exam_soon": "{subject} 시험 D-{n}. 지난번처럼 벼락치기 하면 놀린다.",
     "remind": "{time}에 {text} 있잖아. 10분 남았다. 움직여.",
     "late": "{text}, 아직이지? 그니까, 지금 해.",
     "call": [
@@ -827,6 +821,10 @@
    },
    "special_images": [],
    "app": {
+    "study_start": "{subject}… 50분이지이? 나도 옆에서 원고 할게에. 같이 하자아.",
+    "study_half": "반 했어어… 나는 컷 세 개 그렸어어.",
+    "study_end": "끝났다아… 대단해에. 딸기우유 마실래애?",
+    "exam_soon": "{subject} 시험이… D-{n}이래애. 같이 공부하자아…",
     "remind": "저기… {time}에 {text}… 10분 남았어어.",
     "late": "{text}… 아직이지이? 나도 마감 밀렸으니까… 같이 하자아.",
     "call": [
@@ -1075,6 +1073,10 @@
    },
    "special_images": [],
    "app": {
+    "study_start": "{subject} 하는구나~ 50분 집중하면 간식 줄게~",
+    "study_half": "벌써 반이야~ 물 한 잔 마셔~",
+    "study_end": "수고했어~ 잘했다~ 10분은 꼭 쉬어~",
+    "exam_soon": "{user} 씨, {subject} 시험 D-{n}이지~? 밥 잘 먹고 공부해야 돼~",
     "remind": "{user} 씨~ {time}에 {text} 있잖아~ 10분 남았어~",
     "late": "{user} 씨, {text} 아직이지~? 지금 하자~ 내가 옆에 있을게~",
     "call": [
@@ -1318,6 +1320,10 @@
    },
    "special_images": [],
    "app": {
+    "study_start": "{subject}, 50분. 목표 하나만 정하고 시작하자.",
+    "study_half": "반. 페이스 좋아. 이대로.",
+    "study_end": "끝. 잘했어. …쉬는 것도 계획이야, 10분 쉬어.",
+    "exam_soon": "{subject} 시험 D-{n}. 남은 날 나눠서 하면 충분해.",
     "remind": "{time}에 {text}. 10분 전이야. 준비해.",
     "late": "{text}, 밀렸네. 괜찮아. 지금 15분만 하자.",
     "call": [
@@ -1582,6 +1588,10 @@
     }
    ],
    "app": {
+    "study_start": "{subject}. 50분. 도망가면 장부에 적는다.",
+    "study_half": "반 했다. 엉덩이 붙여.",
+    "study_end": "끝. …제법이네. 쉬어. 명령이다.",
+    "exam_soon": "{subject} 시험 D-{n}. 망치면 과외 쌤이 가만 안 둔다.",
     "remind": "{time}에 {text}. 10분 남았다. 튀어 가.",
     "late": "{text}, 아직이냐. 장부에 적는다. 지금 해.",
     "call": [

@@ -11,7 +11,8 @@ const KEY = 'hanul-v1';
 // ---------------- 저장 ----------------
 const S = Object.assign({
   me: '',            // 내 이름
-  key: '',           // Gemini 키 (이 폰에만)
+  key: '',           // (예전 Gemini 키 — 안 씀)
+  ckey: '',          // Claude API 키 (이 기기에만)
   dayStart: 5,       // 하루가 바뀌는 시각
   pick: null,        // {day, code}
   todos: [],         // [{id, text, done, day, doneDay}]
@@ -370,7 +371,7 @@ SHEETS.album = {
 // ----- 대화 -----
 SHEETS.chat = {
   title: () => C.name,
-  sub: () => (S.key ? 'Gemini 연결됨' : '키 없음 · 설정에서 Gemini 키를 넣으면 진짜 대화'),
+  sub: () => (hasAI() ? 'Claude 연결됨' : '설정에서 Claude 키를 넣으면 진짜로 대화해요'),
   tall: true,
   render: renderChat,
   focus: () => { const i = document.querySelector('#sheetFoot .in'); if (i && !matchMedia('(pointer:coarse)').matches) i.focus(); },
@@ -405,10 +406,10 @@ let thinking = false;
 async function send(text) {
   const s = st(C.code);
   s.log.push({ who: 'me', text, at: Date.now() }); trimLog(); save();
-  if (!S.key) { renderChat(); await sleep(500); say(fill(pick([...C.app.greet, ...C.app.praise]))); setTimeout(() => toast('설정에서 Gemini 키를 넣으면 진짜로 대화해요'), 400); return; }
+  if (!hasAI()) { renderChat(); await sleep(500); say(fill(pick([...C.app.greet, ...C.app.praise]))); setTimeout(() => toast('설정에서 Claude 키를 넣으면 진짜로 대화해요'), 400); return; }
   thinking = true; renderChat();
   try {
-    const r = await gemini(C, s.log);
+    const r = await chatAI(C, s.log);
     thinking = false;
     applyActions(r.actions || []);
     say(r.say || '…', r.mood);
@@ -418,23 +419,54 @@ async function send(text) {
   }
 }
 
-// ---------------- Gemini ----------------
-const MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+// ---------------- Claude ----------------
+// 공식 SDK(@anthropic-ai/sdk)를 CDN에서 고정 버전으로 불러온다. 키는 이 기기에만 저장되고 Anthropic에만 보내진다.
+const SDK_URL = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm';
+const MODEL = 'claude-opus-5-5';
+let SDK = null, client = null, clientKey = '';
+async function claude() {
+  if (!SDK) SDK = (await import(SDK_URL)).default;
+  if (!client || clientKey !== S.ckey) { client = new SDK({ apiKey: S.ckey, dangerouslyAllowBrowser: true, maxRetries: 2 }); clientKey = S.ckey; }
+  return client;
+}
+// 한 번 묻고 JSON으로 받기 (대화·운세·일기·노트·공부 계획에서 같이 씀)
+async function askJSON({ system, messages, schema, effort = 'low', maxTokens = 4000 }) {
+  const c = await claude();
+  let r;
+  try {
+    r = await c.beta.messages.create({
+      model: MODEL, max_tokens: maxTokens,
+      betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default', // 안전 판정으로 거절되면 서버가 다른 모델로 이어서 답한다
+      system, messages,
+      output_config: { effort, format: { type: 'json_schema', schema } },
+    });
+  } catch (e) {
+    if (e instanceof SDK.AuthenticationError || e instanceof SDK.PermissionDeniedError) throw new Error('Claude 키가 맞지 않아요. 설정에서 확인해 주세요.');
+    if (e instanceof SDK.RateLimitError) throw new Error('잠깐 너무 많이 썼어요. 조금 뒤에 다시.');
+    if (e instanceof SDK.BadRequestError) throw new Error('요청을 처리하지 못했어요. (' + (e.message || '').slice(0, 80) + ')');
+    if (e instanceof SDK.APIConnectionError) throw new Error('인터넷 연결을 확인해 주세요.');
+    if (e instanceof SDK.APIError) throw new Error(`Claude 서버 오류 (${e.status})`);
+    throw e;
+  }
+  if (r.stop_reason === 'refusal') throw new Error('이 내용은 답하기 어려워요. 다르게 말해 볼래요?');
+  const t = r.content.filter(x => x.type === 'text').map(x => x.text).join('');
+  try { return JSON.parse(t); } catch (e) { throw new Error('대답을 읽지 못했어요. 다시 해 볼래요?'); }
+}
+const hasAI = () => /^sk-ant-/.test(S.ckey || '');
+
 const CUTS = () => DATA.world.cut_numbers.common_01_29;
-function sysPrompt(c) {
-  const sp = c.speech || {}, o = { name: look(c).label };
-  const todos = S.todos.map(t => `- [${t.done ? 'x' : ' '}] (${t.id}) ${t.due ? `[${t.due.replace('T', ' ')}] ` : ''}${t.text}`).join('\n') || '(없음)';
-  const more = window.promptExtra ? promptExtra(c) : '';
-  const mem = S.memory.slice(-30).map(m => `- ${m.text}`).join('\n') || '(없음)';
+// 캐릭터 설정(잘 안 바뀜) — 캐시되도록 앞에 둔다
+function sysStable(c) {
+  const sp = c.speech || {};
   const ex = Object.entries(sp.examples || {}).map(([k, v]) => `  ${k}: ${fill(v)}`).join('\n');
   return `너는 「${c.name}」이다. 한울아파트 ${c.floor}층에 사는 ${c.age}세, ${c.job}.
-사용자는 옆집 이웃 「${userName()}」이다. 오늘 하루 너는 ${userName()}의 비서를 맡았다(매일 아침 5명 중 한 명을 고르는 앱, 오늘은 너).
+사용자는 옆집 이웃 「${userName()}」이다. 고등학생이고 내신을 준비한다. 오늘 하루 너는 ${userName()}의 비서를 맡았다(매일 아침 5명 중 한 명을 고르는 앱, 오늘은 너).
 
 [세계관] ${DATA.world.era}. ${DATA.world.genre_rule}.
 [성격] ${(c.personality || []).join(' / ')}
 [결핍] ${c.lack || ''}
 [좋아함] ${(c.likes || []).join(', ')} / [싫어함] ${(c.dislikes || []).join(', ')}
-[관계] ${c.relationship_to_user || ''} · 현재 단계: ${stageOf(c)} (호감도 ${st(c.code).aff})
+[관계] ${c.relationship_to_user || ''}
 [말투] ${sp.register || ''} / 호칭: ${fill(sp.address || '')}
 ${(sp.patterns || []).map(p => '- ' + fill(p)).join('\n')}
 [욕] ${sp.swearing || ''}
@@ -443,58 +475,60 @@ ${ex}
 [금지] ${[...(sp.forbidden || []), ...(c.rules || [])].join(' / ')}
 [비서 스타일] ${c.app.assistant}
 
-[지금] ${nowText()} · 입은 옷: ${o.name}
+규칙:
+- 반드시 캐릭터 말투로, 1~3문장. 메신저처럼 짧게. 지문·괄호 서술·이모지 남발 금지.
+- 성적 묘사 금지. 순애 톤 유지. 사용자가 진심으로 싫어하면 바로 물러난다.
+- 공부 질문(개념 설명, 문제 풀이)에는 캐릭터 말투를 지키되 정확하게 답한다. 길어져도 된다.
+- 할 일을 새로 말하면 actions에 {"type":"add_todo","text":"...","due":"YYYY-MM-DDTHH:MM(시간을 말했을 때만)"}. 끝냈다고 하면 {"type":"done_todo","id":"할 일 id"}.
+- 시험 일정을 말하면 {"type":"add_exam","text":"과목","date":"YYYY-MM-DD"}.
+- 나중에 결과가 궁금한 일(시험, 수행평가, 약속, 병원)을 말하면 그날 이후 물어볼 질문을 {"type":"follow","text":"그거 어땠어? 같은 질문","date":"YYYY-MM-DD"}로.
+- 사용자에 대해 오래 기억할 만한 사실(이름, 일정, 취향)은 {"type":"remember","text":"..."}.
+- mood는 지금 대사의 기분: none, happy, sweat, angry, sparkle, sleepy, confused 중 하나.
+- cut은 지금 표정에 맞는 번호(1~29): ${CUTS().map((n, i) => `${i + 1}${n}`).join(', ')}. 17~20은 실제 스킨십일 때만, 26~29는 실제로 술 마실 때만.`;
+}
+// 지금 상황(자주 바뀜)
+function sysNow(c) {
+  const todos = S.todos.map(t => `- [${t.done ? 'x' : ' '}] (${t.id}) ${t.due ? `[${t.due.replace('T', ' ')}] ` : ''}${t.text}`).join('\n') || '(없음)';
+  const more = window.promptExtra ? promptExtra(c) : '';
+  const study = window.studyPrompt ? studyPrompt() : '';
+  const mem = S.memory.slice(-30).map(m => `- ${m.text}`).join('\n') || '(없음)';
+  return `[지금] ${nowText()} · 입은 옷: ${look(c).label} · 관계 단계: ${stageOf(c)} (호감도 ${st(c.code).aff})
 [오늘 할 일]
 ${todos}
 [기억하는 것 (5명이 함께 앎)]
 ${mem}
 ${more}
-
-규칙:
-- 반드시 캐릭터 말투로, 1~3문장. 메신저처럼 짧게. 지문·괄호 서술·이모지 남발 금지.
-- 성적 묘사 금지. 순애 톤 유지. 사용자가 진심으로 싫어하면 바로 물러난다.
-- 할 일을 새로 말하면 actions에 {"type":"add_todo","text":"...","due":"YYYY-MM-DDTHH:MM(시간을 말했을 때만)"}. 끝냈다고 하면 {"type":"done_todo","id":"할 일 id"}.
-- 나중에 결과가 궁금한 일(면접, 시험, 약속, 병원)을 말하면 그날 이후 물어볼 질문을 {"type":"follow","text":"그거 어땠어? 같은 질문","date":"YYYY-MM-DD"}로.
-- mood는 지금 대사의 기분: none, happy, sweat, angry, sparkle, sleepy, confused 중 하나.
-- 사용자에 대해 오래 기억할 만한 사실(이름, 일정, 취향)은 {"type":"remember","text":"..."}.
-- cut은 지금 표정에 맞는 번호(1~29): ${CUTS().map((n, i) => `${i + 1}${n}`).join(', ')}. 17~20은 실제 스킨십일 때만, 26~29는 실제로 술 마실 때만.`;
+${study}`;
 }
-async function gemini(c, log) {
-  const contents = log.slice(-16).map(m => ({ role: m.who === 'me' ? 'user' : 'model', parts: [{ text: m.text }] }));
-  while (contents.length && contents[0].role !== 'user') contents.shift();
-  const body = {
-    systemInstruction: { parts: [{ text: sysPrompt(c) }] },
-    contents,
-    generationConfig: {
-      temperature: 1, maxOutputTokens: 600, responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'OBJECT', required: ['say'],
-        properties: {
-          say: { type: 'STRING' }, cut: { type: 'INTEGER' },
-          mood: { type: 'STRING', enum: ['none', 'happy', 'sweat', 'angry', 'sparkle', 'sleepy', 'confused'] },
-          actions: { type: 'ARRAY', items: { type: 'OBJECT', required: ['type'], properties: { type: { type: 'STRING', enum: ['add_todo', 'done_todo', 'remember', 'follow'] }, text: { type: 'STRING' }, id: { type: 'STRING' }, due: { type: 'STRING' }, date: { type: 'STRING' } } } },
-        },
-      },
-    },
-    safetySettings: ['HARASSMENT', 'HATE_SPEECH', 'SEXUALLY_EXPLICIT', 'DANGEROUS_CONTENT'].map(k => ({ category: 'HARM_CATEGORY_' + k, threshold: 'BLOCK_ONLY_HIGH' })),
-  };
-  let lastErr;
-  for (const m of MODELS) {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(S.key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (r.status === 404) { lastErr = new Error('모델을 찾지 못했어요'); continue; }
-    if (r.status === 400 || r.status === 401 || r.status === 403) throw new Error('키가 맞지 않아요. 설정에서 확인해 주세요.');
-    if (r.status === 429) throw new Error('오늘 무료 사용량을 다 썼어요. 잠시 후에 다시.');
-    if (!r.ok) { lastErr = new Error('연결이 불안정해요'); continue; }
-    const j = await r.json();
-    const t = j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts.map(p => p.text || '').join('');
-    if (!t) throw new Error('대답이 막혔어요. 다르게 말해 볼래요?');
-    try { return JSON.parse(t); } catch (e) { return { say: t }; }
-  }
-  throw lastErr || new Error('연결이 안 됐어요');
+const REPLY = {
+  type: 'object', additionalProperties: false, required: ['say', 'mood', 'cut', 'actions'],
+  properties: {
+    say: { type: 'string' }, cut: { type: 'integer' },
+    mood: { type: 'string', enum: ['none', 'happy', 'sweat', 'angry', 'sparkle', 'sleepy', 'confused'] },
+    actions: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['type'], properties: { type: { type: 'string', enum: ['add_todo', 'done_todo', 'remember', 'follow', 'add_exam'] }, text: { type: 'string' }, id: { type: 'string' }, due: { type: 'string' }, date: { type: 'string' } } } },
+  },
+};
+// 대화 기록 → Claude 메시지 (사용자로 시작, 번갈아, 같은 쪽 연속은 합침)
+function toMessages(log) {
+  const out = [];
+  log.slice(-20).forEach(m => {
+    const role = m.who === 'me' ? 'user' : 'assistant';
+    if (out.length && out[out.length - 1].role === role) out[out.length - 1].content += '\n' + m.text;
+    else out.push({ role, content: m.text });
+  });
+  while (out.length && out[0].role !== 'user') out.shift();
+  return out;
+}
+async function chatAI(c, log) {
+  return askJSON({
+    system: [{ type: 'text', text: sysStable(c), cache_control: { type: 'ephemeral' } }, { type: 'text', text: sysNow(c) }],
+    messages: toMessages(log), schema: REPLY, effort: 'low',
+  });
 }
 function applyActions(list) {
   list.forEach(a => {
     if (a.type === 'add_todo' && a.text) { const due = /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(a.due || '') ? a.due : null; S.todos.push({ id: uid(), text: a.text, done: false, day: today(), due }); toast(due ? `일정 추가: ${a.text} (${due.slice(5).replace('T', ' ')})` : `할 일 추가: ${a.text}`); }
+    if (a.type === 'add_exam' && a.text && /^\d{4}-\d\d-\d\d$/.test(a.date || '') && window.addExam) addExam(a.text, a.date);
     if (a.type === 'follow' && a.text && /^\d{4}-\d\d-\d\d$/.test(a.date || '')) S.follow.push({ id: uid(), code: C.code, q: a.text, date: a.date, asked: false });
     if (a.type === 'done_todo' && a.id) { const t = S.todos.find(x => x.id === a.id && !x.done); if (t) toggleTodo(t.id, true); }
     if (a.type === 'remember' && a.text) { S.memory.push({ text: a.text, at: Date.now() }); if (S.memory.length > 50) S.memory.shift(); }
@@ -511,9 +545,9 @@ SHEETS.set = {
     const f1 = el('div', 'field', '<b>내 이름</b>'), n = el('input', 'in'); n.value = S.me; n.placeholder = '캐릭터가 부를 이름';
     n.onchange = () => { S.me = n.value.trim(); save(); };
     f1.appendChild(n);
-    const f2 = el('div', 'field', '<b>Gemini 키 (대화용)</b>'), k = el('input', 'in'); k.type = 'password'; k.value = S.key; k.placeholder = 'AIza…'; k.autocomplete = 'off';
-    k.onchange = () => { S.key = k.value.trim(); save(); toast(S.key ? '키를 저장했어요' : '키를 지웠어요'); };
-    f2.append(k, el('p', 'hint', '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>에서 무료로 받을 수 있어요. 키는 이 폰에만 저장되고 Google에만 보내져요.'));
+    const f2 = el('div', 'field', '<b>Claude API 키 (대화·노트 정리)</b>'), k = el('input', 'in'); k.type = 'password'; k.value = S.ckey; k.placeholder = 'sk-ant-…'; k.autocomplete = 'off'; k.id = 'ckey';
+    k.onchange = () => { S.ckey = k.value.trim(); save(); toast(!S.ckey ? '키를 지웠어요' : hasAI() ? '키를 저장했어요' : 'sk-ant-로 시작하는 Claude 키를 넣어 주세요'); };
+    f2.append(k, el('p', 'hint', '<a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Claude Console</a>에서 만들어요. 쓴 만큼 돈이 나가니 Console에서 월 한도를 정해 두세요. 대화 한 번에 대략 몇십 원이에요. 키는 이 기기에만 저장되고 Anthropic에만 보내져요.'));
     const f3 = el('div', 'field', '<b>하루가 바뀌는 시각</b>'), sel = el('select');
     [3, 4, 5, 6, 7].forEach(h => { const o = el('option', null, `새벽 ${h}시`); o.value = h; if (h === S.dayStart) o.selected = true; sel.appendChild(o); });
     sel.onchange = () => { S.dayStart = +sel.value; save(); };
