@@ -20,7 +20,7 @@ KEEP = {
 }
 BODY_FIX = [('thick thighs, ', ''), ('1.2::wide hips::', ''), ('wide hips, ', ''), ('1.3::large breasts::', 'medium breasts'), ('large breasts', 'medium breasts'), ('glossy skin, ', ''), ('shiny skin, ', ''), ('curvy, ', ''), ('hourglass figure, ', '')]  # 몸매 강조 줄이기
 NEON = ('glowing city lights, neon lights, ', '')
-SAFE_NEG = ', 1.6::cleavage::, 1.5::huge breasts::, 1.4::large breasts::, 1.4::revealing clothes::, 1.3::skin tight::, 1.3::thighhighs::, 1.3::side slit::, 1.4::leotard::, 1.4::bikini::, 1.5::panties::, 1.5::pantyshot::, 1.3::bare shoulders::, 1.3::off-shoulder::, 1.3::strapless::, 1.3::miniskirt::, 1.2::navel::, 1.2::midriff::, 1.3::breast focus::, 1.3::ass focus::, 1.4::thigh focus::, 1.3::sexually suggestive::, 1.2::underboob::, 1.2::sideboob::, 1.2::from below::'
+SAFE_NEG = ', 1.6::cleavage::, 1.5::huge breasts::, 1.4::large breasts::, 1.4::revealing clothes::, 1.3::skin tight::, 1.3::thighhighs::, 1.3::side slit::, 1.4::leotard::, 1.4::bikini::, 1.5::panties::, 1.5::pantyshot::, 1.3::bare shoulders::, 1.3::off-shoulder::, 1.3::strapless::, 1.3::miniskirt::, 1.4::navel::, 1.4::midriff::, 1.4::crop top::, 1.5::spread legs::, 1.4::crotch::, 1.3::sitting on ground::, 1.4::unbuttoned::, 1.3::unzipped::, 1.3::open shirt::, 1.3::open clothes::, 1.3::breast focus::, 1.3::ass focus::, 1.4::thigh focus::, 1.3::sexually suggestive::, 1.2::underboob::, 1.2::sideboob::, 1.4::from below::, 1.4::latex::, 1.4::shiny clothes::, 1.3::abs::'
 WARM = '1.3::warm lighting::, 1.2::orange tint::, morning sunlight'
 WARM_NEG = ', 1.4::blue tint::, 1.3::cool lighting::, 1.2::blue theme::'
 HR_OPEN = ('1.4::closed eyes::', '1.3::half-closed eyes::, 1.4::purple eyes::')  # 혜린이 눈을 뜨는 장면
@@ -32,10 +32,10 @@ COSTUME = {
     'bn': ('토끼 귀 잠옷', '🐰', '1.4::animal hood::, 1.4::rabbit hood::, 1.3::hood up::, 1.4::bunny pajamas::, 1.3::onesie::, fluffy, 1.3::long sleeves::, 1.3::loose clothes::, pastel pink, 1.2::modest::'),
     'xm': ('산타', '🎄', '1.4::santa costume::, 1.3::red coat::, 1.3::fur-trimmed coat::, 1.3::buttoned coat::, fur-trimmed sleeves, 1.3::long sleeves::, 1.3::high collar::, 1.2::long skirt::, 1.2::santa hat::, 1.2::modest::'),
     'nn': ('수녀', '📿', '1.4::nun::, 1.4::traditional nun::, 1.5::black habit::, 1.5::loose robe::, 1.4::high neck::, 1.4::long sleeves::, 1.3::wide sleeves::, 1.3::white coif::, 1.3::black veil::, 1.3::floor length skirt::, 1.4::modest::'),
-    't': ('래시가드 수영복', '🏖️', '1.4::rash guard::, 1.3::long sleeves::, 1.3::zipped::, 1.3::swim shorts::, 1.2::board shorts::, 1.2::bucket hat::, 1.2::modest::'),
+    't': ('바캉스룩', '🏖️', '1.4::oversized t-shirt::, 1.3::white t-shirt::, 1.4::loose clothes::, 1.3::baggy clothes::, short sleeves, 1.3::board shorts::, knee-length shorts, 1.2::bucket hat::, sandals, 1.3::modest::'),
     'c': ('겨울코트', '🧥', '1.3::open coat::, beige long coat, winter coat, 1.4::turtleneck sweater::, knit sweater, ribbed sweater, long sleeves, 1.2::plaid scarf::, knit scarf, black skirt, black pantyhose, ankle boots, winter clothes'),
-    'id': ('아이돌 무대의상', '🎤', '1.4::idol::, 1.3::idol clothes::, frilled dress, 1.2::sparkling costume::, 1.2::puffy sleeves::, 1.3::knee-length skirt::, 1.2::hair ribbon::, 1.3::holding microphone::, 1.2::modest::'),
-    'w': ('웨딩드레스', '💍', '1.5::wedding dress::, 1.4::white dress::, 1.4::bridal veil::, 1.3::lace::, 1.3::long skirt::, white gloves, 1.3::bouquet::'),
+    'id': ('아이돌 무대의상', '🎤', '1.4::idol::, 1.3::idol clothes::, frilled dress, 1.3::high collar::, 1.2::sparkling costume::, 1.2::puffy sleeves::, 1.3::knee-length skirt::, 1.2::hair ribbon::, 1.3::holding microphone::, 1.2::modest::'),
+    'w': ('웨딩드레스', '💍', '1.5::wedding dress::, 1.4::white dress::, 1.4::high neck::, 1.4::long sleeves::, 1.3::lace sleeves::, 1.3::covered collarbone::, 1.4::bridal veil::, 1.3::lace::, 1.3::long skirt::, 1.3::bouquet::, 1.3::modest::'),
     'bt': ('바텐더', '🍸', '1.4::bartender::, black vest, white dress shirt, long sleeves, 1.3::black bow tie::, black slacks, rolled-up sleeves'),
 }
 EXTRA_NEG = {'nn': ['cross', 'necklace', 'pendant', 'jewelry'], 'xm': [], 'bn': []}
@@ -61,7 +61,7 @@ R = {
         'bn': 'cowboy shot, standing, indoors, bedroom, 1.3::pulling hood down::, 1.4::blush::, looking away, embarrassed',
         'xm': 'cowboy shot, standing, indoors, christmas tree, decorating tree, holding ornament, stumbling, surprised, :o, string lights',
         'nn': 'cowboy shot, standing, indoors, candles, 1.3::holding manuscript::, praying, closed eyes, peaceful',
-        't': 'cowboy shot, 1.4::sitting on sand::, outdoors, beach, beach umbrella, shade, 1.3::hugging own knees::, shy, blush',
+        't': 'cowboy shot, standing, outdoors, beach, day, beach umbrella, shade, 1.3::holding popsicle::, shy, blush, looking away',
         'c': 'cowboy shot, standing, outdoors, winter, snow, 1.3::face buried in scarf::, mittens, small wave, blush',
         'id': 'cowboy shot, standing, stage, stage lights, 1.3::hugging glowstick::, 1.4::blush::, embarrassed, looking down',
         'w': 'cowboy shot, standing, indoors, chapel, 1.3::tears in eyes::, happy tears, smile, looking at viewer',
@@ -72,9 +72,9 @@ R = {
         'bn': 'cowboy shot, standing, indoors, kitchen, night, holding mug, hot cocoa, relaxed smile, head tilt',
         'xm': 'cowboy shot, standing, indoors, christmas, 1.3::holding cake::, christmas cake, smile, string lights, warm lighting',
         'nn': 'cowboy shot, standing, indoors, candles, 1.3::holding rosary::, light smile, peaceful',
-        't': 'cowboy shot, 1.4::sitting on beach chair::, outdoors, beach, beach umbrella, shade, 1.3::sunglasses::, pulling down sunglasses, light smile, looking at viewer',
+        't': 'cowboy shot, standing, outdoors, beach, beach umbrella, shade, 1.3::sunglasses::, pulling down sunglasses, light smile, looking at viewer',
         'c': 'cowboy shot, standing, outdoors, winter, snow, street, 1.3::holding paper bag::, taiyaki, offering, smile, head tilt',
-        'id': 'cowboy shot, standing, stage, stage lights, 1.3::holding skirt::, 1.4::blush::, embarrassed, nervous smile, sweatdrop',
+        'id': 'cowboy shot, standing, stage, stage lights, 1.3::holding microphone with both hands::, 1.4::blush::, embarrassed, nervous smile, sweatdrop',
         'w': 'cowboy shot, standing, indoors, chapel, 1.3::looking at own hand::, wedding ring, 1.3::smile::, happy, tears in eyes',
     },
     'sy': {
@@ -83,7 +83,7 @@ R = {
         'bn': 'cowboy shot, standing, indoors, bedroom, 1.3::bent ears::, tired, v, weak smile, half-closed eyes, holding pillow',
         'xm': 'cowboy shot, 1.4::standing on ladder::, indoors, christmas stocking, hanging stocking, 1.3::yawning::, sleepy',
         'nn': 'cowboy shot, 1.4::sitting::, indoors, candles, candlelight, 1.3::dozing::, head tilt, closed eyes',
-        't': 'cowboy shot, outdoors, beach, sea, 1.4::sitting on swim ring::, on shore, 1.2::sleepy::, half-closed eyes, relaxed',
+        't': 'cowboy shot, standing, outdoors, beach, sea, 1.4::holding swim ring::, 1.2::sleepy::, yawning, half-closed eyes, relaxed',
         'c': 'cowboy shot, standing, outdoors, winter, night, street lamp, snow, visible breath, 1.2::sleepy::, tired smile',
         'id': 'cowboy shot, standing, stage, stage lights, 1.3::failed wink::, laughing, embarrassed, blush',
         'w': 'cowboy shot, standing, indoors, chapel, aisle, 1.3::teary eyes::, trembling lips, about to cry',
@@ -91,12 +91,12 @@ R = {
     'tr': {
         'md': 'cowboy shot, standing, indoors, 1.3::crossed arms::, looking at viewer, annoyed, blush, sharp teeth',
         'nr': 'cowboy shot, standing, indoors, 1.3::holding syringe::, toy syringe, grin, sharp teeth, playful',
-        'bn': 'cowboy shot, 1.4::sitting on couch::, 1.3::crossed arms::, pout, 1.3::blush::, looking away, sharp teeth',
+        'bn': 'cowboy shot, 1.4::sitting on couch::, 1.3::hugging pillow::, pillow covering chest, pout, 1.3::blush::, looking away, sharp teeth',
         'xm': 'cowboy shot, standing, outdoors, night, motorcycle, 1.3::gift sack::, carrying sack over shoulder, grin, sharp teeth, snow',
         'nn': 'cowboy shot, standing, indoors, candles, 1.3::spinning rosary::, smirk, sharp teeth',
-        't': 'cowboy shot, standing, outdoors, beach, day, 1.3::holding surfboard::, grin, sharp teeth, wet hair',
+        't': 'cowboy shot, standing, outdoors, beach, day, 1.3::holding surfboard::, 1.4::oversized t-shirt::, grin, sharp teeth, wet hair',
         'c': 'cowboy shot, standing, outdoors, winter, night, snow, 1.3::hands in pockets::, canned coffee, smirk',
-        'id': 'cowboy shot, standing, stage, stage lights, looking away, crossed arms, 1.4::blush::, red ears, embarrassed, pout',
+        'id': 'cowboy shot, standing, stage, stage lights, looking away, 1.3::holding microphone::, hand on own cheek, 1.4::blush::, red ears, embarrassed, pout',
         'w': 'cowboy shot, standing, indoors, chapel, 1.3::about to throw bouquet::, grin, sharp teeth, blush',
     },
 }
@@ -183,9 +183,12 @@ def reward_specs():
             if code == 'ns' and key == 'c': fix.append(('1.3::black choker::, plain choker, ', 'silver necklace, '))
             soft = BODY_FIX + [NEON]  # 있으면 바꾸고 없으면 넘어감
             neg_rm = EXTRA_NEG.get(key, [])
-            out.append(dict(code=code, slot=f'r_{key}', base=base, vibe=f'{code}-a', fix=fix, soft=soft,
-                            neg_add=SAFE_NEG + EXTRA_ADD.get(key, ''), neg_rm=neg_rm,
-                            label=f'보상씬 · {emoji} {name}', scene=f"{scene.replace('cowboy shot', '1.3::upper body::')}, {BG}"))
+            extra = dict(vibe_strength=0.4) if code == 'tr' else {}  # 태린은 참고 그림의 올려다보는 구도가 강하게 따라와서 약하게
+            if code == 'tr': neg_extra = ', 1.6::latex::, 1.5::shiny clothes::, 1.4::crossed arms::, 1.3::breast press::'
+            else: neg_extra = ''
+            out.append(dict(code=code, slot=f'r_{key}', base=base, vibe=f'{code}-a', fix=fix, soft=soft, **extra,
+                            neg_add=SAFE_NEG + EXTRA_ADD.get(key, '') + neg_extra, neg_rm=neg_rm,
+                            label=f'보상씬 · {emoji} {name}', scene=f"{scene.replace('cowboy shot', '1.3::upper body::, 1.2::straight-on::')}, {BG}"))
     return out
 
 
