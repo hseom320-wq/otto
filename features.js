@@ -273,9 +273,9 @@ function wxToday() { const w = S.wx; if (!w.on || !w.data) return null; const d 
 
 // ---------- 운세 · 일기 ----------
 const ITEMS = ['딸기우유', '검정 볼펜', '접이식 우산', '이어폰', '따뜻한 국물', '손수건', '500원짜리 동전', '편의점 삼각김밥', '립밤', '보조배터리', '파란 양말', '민트 사탕'];
-// 한 줄짜리 글 받기 (askJSON은 app.js)
+// 한 줄짜리 글 받기 (askJSON은 app.js — Gemini)
 const TEXT = { type: 'object', additionalProperties: false, required: ['text'], properties: { text: { type: 'string' } } };
-const aiText = prompt => askJSON({ messages: [{ role: 'user', content: prompt }], schema: TEXT, effort: 'low', maxTokens: 3000 });
+const aiText = prompt => askJSON({ messages: [{ role: 'user', content: prompt }], schema: TEXT, maxTokens: 4096 });
 const voiceOf = c => `너는 ${c.name}. 말투: ${c.speech?.register || ''}. 호칭: ${fill(c.speech?.address || '')}. 예시: ${Object.values(c.speech?.examples || {}).slice(0, 4).map(fill).join(' / ')}`;
 async function makeFortune(c) {
   const key = `${calToday()}-${c.code}`; if (S.fortune[key]) return S.fortune[key];

@@ -11,8 +11,7 @@ const KEY = 'hanul-v1';
 // ---------------- 저장 ----------------
 const S = Object.assign({
   me: '',            // 내 이름
-  key: '',           // (예전 Gemini 키 — 안 씀)
-  ckey: '',          // Claude API 키 (이 기기에만)
+  key: '',           // Gemini 키 (이 기기에만)
   dayStart: 5,       // 하루가 바뀌는 시각
   pick: null,        // {day, code}
   todos: [],         // [{id, text, done, day, doneDay}]
@@ -371,7 +370,7 @@ SHEETS.album = {
 // ----- 대화 -----
 SHEETS.chat = {
   title: () => C.name,
-  sub: () => (hasAI() ? 'Claude 연결됨' : '설정에서 Claude 키를 넣으면 진짜로 대화해요'),
+  sub: () => (hasAI() ? 'Gemini 연결됨' : '설정에서 Gemini 무료 키를 넣으면 진짜로 대화해요'),
   tall: true,
   render: renderChat,
   focus: () => { const i = document.querySelector('#sheetFoot .in'); if (i && !matchMedia('(pointer:coarse)').matches) i.focus(); },
@@ -406,7 +405,7 @@ let thinking = false;
 async function send(text) {
   const s = st(C.code);
   s.log.push({ who: 'me', text, at: Date.now() }); trimLog(); save();
-  if (!hasAI()) { renderChat(); await sleep(500); say(fill(pick([...C.app.greet, ...C.app.praise]))); setTimeout(() => toast('설정에서 Claude 키를 넣으면 진짜로 대화해요'), 400); return; }
+  if (!hasAI()) { renderChat(); await sleep(500); say(fill(pick([...C.app.greet, ...C.app.praise]))); setTimeout(() => toast('설정에서 Gemini 무료 키를 넣으면 진짜로 대화해요'), 400); return; }
   thinking = true; renderChat();
   try {
     const r = await chatAI(C, s.log);
@@ -419,40 +418,51 @@ async function send(text) {
   }
 }
 
-// ---------------- Claude ----------------
-// 공식 SDK(@anthropic-ai/sdk)를 CDN에서 고정 버전으로 불러온다. 키는 이 기기에만 저장되고 Anthropic에만 보내진다.
-const SDK_URL = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.1.0/+esm';
-const MODEL = 'claude-opus-5-5';
-let SDK = null, client = null, clientKey = '';
-async function claude() {
-  if (!SDK) SDK = (await import(SDK_URL)).default;
-  if (!client || clientKey !== S.ckey) { client = new SDK({ apiKey: S.ckey, dangerouslyAllowBrowser: true, maxRetries: 2 }); clientKey = S.ckey; }
-  return client;
-}
-// 한 번 묻고 JSON으로 받기 (대화·운세·일기·노트·공부 계획에서 같이 씀)
-async function askJSON({ system, messages, schema, effort = 'low', maxTokens = 4000 }) {
-  const c = await claude();
-  let r;
-  try {
-    r = await c.beta.messages.create({
-      model: MODEL, max_tokens: maxTokens,
-      betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default', // 안전 판정으로 거절되면 서버가 다른 모델로 이어서 답한다
-      system, messages,
-      output_config: { effort, format: { type: 'json_schema', schema } },
-    });
-  } catch (e) {
-    if (e instanceof SDK.AuthenticationError || e instanceof SDK.PermissionDeniedError) throw new Error('Claude 키가 맞지 않아요. 설정에서 확인해 주세요.');
-    if (e instanceof SDK.RateLimitError) throw new Error('잠깐 너무 많이 썼어요. 조금 뒤에 다시.');
-    if (e instanceof SDK.BadRequestError) throw new Error('요청을 처리하지 못했어요. (' + (e.message || '').slice(0, 80) + ')');
-    if (e instanceof SDK.APIConnectionError) throw new Error('인터넷 연결을 확인해 주세요.');
-    if (e instanceof SDK.APIError) throw new Error(`Claude 서버 오류 (${e.status})`);
-    throw e;
+// ---------------- AI (Gemini 무료 키) ----------------
+// Google AI Studio 무료 키로 Gemini를 부른다. 키는 이 기기에만 저장되고 Google에만 보내진다.
+const MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+const hasAI = () => /^AIza/.test(S.key || '');
+// JSON 스키마(소문자 type) → Gemini responseSchema(대문자 type)
+function gSchema(x) {
+  if (Array.isArray(x)) return x.map(gSchema);
+  if (!x || typeof x !== 'object') return x;
+  const o = {};
+  for (const [k, v] of Object.entries(x)) {
+    if (k === 'additionalProperties') continue;
+    o[k] = k === 'type' ? String(v).toUpperCase() : (k === 'properties' ? Object.fromEntries(Object.entries(v).map(([n, s]) => [n, gSchema(s)])) : gSchema(v));
   }
-  if (r.stop_reason === 'refusal') throw new Error('이 내용은 답하기 어려워요. 다르게 말해 볼래요?');
-  const t = r.content.filter(x => x.type === 'text').map(x => x.text).join('');
-  try { return JSON.parse(t); } catch (e) { throw new Error('대답을 읽지 못했어요. 다시 해 볼래요?'); }
+  return o;
 }
-const hasAI = () => /^sk-ant-/.test(S.ckey || '');
+// 메시지 → Gemini contents (글·사진·PDF)
+function gParts(content) {
+  if (typeof content === 'string') return [{ text: content }];
+  return content.map(b => b.type === 'text' ? { text: b.text } : { inlineData: { mimeType: b.source.media_type, data: b.source.data } });
+}
+// 한 번 묻고 JSON으로 받기 (대화·운세·일기·노트 정리에서 같이 씀)
+async function askJSON({ system, messages, schema, maxTokens = 8192 }) {
+  const body = {
+    contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: gParts(m.content) })),
+    generationConfig: { maxOutputTokens: maxTokens, responseMimeType: 'application/json', responseSchema: gSchema(schema) },
+    safetySettings: ['HARASSMENT', 'HATE_SPEECH', 'SEXUALLY_EXPLICIT', 'DANGEROUS_CONTENT'].map(k => ({ category: 'HARM_CATEGORY_' + k, threshold: 'BLOCK_ONLY_HIGH' })),
+  };
+  if (system) body.systemInstruction = { parts: (Array.isArray(system) ? system : [{ text: system }]).map(x => ({ text: x.text })) };
+  let lastErr;
+  for (const m of MODELS) {
+    let r;
+    try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': S.key }, body: JSON.stringify(body) }); }
+    catch (e) { throw new Error('인터넷 연결을 확인해 주세요.'); }
+    if (r.status === 404) { lastErr = new Error('모델을 찾지 못했어요'); continue; }
+    if (r.status === 401 || r.status === 403) throw new Error('Gemini 키가 맞지 않아요. 설정에서 확인해 주세요.');
+    if (r.status === 400) { const j = await r.json().catch(() => ({})); const msg = (j.error && j.error.message) || ''; throw new Error(/API key/i.test(msg) ? 'Gemini 키가 맞지 않아요. 설정에서 확인해 주세요.' : '요청을 처리하지 못했어요. 다르게 해 볼래요?'); }
+    if (r.status === 429) throw new Error('오늘 무료 사용량을 다 썼어요. 잠시 후에 다시.');
+    if (!r.ok) { lastErr = new Error('연결이 불안정해요'); continue; }
+    const j = await r.json();
+    const t = j.candidates && j.candidates[0] && j.candidates[0].content && (j.candidates[0].content.parts || []).map(p => p.text || '').join('');
+    if (!t) throw new Error('대답이 막혔어요. 다르게 말해 볼래요?');
+    try { return JSON.parse(t); } catch (e) { throw new Error('대답을 읽지 못했어요. 다시 해 볼래요?'); }
+  }
+  throw lastErr || new Error('연결이 안 됐어요');
+}
 
 const CUTS = () => DATA.world.cut_numbers.common_01_29;
 // 캐릭터 설정(잘 안 바뀜) — 캐시되도록 앞에 둔다
@@ -508,7 +518,7 @@ const REPLY = {
     actions: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['type'], properties: { type: { type: 'string', enum: ['add_todo', 'done_todo', 'remember', 'follow', 'add_exam'] }, text: { type: 'string' }, id: { type: 'string' }, due: { type: 'string' }, date: { type: 'string' } } } },
   },
 };
-// 대화 기록 → Claude 메시지 (사용자로 시작, 번갈아, 같은 쪽 연속은 합침)
+// 대화 기록 → AI 메시지 (사용자로 시작, 번갈아, 같은 쪽 연속은 합침)
 function toMessages(log) {
   const out = [];
   log.slice(-20).forEach(m => {
@@ -521,8 +531,8 @@ function toMessages(log) {
 }
 async function chatAI(c, log) {
   return askJSON({
-    system: [{ type: 'text', text: sysStable(c), cache_control: { type: 'ephemeral' } }, { type: 'text', text: sysNow(c) }],
-    messages: toMessages(log), schema: REPLY, effort: 'low',
+    system: [{ text: sysStable(c) }, { text: sysNow(c) }],
+    messages: toMessages(log), schema: REPLY,
   });
 }
 function applyActions(list) {
@@ -545,9 +555,9 @@ SHEETS.set = {
     const f1 = el('div', 'field', '<b>내 이름</b>'), n = el('input', 'in'); n.value = S.me; n.placeholder = '캐릭터가 부를 이름';
     n.onchange = () => { S.me = n.value.trim(); save(); };
     f1.appendChild(n);
-    const f2 = el('div', 'field', '<b>Claude API 키 (대화·노트 정리)</b>'), k = el('input', 'in'); k.type = 'password'; k.value = S.ckey; k.placeholder = 'sk-ant-…'; k.autocomplete = 'off'; k.id = 'ckey';
-    k.onchange = () => { S.ckey = k.value.trim(); save(); toast(!S.ckey ? '키를 지웠어요' : hasAI() ? '키를 저장했어요' : 'sk-ant-로 시작하는 Claude 키를 넣어 주세요'); };
-    f2.append(k, el('p', 'hint', '<a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">Claude Console</a>에서 만들어요. 쓴 만큼 돈이 나가니 Console에서 월 한도를 정해 두세요. 대화 한 번에 대략 몇십 원이에요. 키는 이 기기에만 저장되고 Anthropic에만 보내져요.'));
+    const f2 = el('div', 'field', '<b>Gemini 키 (대화·노트 정리, 무료)</b>'), k = el('input', 'in'); k.type = 'password'; k.value = S.key; k.placeholder = 'AIza…'; k.autocomplete = 'off'; k.id = 'gkey';
+    k.onchange = () => { S.key = k.value.trim(); save(); toast(!S.key ? '키를 지웠어요' : hasAI() ? '키를 저장했어요' : 'AIza로 시작하는 Gemini 키를 넣어 주세요'); };
+    f2.append(k, el('p', 'hint', '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>에서 무료로 받아요. 하루 사용량 제한 안에서는 돈이 안 들어요. 키는 이 기기에만 저장되고 Google에만 보내져요.'));
     const f3 = el('div', 'field', '<b>하루가 바뀌는 시각</b>'), sel = el('select');
     [3, 4, 5, 6, 7].forEach(h => { const o = el('option', null, `새벽 ${h}시`); o.value = h; if (h === S.dayStart) o.selected = true; sel.appendChild(o); });
     sel.onchange = () => { S.dayStart = +sel.value; save(); };

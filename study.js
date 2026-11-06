@@ -1,6 +1,6 @@
 // 한울아파트 — 고등학생 내신 공부
 // 시간표 · 시험(D-day) · 공부 계획 자동 배치(시험 3주 전부터 회독 단계, 평일 2과목·주말 3과목, 50분 블록)
-// · 공부 타이머(비서가 옆에서 응원) · 노트 정리(필기·교과서 사진/PDF를 Claude가 단원별로 정리, 퀴즈)
+// · 공부 타이머(비서가 옆에서 응원) · 노트 정리(필기·교과서 사진/PDF를 Gemini가 단원별로 정리, 퀴즈)
 // app.js·features.js 뒤에 불러온다.
 'use strict';
 (() => {
@@ -157,7 +157,7 @@ function renderTT(b) {
   }
 }
 
-// ---------- 노트 정리 (Claude) ----------
+// ---------- 노트 정리 (Gemini) ----------
 const NOTE = {
   type: 'object', additionalProperties: false, required: ['subject', 'unit', 'title', 'summary', 'points', 'quiz'],
   properties: {
@@ -189,12 +189,12 @@ async function makeNote(files, subject, extra) {
 - points: 시험에 잘 나오는 포인트 3~6개 (서술형·함정 포함)
 - quiz: 백지 복습용 문제 5개와 정답 (단답·서술 섞어서)
 ${extra ? `학생이 덧붙인 말: ${extra}` : ''}` });
-  return askJSON({ messages: [{ role: 'user', content }], schema: NOTE, effort: 'medium', maxTokens: 16000 });
+  return askJSON({ messages: [{ role: 'user', content }], schema: NOTE, maxTokens: 16000 });
 }
 function renderNotes(b) {
   if (noteOpen) return renderNote(b, S.notes.find(n => n.id === noteOpen));
   const subs = [...new Set(S.notes.map(n => n.subject))];
-  if (!S.notes.length) b.appendChild(el('div', 'empty', '필기나 교과서, 학습지 사진(PDF도 돼요)을 올리면 Claude가 단원별 노트와 백지 복습 퀴즈로 정리해 줘요.'));
+  if (!S.notes.length) b.appendChild(el('div', 'empty', '필기나 교과서, 학습지 사진(PDF도 돼요)을 올리면 AI가 단원별 노트와 백지 복습 퀴즈로 정리해 줘요.'));
   subs.forEach(sub => {
     b.appendChild(el('h4', 'sub-h', esc(sub)));
     S.notes.filter(n => n.subject === sub).sort((a, x) => x.at - a.at).forEach(n => {
@@ -211,9 +211,9 @@ function renderNotes(b) {
   pickB.onclick = () => file.click();
   file.onchange = () => { const n = file.files.length; info.textContent = n ? `${n}개 골랐어요${n > 5 ? ' (앞의 5개만 써요)' : ''}` : '한 번에 최대 5장.'; };
   go.onclick = async () => {
-    if (!hasAI()) { toast('설정에서 Claude 키를 넣어 주세요'); return; }
+    if (!hasAI()) { toast('설정에서 Gemini 무료 키를 넣어 주세요'); return; }
     const fs = [...file.files].slice(0, 5); if (!fs.length) { toast('사진이나 PDF를 먼저 골라 주세요'); return; }
-    go.disabled = true; go.textContent = '정리하는 중…'; info.textContent = 'Claude가 읽고 있어요. 30초~1분쯤 걸려요.';
+    go.disabled = true; go.textContent = '정리하는 중…'; info.textContent = 'AI가 읽고 있어요. 30초~1분쯤 걸려요.';
     try {
       const n = await makeNote(fs, sub.value.trim());
       S.notes.push({ id: uid(), ...n, at: Date.now() }); if (S.notes.length > 200) S.notes.shift(); save();
