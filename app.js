@@ -64,18 +64,18 @@ function look(c) {
   const s = st(c.code);
   if (s.wear && s.wear.day === today()) {
     const r = c.rewards.find(x => x.key === s.wear.key);
-    if (r && s.got.includes(r.key) && hasMedia(r)) return { img: r.img, video: r.video, wide: r.wide, focus: r.focus || 50, label: `${r.emoji} ${r.name}`, reward: r.key };
+    if (r && s.got.includes(r.key) && hasMedia(r)) return { img: r.img, video: r.video, wide: r.wide, focus: r.focus || 50, label: r.name, reward: r.key };
   }
   const o = timeOutfit(c), sc = c.scenes[slot()];
   // 가로 그림만 있는 장면도 가로 화면에서는 쓴다
-  if (hasMedia(sc) || (sc && isWide() && hasMedia(sc.wide))) return { img: sc.img || o.cover, video: sc.video, wide: sc.wide, focus: 50, label: `${SLOT_NAME[slot()]} · ${o.name}` };
-  return { img: o.cover, focus: o.focus, label: `${o.emoji || ''} ${o.name}` };
+  if (hasMedia(sc) || (sc && isWide() && hasMedia(sc.wide))) return { img: sc.img || o.cover, video: sc.video, wide: sc.wide, focus: 50, label: `${SLOT_NAME[slot()]}의 ${o.name}` };
+  return { img: o.cover, focus: o.focus, label: o.name };
 }
 
 // ---------------- 화면 전환 ----------------
 function show(id) { document.querySelectorAll('.screen').forEach(e => e.classList.toggle('on', e.id === id)); }
 async function doors(fn) {
-  const d = $('doors'); d.classList.add('shut'); await sleep(600); fn(); await sleep(150); d.classList.remove('shut');
+  const d = $('doors'); d.classList.add('shut'); await sleep(650); fn(); d.classList.add('seam'); await sleep(260); d.classList.remove('shut'); await sleep(200); d.classList.remove('seam');
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let toastT;
@@ -124,15 +124,29 @@ function typeInto(el, text, id = 'x') {
   const ch = [...String(text)]; let i = 0;
   typeT[id] = setInterval(() => { el.textContent += ch[i++] || ''; if (i >= ch.length) clearInterval(typeT[id]); }, 28);
 }
-function liftSay(who, text) { $('liftLine').hidden = false; $('liftWho').textContent = who; typeInto($('liftText'), text, 'lift'); }
-function setLiftBg() { const img = $('liftBg'), src = isWide() ? 'assets/ui/elevator-wide.webp' : 'assets/ui/elevator.webp'; if (img.getAttribute('src') !== src) img.src = src; }
+function liftSay(who, text) { $('liftWho').textContent = who; typeInto($('liftText'), text, 'lift'); }
+// 사진 속 문 위 표시창 자리 (그림 기준 비율). 화면을 꽉 채워 잘린 만큼 계산해서 숫자를 그 위에 띄운다
+const IND = { tall: [0.5, 0.322], wide: [0.5, 0.30] };
+function placeInd() {
+  const img = $('liftBg'), W = innerWidth, H = innerHeight, w = img.naturalWidth, h = img.naturalHeight;
+  if (!w) return;
+  const k = Math.max(W / w, H / h), [u, v] = IND[isWide() ? 'wide' : 'tall'];
+  const e = $('ind'); e.style.left = ((W - w * k) / 2 + u * w * k) + 'px'; e.style.top = ((H - h * k) / 2 + v * h * k) + 'px';
+  e.style.fontSize = Math.max(.8, Math.min(1.6, (w * k) / 1080)) + 'em';
+}
+function setLiftBg() {
+  const img = $('liftBg'), src = isWide() ? 'assets/ui/elevator-wide.webp' : 'assets/ui/elevator.webp';
+  img.onload = placeInd;
+  if (img.getAttribute('src') !== src) img.src = src; else placeInd();
+}
 
 function renderLift() {
   const d = new Date();
   $('liftDate').textContent = `${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`;
   $('meRow').style.display = S.me ? 'none' : '';
   setLiftBg();
-  $('liftLine').hidden = true;
+  $('liftCam').classList.remove('push');
+  liftSay('', S.me ? `${S.me}, 오늘은 누구 집 앞에서 내릴까.` : '오늘은 누구 집 앞에서 내릴까.\n그 전에, 이름부터.');
   const box = $('floors'); box.innerHTML = '';
   const who = {}; DATA.characters.forEach(c => who[c.floor] = c);
   // 실제 엘리베이터처럼 2줄, 위층이 위로: 15 / 13 14 / 11 12 / … / 1 2
@@ -141,7 +155,7 @@ function renderLift() {
     const c = who[n], b = document.createElement('button');
     const picked = c && S.pick && S.pick.day === today() && S.pick.code === c.code;
     b.className = 'key' + (c ? ' home' : '') + (picked ? ' today' : '');
-    b.innerHTML = `<span class="btn">${n}</span><small>${c ? (picked ? '오늘 · ' : '') + c.name.slice(1) : ''}</small>`;
+    b.innerHTML = `<span class="btn">${n}</span><small>${c ? c.name.slice(1) : ''}</small>`;
     b.setAttribute('aria-label', c ? `${n}층 ${c.name}` : `${n}층`);
     b.onclick = () => c ? choose(c, b) : refuse(n, b);
     box.appendChild(b);
@@ -163,9 +177,11 @@ async function choose(c, el) {
   // 층 표시가 올라간다
   const led = $('ledNum'); let f = +led.textContent || 1; const dir = c.floor >= f ? 1 : -1;
   $('ledArrow').textContent = c.floor === f ? '' : dir > 0 ? '▲' : '▼';
-  liftSay(`${c.floor}층`, `${c.floor}층 — ${c.name}의 집.`);
+  liftSay(`${c.floor}층`, `${c.floor}층, ${c.name}네.`);
   while (f !== c.floor) { f += dir; led.textContent = f; await sleep(f === c.floor ? 0 : 160); }
   ding();
+  $('liftCam').classList.add('push');
+  await sleep(450);
   const first = !(S.pick && S.pick.day === today() && S.pick.code === c.code);
   S.pick = { day: today(), code: c.code }; save();
   await doors(() => { enter(c.code); show('home'); });
@@ -191,11 +207,11 @@ function enter(code) {
 }
 function renderHome() {
   const s = st(C.code), lk = look(C);
-  $('hudFloor').textContent = `${C.floor}F`;
+  $('hudFloor').textContent = C.floor;
   $('hudName').textContent = C.name;
-  $('hudTemp').textContent = `${lk.label} · ${stageOf(C)}`;
+  $('hudTemp').textContent = `${lk.label}, ${stageOf(C)}`;
   $('hudAff').textContent = `♥ ${s.aff}`;
-  $('hudHeart').textContent = `📸 ${s.got.length}/${C.rewards.length}`;
+  $('hudHeart').textContent = `사진 ${s.got.length}/${C.rewards.length}`;
   $('bubName').textContent = C.name;
   setBg(lk);
   const left = S.todos.filter(t => !t.done).length;
@@ -497,6 +513,8 @@ async function init() {
   $('sheetX').onclick = $('scrim').onclick = closeSheet;
   $('rwClose').onclick = closeReward;
   $('bubble').onclick = () => openSheet('chat');
+  $('bubble').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSheet('chat'); } };
+  $('meName').onchange = () => { const v = $('meName').value.trim(); if (v) { S.me = v; save(); renderLift(); } };
   let tapN = 0, tapT = 0;
   $('tapHit').onclick = () => {
     if (!C) return;
@@ -521,5 +539,6 @@ addEventListener('resize', () => {
   wasWide = isWide();
   if ($('home').classList.contains('on')) renderHome();
   if ($('lift').classList.contains('on')) setLiftBg();
+  else placeInd();
 });
 init();
