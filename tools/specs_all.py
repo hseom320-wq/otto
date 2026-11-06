@@ -180,11 +180,12 @@ def reward_specs():
             name, emoji, tags = COSTUME[key]
             fix = [(A_OUTFIT[code], KEEP[code] + tags)]
             if code == 'hr' and key in ('t', 'w'): fix.append(HR_OPEN)
+            if code == 'tr' and key == 'id': fix.append(('1.2::sparkling costume::', '1.4::white idol dress::, 1.3::pastel colors::, 1.3::matte fabric::, 1.2::loose clothes::'))
             if code == 'ns' and key == 'c': fix.append(('1.3::black choker::, plain choker, ', 'silver necklace, '))
             soft = BODY_FIX + [NEON]  # 있으면 바꾸고 없으면 넘어감
             neg_rm = EXTRA_NEG.get(key, [])
             extra = dict(vibe_strength=0.4) if code == 'tr' else {}  # 태린은 참고 그림의 올려다보는 구도가 강하게 따라와서 약하게
-            if code == 'tr': neg_extra = ', 1.6::latex::, 1.5::shiny clothes::, 1.4::crossed arms::, 1.3::breast press::'
+            if code == 'tr': neg_extra = ', 1.6::latex::, 1.5::shiny clothes::, 1.4::crossed arms::, 1.3::breast press::, 1.5::cleavage cutout::'
             else: neg_extra = ''
             out.append(dict(code=code, slot=f'r_{key}', base=base, vibe=f'{code}-a', fix=fix, soft=soft, **extra,
                             neg_add=SAFE_NEG + EXTRA_ADD.get(key, '') + neg_extra, neg_rm=neg_rm,
