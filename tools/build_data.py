@@ -191,19 +191,20 @@ UNLOCK_COST = {'daily': 3, 'cos': 6, 'w': 12}
 COS = {'nr', 'bn', 'xm', 'nn', 'md', 't'}
 
 # 보상씬: 할 일을 하나 끝낼 때마다 하나씩 나온다. 5명 공용 복장 (수현의 서비스 복장 기준)
-REWARDS = [
-    {'key': 'bt', 'name': '바텐더', 'emoji': '🍸', 'from': 'b'},
+REWARDS = [  # 5명 공용 9종 (11/6 확정). from = 수현의 예전 가로 그림 세트
     {'key': 'md', 'name': '메이드', 'emoji': '🧹', 'from': 'md'},
     {'key': 'nr', 'name': '간호사', 'emoji': '🩺', 'from': 'nr'},
     {'key': 'bn', 'name': '바니', 'emoji': '🐰', 'from': 'bn'},
     {'key': 'xm', 'name': '산타', 'emoji': '🎄', 'from': 'xm'},
     {'key': 'nn', 'name': '수녀', 'emoji': '📿', 'from': 'nn'},
     {'key': 't', 'name': '비키니', 'emoji': '👙', 'from': 't'},
+    {'key': 'c', 'name': '겨울코트', 'emoji': '🧥', 'from': 'c'},
+    {'key': 'id', 'name': '아이돌 무대의상', 'emoji': '🎤', 'from': 'id'},
     {'key': 'w', 'name': '웨딩드레스', 'emoji': '💍', 'from': 'w', 'need_aff': 240},
 ]
-# 수현만 더 있는 보상 (일상 복장)
-REWARDS_EXTRA = {'ns': [  # 헬스복·놀이공원룩은 뺌 (11/6 사용자 결정)
-    {'key': 'c', 'name': '겨울코트', 'emoji': '🧥', 'from': 'c'},
+# 수현 전용
+REWARDS_EXTRA = {'ns': [
+    {'key': 'bt', 'name': '바텐더', 'emoji': '🍸', 'from': 'b'},
 ]}
 SLOTS = ['morning', 'day', 'evening', 'night']  # 아침 6~11 · 낮 11~17 · 저녁 17~21 · 밤 21~6
 

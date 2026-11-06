@@ -474,13 +474,6 @@
    "code": "ns",
    "rewards": [
     {
-     "key": "bt",
-     "name": "바텐더",
-     "emoji": "🍸",
-     "img": "assets/ns/b/cover.webp",
-     "focus": 50
-    },
-    {
      "key": "md",
      "name": "메이드",
      "emoji": "🧹",
@@ -519,6 +512,18 @@
      "focus": 46
     },
     {
+     "key": "c",
+     "name": "겨울코트",
+     "emoji": "🧥",
+     "img": "assets/ns/c/cover.webp",
+     "focus": 47
+    },
+    {
+     "key": "id",
+     "name": "아이돌 무대의상",
+     "emoji": "🎤"
+    },
+    {
      "key": "w",
      "name": "웨딩드레스",
      "emoji": "💍",
@@ -527,11 +532,11 @@
      "focus": 48
     },
     {
-     "key": "c",
-     "name": "겨울코트",
-     "emoji": "🧥",
-     "img": "assets/ns/c/cover.webp",
-     "focus": 47
+     "key": "bt",
+     "name": "바텐더",
+     "emoji": "🍸",
+     "img": "assets/ns/b/cover.webp",
+     "focus": 50
     }
    ],
    "scenes": {
@@ -773,11 +778,6 @@
    "code": "ys",
    "rewards": [
     {
-     "key": "bt",
-     "name": "바텐더",
-     "emoji": "🍸"
-    },
-    {
      "key": "md",
      "name": "메이드",
      "emoji": "🧹"
@@ -806,6 +806,16 @@
      "key": "t",
      "name": "비키니",
      "emoji": "👙"
+    },
+    {
+     "key": "c",
+     "name": "겨울코트",
+     "emoji": "🧥"
+    },
+    {
+     "key": "id",
+     "name": "아이돌 무대의상",
+     "emoji": "🎤"
     },
     {
      "key": "w",
@@ -1025,11 +1035,6 @@
    "code": "hr",
    "rewards": [
     {
-     "key": "bt",
-     "name": "바텐더",
-     "emoji": "🍸"
-    },
-    {
      "key": "md",
      "name": "메이드",
      "emoji": "🧹"
@@ -1058,6 +1063,16 @@
      "key": "t",
      "name": "비키니",
      "emoji": "👙"
+    },
+    {
+     "key": "c",
+     "name": "겨울코트",
+     "emoji": "🧥"
+    },
+    {
+     "key": "id",
+     "name": "아이돌 무대의상",
+     "emoji": "🎤"
     },
     {
      "key": "w",
@@ -1272,11 +1287,6 @@
    "code": "sy",
    "rewards": [
     {
-     "key": "bt",
-     "name": "바텐더",
-     "emoji": "🍸"
-    },
-    {
      "key": "md",
      "name": "메이드",
      "emoji": "🧹"
@@ -1305,6 +1315,16 @@
      "key": "t",
      "name": "비키니",
      "emoji": "👙"
+    },
+    {
+     "key": "c",
+     "name": "겨울코트",
+     "emoji": "🧥"
+    },
+    {
+     "key": "id",
+     "name": "아이돌 무대의상",
+     "emoji": "🎤"
     },
     {
      "key": "w",
@@ -1534,11 +1554,6 @@
    "code": "tr",
    "rewards": [
     {
-     "key": "bt",
-     "name": "바텐더",
-     "emoji": "🍸"
-    },
-    {
      "key": "md",
      "name": "메이드",
      "emoji": "🧹"
@@ -1567,6 +1582,16 @@
      "key": "t",
      "name": "비키니",
      "emoji": "👙"
+    },
+    {
+     "key": "c",
+     "name": "겨울코트",
+     "emoji": "🧥"
+    },
+    {
+     "key": "id",
+     "name": "아이돌 무대의상",
+     "emoji": "🎤"
     },
     {
      "key": "w",

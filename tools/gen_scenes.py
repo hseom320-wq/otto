@@ -73,29 +73,11 @@ SPECS = [
                '1.3::holding game controller::, 1.3::waving::, 1.2::looking up at viewer::, 1.1::light smile::, '
                'closed mouth, half-closed eyes, relaxed, night, indoors, living room, 1.3::dark room::, '
                '1.3::screen light::, 1.2::light on face::, television, cushion, 1.3::blurry background::'),
-    dict(code='ys', slot='day', base='ys-a', vibe='ys-a',
-         label='낮 · 🧥깔깔이 · 태블릿 펜 문 채 의자 돌려 봄',
-         scene='cowboy shot, sitting on office chair, 1.2::turning around::, 1.3::stylus in mouth::, '
-               'holding drawing tablet, looking at viewer, 1.2:::o::, blush, day, indoors, messy room, '
-               'computer monitor, cardboard box, curtains, 1.2::sunlight through curtains::, daylight, '
-               '1.3::blurry background::'),
-    dict(code='hr', slot='morning', base='hr-a', vibe='hr-a',
-         label='아침 · 🍳앞치마 · 현관에서 반찬통 내밀기 (실눈)',
-         fix=[('1.3::apron::', '1.3::red apron::')],
-         scene='cowboy shot, standing, 1.3::holding food container::, tupperware, 1.2::incoming food::, '
-               'offering to viewer, looking at viewer, 1.2::light smile::, head tilt, morning, indoors, '
-               'entrance, doorway, apartment, 1.3::bright::, daylight, sunlight, light rays, '
-               '1.3::blurry background::'),
-    dict(code='sy', slot='evening', base='sy-a', vibe='sy-a2',
-         label='저녁 · 👔정장 · 퇴근해 문에 기대 머리끈 입에 묾',
-         scene='cowboy shot, standing, 1.2::leaning on door::, looking at viewer, bored, tired, evening, '
-               'indoors, entrance, doorway, light from doorway, 1.3::blurry background::'),
-    dict(code='tr', slot='day', base='tr-b', vibe='tr-b',
-         label='낮 · 🧤과외룩 · 과외 가는 길, 장갑 끼며 돌아봄',
-         scene='cowboy shot, standing, 1.2::adjusting gloves::, turning head, looking at viewer, '
-               '1.2::smirk::, sharp teeth, day, outdoors, city street, sidewalk, winter, sunlight, '
-               '1.3::blurry background::'),
 ]
+
+
+from specs_all import all_specs  # 연서·혜린·소영·태린 장면 + 5명 보상씬
+SPECS += all_specs()
 
 
 def post(path, body):
@@ -129,10 +111,17 @@ def encode_vibe(name):
     return base64.b64encode(v).decode()
 
 
+def strip_neg(neg, words):
+    parts = [x.strip() for x in neg.split(',')]
+    return ', '.join(x for x in parts if x not in words)
+
+
 def build_prompt(base, spec):
     p = base['prompt']
     for a, b in spec.get('fix', []):
         assert a in p, a
+        p = p.replace(a, b)
+    for a, b in spec.get('soft', []):
         p = p.replace(a, b)
     start, end = p.index('cowboy shot'), p.index('-2::upscaled, blurry::')
     return p[:start] + spec['scene'] + ', ' + p[end:]
@@ -174,9 +163,19 @@ def fit(im, size):
     return im.crop((x, y, x + size[0], y + size[1]))
 
 
+def place(code, slot, wide=False):
+    """슬롯 → (그림 폴더, 파일 이름, 프롬프트 기록 파일). 보상씬은 'r_키'."""
+    if slot.startswith('r_'):
+        name = slot[2:]
+        return (os.path.join(ROOT, 'assets', code, 'reward-wide' if wide else 'reward'), name,
+                os.path.join(PROMPTS, f"{code}-reward{'-wide' if wide else ''}-{name}.json"))
+    return (os.path.join(ROOT, 'assets', code, 'scene-wide' if wide else 'scene'), slot,
+            os.path.join(PROMPTS, f"{code}-scene{'-wide' if wide else ''}-{slot}.json"))
+
+
 def save_final(im, code, slot, wide=False):
-    d = os.path.join(ROOT, 'assets', code, 'scene-wide' if wide else 'scene'); os.makedirs(d, exist_ok=True)
-    fit(im, FINAL_WIDE if wide else FINAL).save(os.path.join(d, slot + '.webp'), 'WEBP', quality=90, method=6)
+    d, name, _ = place(code, slot, wide); os.makedirs(d, exist_ok=True)
+    fit(im, FINAL_WIDE if wide else FINAL).save(os.path.join(d, name + '.webp'), 'WEBP', quality=90, method=6)
 
 
 def load_base(name):
@@ -203,7 +202,7 @@ def make_meta(s):
             'sampler': base['sampler'], 'noise_schedule': base['noise_schedule'],
             'vibe': {'image': f"characters/vibes/{s['vibe']}.webp", 'strength': s.get('vibe_strength', VIBE_STRENGTH),
                      'information_extracted': VIBE_INFO},
-            'prompt': build_prompt(base, s), 'negative': base['negative'] + s.get('neg_add', ''),
+            'prompt': build_prompt(base, s), 'negative': strip_neg(base['negative'], s.get('neg_rm', [])) + s.get('neg_add', ''),
             **({'skip_cfg_above_sigma': 19, 'variety_plus': True} if s.get('variety') else {}),
         }
 
@@ -256,7 +255,7 @@ def up(src, key, meta_src=None, wide=False):
     폰: 832x1792로 다시 그림 → 1080x2340 / 태블릿(wide): 1920x1152 → 2560x1536.
     meta_src: 후보의 .json (고른 후보의 프롬프트·시드를 characters/prompts/로 옮긴다)"""
     code, slot = key.split('-')
-    path = os.path.join(PROMPTS, f"{code}-scene{'-wide' if wide else ''}-{slot}.json")
+    path = place(code, slot, wide)[2]
     meta = json.load(open(meta_src or path))
     size = UP_SIZE_WIDE if wide else UP_SIZE
     im = fit(Image.open(src).convert('RGB'), size)
@@ -274,10 +273,10 @@ def extend_wide(key):
     """태블릿 그림 위아래를 아웃페인트로 늘려 iPad 비율로 만든다 (1920x1152 → 1920x1344 → 2560x1792).
     iPad에서는 그림 전체가 보이고, 탭 A11에서는 늘린 띠만 잘려 원래 그림이 그대로 보인다."""
     code, slot = key.split('-')
-    path = os.path.join(PROMPTS, f'{code}-scene-wide-{slot}.json')
+    folder, name, path = place(code, slot, True)
     meta = json.load(open(path))
     W, H, PAD, OV = 1920, 1344, 96, 24
-    final = os.path.join(ROOT, 'assets', code, 'scene-wide', slot + '.webp')
+    final = os.path.join(folder, name + '.webp')
     src = Image.open(final).convert('RGB').resize((W, 1152), Image.LANCZOS)
     canvas = Image.new('RGB', (W, H)); canvas.paste(src, (0, PAD))
     canvas.paste(src.crop((0, 0, W, 1)).resize((W, PAD)), (0, 0))
