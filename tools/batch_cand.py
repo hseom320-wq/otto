@@ -12,6 +12,19 @@ N = int(sys.argv[2]) if len(sys.argv) > 2 else 5
 SIZES = {'phone': (832, 1216), 'tablet': (1280, 768)}
 # 수현 시간대 장면은 이미 끝났으니 빼고, 나머지 장면 + 보상씬 전부
 todo = [s for s in g.SPECS if not (s['code'] == 'ns' and not s['slot'].startswith('r_'))]
+# 6번부터는 자세·표정을 바꿔 가며 뽑는다 (1~5번은 기본 장면 그대로)
+VARIANTS = [
+    'head tilt, 1.2::light smile::',
+    '1.2::hand on own cheek::, blush',
+    '1.2::waving::, smile, open mouth',
+    '1.2::looking away::, 1.2::embarrassed::, blush',
+    '1.2::peace sign::, grin',
+    '1.2::hand in own hair::, half-closed eyes',
+    '1.2::surprised::, :o',
+    '1.2::smug::, closed mouth',
+    '1.2::pout::, blush',
+    '1.2::laughing::, closed eyes',
+]
 vibes = {}
 done = total = 0
 for s in todo:
@@ -22,7 +35,9 @@ for s in todo:
             png = os.path.join(d, f'{i}.png')
             if os.path.exists(png): done += 1; continue
             if s['vibe'] not in vibes: vibes[s['vibe']] = g.encode_vibe(s['vibe'])
-            meta = g.make_meta(s); meta['width'], meta['height'] = size
+            sv = s if i <= 5 else dict(s, scene=s['scene'] + ', ' + VARIANTS[(i - 6) % len(VARIANTS)])
+            meta = g.make_meta(sv); meta['width'], meta['height'] = size
+            if i > 5: meta['variant'] = VARIANTS[(i - 6) % len(VARIANTS)]
             for attempt in range(3):
                 try:
                     im = g.run('generate', meta, size, vibes[s['vibe']]); break
