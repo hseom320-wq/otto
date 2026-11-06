@@ -96,23 +96,64 @@ function ding() {
 }
 
 // ---------------- 엘리베이터 ----------------
+// 1~10층: 못 내리는 층. 누르면 이유를 말해 준다 (레나의 키패드처럼 누르는 재미)
+const LOCKED = {
+  1: ['1층 로비. 지금 내려갈 일은 없다.', '택배는 아까 챙겼다. 1층은 패스.'],
+  2: ['2층 관리사무소. 관리비 얘기 나오기 전에 그냥 가자.', '관리사무소 불이 켜져 있다. …조용히 지나가자.'],
+  3: ['3층 커뮤니티 헬스장. …운동은 내일부터.', '헬스장 앞에 "오늘 쉬는 날" 팻말이 걸려 있다.'],
+  4: ['4층은 비어 있다. 아무도 안 산다는 소문이 있다.', '이 건물 4층 버튼은 원래 잘 안 눌린다.'],
+  5: ['5층은 모르는 집뿐이다. 남의 집 초인종은 누르지 말자.', '5층 복도에서 된장찌개 냄새가 난다. …우리 집 아니다.'],
+  6: ['6층은 인테리어 공사 중. 드릴 소리만 난다.', '6층 문 앞에 "공사 중 · 소음 죄송합니다"가 붙어 있다.'],
+  7: ['7층 할머니가 또 반찬 싸 주실 것 같다. 오늘은 그냥 지나가자.', '7층 강아지가 벌써 짖는다. 버튼을 다시 눌러 취소했다.'],
+  8: ['8층엔 아는 사람이 없다.', '8층은 이사 나간 집만 있다. 불이 꺼져 있다.'],
+  9: ['9층은 카드키가 있어야 서는 층이다.', '9층 버튼이 깜빡이다 꺼졌다. 등록된 층이 아니다.'],
+  10: ['10층 옥상 정원은 밤에는 잠겨 있다.', '10층은 관리 중이라 안 선다. 위로 가 보자.'],
+};
+function buzz() {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain(), at = AC.currentTime;
+    o.type = 'square'; o.frequency.value = 220; o.connect(g); g.connect(AC.destination);
+    g.gain.setValueAtTime(.06, at); g.gain.exponentialRampToValueAtTime(.001, at + .35); o.start(at); o.stop(at + .4);
+  } catch (e) {}
+}
+// 한 글자씩 나오는 대사 (레나식)
+let typeT = {};
+function typeInto(el, text, id = 'x') {
+  clearInterval(typeT[id]); el.textContent = '';
+  const ch = [...String(text)]; let i = 0;
+  typeT[id] = setInterval(() => { el.textContent += ch[i++] || ''; if (i >= ch.length) clearInterval(typeT[id]); }, 28);
+}
+function liftSay(who, text) { $('liftLine').hidden = false; $('liftWho').textContent = who; typeInto($('liftText'), text, 'lift'); }
+function setLiftBg() { const img = $('liftBg'), src = isWide() ? 'assets/ui/elevator-wide.webp' : 'assets/ui/elevator.webp'; if (img.getAttribute('src') !== src) img.src = src; }
+
 function renderLift() {
   const d = new Date();
   $('liftDate').textContent = `${d.getMonth() + 1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`;
   $('meRow').style.display = S.me ? 'none' : '';
+  setLiftBg();
+  $('liftLine').hidden = true;
   const box = $('floors'); box.innerHTML = '';
-  [...DATA.characters].sort((a, b) => b.floor - a.floor).forEach(c => {
-    const o = c.outfits.find(x => x.default) || c.outfits[0], sc = c.scenes[slot()];
-    const b = document.createElement('button'); b.className = 'fl';
-    const picked = S.pick && S.pick.day === today() && S.pick.code === c.code;
-    b.innerHTML = `<span class="btn">${c.floor}</span><span class="face"></span><span class="txt"><b>${c.name}</b><small>${c.temperature} · ${c.job.split(' (')[0]}</small></span>${picked ? '<span class="today">오늘</span>' : ''}`;
-    const f = b.querySelector('.face');
-    const face = sc && sc.img ? { img: sc.img, focus: 50 } : { img: o.cover, focus: o.focus };
-    if (face.img) { f.style.backgroundImage = `url(${face.img})`; f.style.backgroundPosition = `${face.focus}% 18%`; }
-    b.onclick = () => choose(c, b);
+  const who = {}; DATA.characters.forEach(c => who[c.floor] = c);
+  // 실제 엘리베이터처럼 2줄, 위층이 위로: 15 / 13 14 / 11 12 / … / 1 2
+  [15, 0, 13, 14, 11, 12, 9, 10, 7, 8, 5, 6, 3, 4, 1, 2].forEach(n => {
+    if (!n) { const g = document.createElement('span'); g.className = 'key gap'; box.appendChild(g); return; }
+    const c = who[n], b = document.createElement('button');
+    const picked = c && S.pick && S.pick.day === today() && S.pick.code === c.code;
+    b.className = 'key' + (c ? ' home' : '') + (picked ? ' today' : '');
+    b.innerHTML = `<span class="btn">${n}</span><small>${c ? (picked ? '오늘 · ' : '') + c.name.slice(1) : ''}</small>`;
+    b.setAttribute('aria-label', c ? `${n}층 ${c.name}` : `${n}층`);
+    b.onclick = () => c ? choose(c, b) : refuse(n, b);
     box.appendChild(b);
   });
+  $('ledArrow').textContent = '';
   $('ledNum').textContent = S.pick && S.pick.day === today() ? DATA.characters.find(x => x.code === S.pick.code).floor : 1;
+}
+async function refuse(n, el) {
+  if (busy) return;
+  el.classList.add('no'); buzz();
+  liftSay(`${n}층`, pick(LOCKED[n] || ['여기는 내릴 수 없는 층이다.']));
+  await sleep(500); el.classList.remove('no');
 }
 let busy = false;
 async function choose(c, el) {
@@ -121,14 +162,22 @@ async function choose(c, el) {
   el.classList.add('lit');
   // 층 표시가 올라간다
   const led = $('ledNum'); let f = +led.textContent || 1; const dir = c.floor >= f ? 1 : -1;
-  $('ledArrow').textContent = dir > 0 ? '▲' : '▼';
+  $('ledArrow').textContent = c.floor === f ? '' : dir > 0 ? '▲' : '▼';
+  liftSay(`${c.floor}층`, `${c.floor}층 — ${c.name}의 집.`);
   while (f !== c.floor) { f += dir; led.textContent = f; await sleep(f === c.floor ? 0 : 160); }
   ding();
   const first = !(S.pick && S.pick.day === today() && S.pick.code === c.code);
   S.pick = { day: today(), code: c.code }; save();
   await doors(() => { enter(c.code); show('home'); });
   el.classList.remove('lit'); busy = false;
-  if (first) say(fill(pick(c.app.greet)));
+  if (first) say(greetLine(c));
+}
+// 들어올 때: 시간대 인사 + 오늘 할 일 요약 (레나의 greetLine)
+function greetLine(c) {
+  const g = (c.app.greet_time && c.app.greet_time[slot()]) || c.app.greet;
+  const left = S.todos.filter(t => !t.done).length;
+  const t = left ? (c.app.todo_left || '할 일 {n}개 남았어.').replace('{n}', left) : c.app.todo_none;
+  return [fill(pick(g)), t ? fill(t) : ''].filter(Boolean).join('\n');
 }
 function openLift() { renderLift(); doors(() => show('lift')); }
 
@@ -171,10 +220,10 @@ function setMedia(img, vid, lk, fallbackColor) {
   const im = new Image(); im.onload = () => { img.src = lk.img; img.classList.remove('fade'); }; im.src = lk.img;
 }
 function setBg(lk) { setMedia($('bg'), $('bgv'), lk, C.app.color); }
-function setBubble(t) { $('bubText').textContent = t; }
+function setBubble(t, typed) { if (typed) typeInto($('bubText'), t, 'bub'); else { clearInterval(typeT.bub); $('bubText').textContent = t; } }
 // 말하기: 말풍선 + 대화 기록
 function say(text) {
-  setBubble(text);
+  setBubble(text, true);
   st(C.code).log.push({ who: 'her', text, at: Date.now() }); trimLog(); save();
   if (sheetOpen === 'chat') renderChat();
 }
@@ -448,6 +497,13 @@ async function init() {
   $('sheetX').onclick = $('scrim').onclick = closeSheet;
   $('rwClose').onclick = closeReward;
   $('bubble').onclick = () => openSheet('chat');
+  let tapN = 0, tapT = 0;
+  $('tapHit').onclick = () => {
+    if (!C) return;
+    tapN++; clearTimeout(tapT); tapT = setTimeout(() => tapN = 0, 6000);
+    if (tapN >= 5) { tapN = 0; setBubble(fill(C.app.tap_stop || '…그만.'), true); return; }
+    setBubble(fill(pick(C.app.taps || C.app.praise)), true);
+  };
   if (S.pick && S.pick.day === today()) { enter(S.pick.code); show('home'); }
   else { renderLift(); show('lift'); }
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -464,5 +520,6 @@ addEventListener('resize', () => {
   if (isWide() === wasWide || !DATA) return;
   wasWide = isWide();
   if ($('home').classList.contains('on')) renderHome();
+  if ($('lift').classList.contains('on')) setLiftBg();
 });
 init();

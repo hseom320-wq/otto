@@ -16,16 +16,19 @@
 <body>
 <div id="app">
 
-  <!-- 엘리베이터: 오늘의 비서 고르기 -->
+  <!-- 엘리베이터: 오늘의 비서 고르기 (1~10층은 못 감, 11~15층이 비서들) -->
   <section id="lift" class="screen">
+    <img id="liftBg" class="bg lift-bg" alt="">
+    <div class="lift-shade"></div>
     <div class="lift-head">
       <small>한울아파트 · <span id="liftDate"></span></small>
       <h1>오늘은 누구로 할래?</h1>
     </div>
     <div class="panel">
-      <div class="led"><span id="ledArrow">▲</span><b id="ledNum">1</b></div>
-      <div id="floors" class="floors"></div>
+      <div class="led"><span id="ledArrow"></span><b id="ledNum">1</b></div>
+      <div id="floors" class="keys"></div>
     </div>
+    <div id="liftLine" class="lift-line" hidden><b id="liftWho">엘리베이터</b><p id="liftText"></p></div>
     <label class="me" id="meRow">나는 <input id="meName" maxlength="12" placeholder="이름"> (이)야</label>
   </section>
 
@@ -34,6 +37,7 @@
     <img id="bg" class="bg" alt="">
     <video id="bgv" class="bg" muted loop playsinline autoplay hidden></video>
     <div class="shade"></div>
+    <button id="tapHit" class="tap-hit" aria-label="캐릭터 건드리기"></button>
     <header class="hud">
       <button id="hudFloor" class="floor-chip" aria-label="층 바꾸기"></button>
       <div class="who"><b id="hudName"></b><small id="hudTemp"></small></div>
