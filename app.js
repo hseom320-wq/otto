@@ -421,7 +421,8 @@ async function send(text) {
 // ---------------- AI (Gemini 무료 키) ----------------
 // Google AI Studio 무료 키로 Gemini를 부른다. 키는 이 기기에만 저장되고 Google에만 보내진다.
 const MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
-const hasAI = () => /^AIza/.test(S.key || '');
+// 예전 키는 AIza…, 2026년부터 새로 받는 키는 AQ.…로 시작한다
+const hasAI = () => /^(AIza|AQ\.)[\w.-]{20,}$/.test(S.key || '');
 // JSON 스키마(소문자 type) → Gemini responseSchema(대문자 type)
 function gSchema(x) {
   if (Array.isArray(x)) return x.map(gSchema);
@@ -449,7 +450,14 @@ async function askJSON({ system, messages, schema, maxTokens = 8192 }) {
   let lastErr;
   for (const m of MODELS) {
     let r;
-    try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': S.key }, body: JSON.stringify(body) }); }
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
+    const send = (inQuery) => fetch(inQuery ? `${url}?key=${encodeURIComponent(S.key)}` : url,
+      { method: 'POST', headers: inQuery ? { 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json', 'x-goog-api-key': S.key }, body: JSON.stringify(body) });
+    try {
+      r = await send(false);
+      // 새 형식(AQ.) 키가 헤더로 거절되는 경우가 있어서 한 번은 주소에 붙여 다시 보낸다
+      if ((r.status === 401 || r.status === 403) && S.key.startsWith('AQ.')) r = await send(true);
+    }
     catch (e) { throw new Error('인터넷 연결을 확인해 주세요.'); }
     if (r.status === 404) { lastErr = new Error('모델을 찾지 못했어요'); continue; }
     if (r.status === 401 || r.status === 403) throw new Error('Gemini 키가 맞지 않아요. 설정에서 확인해 주세요.');
@@ -555,8 +563,8 @@ SHEETS.set = {
     const f1 = el('div', 'field', '<b>내 이름</b>'), n = el('input', 'in'); n.value = S.me; n.placeholder = '캐릭터가 부를 이름';
     n.onchange = () => { S.me = n.value.trim(); save(); };
     f1.appendChild(n);
-    const f2 = el('div', 'field', '<b>Gemini 키 (대화·노트 정리, 무료)</b>'), k = el('input', 'in'); k.type = 'password'; k.value = S.key; k.placeholder = 'AIza…'; k.autocomplete = 'off'; k.id = 'gkey';
-    k.onchange = () => { S.key = k.value.trim(); save(); toast(!S.key ? '키를 지웠어요' : hasAI() ? '키를 저장했어요' : 'AIza로 시작하는 Gemini 키를 넣어 주세요'); };
+    const f2 = el('div', 'field', '<b>Gemini 키 (대화·노트 정리, 무료)</b>'), k = el('input', 'in'); k.type = 'password'; k.value = S.key; k.placeholder = 'AQ.… 또는 AIza…'; k.autocomplete = 'off'; k.id = 'gkey';
+    k.onchange = () => { S.key = k.value.trim(); save(); toast(!S.key ? '키를 지웠어요' : hasAI() ? '키를 저장했어요' : 'AQ. 또는 AIza로 시작하는 Gemini 키를 넣어 주세요'); };
     f2.append(k, el('p', 'hint', '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>에서 무료로 받아요. 하루 사용량 제한 안에서는 돈이 안 들어요. 키는 이 기기에만 저장되고 Google에만 보내져요.'));
     const f3 = el('div', 'field', '<b>하루가 바뀌는 시각</b>'), sel = el('select');
     [3, 4, 5, 6, 7].forEach(h => { const o = el('option', null, `새벽 ${h}시`); o.value = h; if (h === S.dayStart) o.selected = true; sel.appendChild(o); });
