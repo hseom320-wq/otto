@@ -20,7 +20,7 @@ KEEP = {
 }
 BODY_FIX = [('thick thighs, ', '')]  # 허벅지에 시선이 쏠리는 것만 뺀다 (11/6 완화)
 NEON = ('glowing city lights, neon lights, ', '')
-SAFE_NEG = ', 1.4::deep cleavage::, 1.2::cleavage::, 1.4::huge breasts::, 1.4::leotard::, 1.4::bikini::, 1.4::lingerie::, 1.5::panties::, 1.5::pantyshot::, 1.4::upskirt::, 1.5::spread legs::, 1.4::crotch::, 1.4::breast focus::, 1.4::ass focus::, 1.4::thigh focus::, 1.4::sexually suggestive::, 1.3::underboob::, 1.3::sideboob::, 1.3::from below::, 1.3::latex::, 1.3::breast press::, 1.3::cleavage cutout::, 1.3::pelvic curtain::'
+SAFE_NEG = ', 1.4::deep cleavage::, 1.2::cleavage::, 1.4::huge breasts::, 1.4::leotard::, 1.4::lingerie::, 1.5::panties::, 1.5::pantyshot::, 1.4::upskirt::, 1.5::spread legs::, 1.4::crotch::, 1.4::breast focus::, 1.4::ass focus::, 1.4::thigh focus::, 1.4::sexually suggestive::, 1.3::underboob::, 1.3::sideboob::, 1.3::from below::, 1.3::latex::, 1.3::breast press::, 1.3::cleavage cutout::, 1.3::pelvic curtain::'
 WARM = '1.3::warm lighting::, 1.2::orange tint::, morning sunlight'
 WARM_NEG = ', 1.4::blue tint::, 1.3::cool lighting::, 1.2::blue theme::'
 HR_OPEN = ('1.4::closed eyes::', '1.3::half-closed eyes::, 1.4::purple eyes::')  # 혜린이 눈을 뜨는 장면
@@ -32,7 +32,7 @@ COSTUME = {
     'bn': ('토끼 귀 잠옷', '🐰', '1.4::animal hood::, 1.4::rabbit hood::, 1.3::hood up::, 1.4::bunny pajamas::, 1.3::onesie::, fluffy, 1.3::long sleeves::, 1.3::loose clothes::, pastel pink, 1.2::modest::'),
     'xm': ('산타', '🎄', '1.4::santa costume::, red dress, 1.3::fur-trimmed dress::, fur-trimmed sleeves, long sleeves, 1.2::santa hat::, red thighhighs'),
     'nn': ('수녀', '📿', '1.4::nun::, 1.5::black long dress::, 1.4::high neck::, 1.3::black veil::, white headscarf, 1.3::detached sleeves::, black detached sleeves, white cuffs, 1.3::white thighhighs::, black shoes'),
-    't': ('바캉스룩', '🏖️', '1.3::summer clothes::, 1.3::oversized t-shirt::, white t-shirt, 1.2::tied shirt::, 1.3::denim shorts::, 1.2::bucket hat::, sandals'),
+    't': ('비키니', '👙', '1.4::bikini::, 1.3::open shirt::, 1.3::white shirt over swimsuit::, 1.2::shirt over bikini::, beach, barefoot'),
     'c': ('겨울코트', '🧥', '1.3::open coat::, beige long coat, winter coat, 1.4::turtleneck sweater::, knit sweater, ribbed sweater, long sleeves, 1.2::plaid scarf::, knit scarf, black skirt, black pantyhose, ankle boots, winter clothes'),
     'id': ('아이돌 무대의상', '🎤', '1.4::idol::, 1.3::idol clothes::, frilled dress, 1.2::sparkling costume::, short sleeves, 1.2::hair ribbon::, white boots, 1.3::holding microphone::'),
     'w': ('웨딩드레스', '💍', '1.5::wedding dress::, 1.4::white dress::, 1.3::lace sleeves::, 1.2::off-shoulder::, 1.4::bridal veil::, 1.3::lace::, 1.3::long skirt::, white gloves, 1.3::bouquet::'),
@@ -154,7 +154,7 @@ SCENES = [
          scene=f'cowboy shot, standing, leaning on motorcycle, motorcycle, pov, 1.4::holding out helmet::, offering helmet, smirk, sharp teeth, looking at viewer, morning, outdoors, parking lot, sunlight, {WARM}, {BG}'),
     dict(code='tr', slot='day', base='tr-b', vibe='tr-b',
          label='낮 · 🧤과외룩 · 과외 가는 길, 장갑 끼며 돌아봄',
-         scene=f'1.4::upper body::, standing, 1.2::adjusting gloves::, turning head, looking at viewer, 1.2::smirk::, sharp teeth, day, outdoors, city street, sidewalk, winter, sunlight, {BG}'),
+         scene=f'cowboy shot, standing, 1.2::adjusting gloves::, turning head, looking at viewer, 1.2::smirk::, sharp teeth, day, outdoors, city street, sidewalk, winter, sunlight, {BG}'),
     dict(code='tr', slot='evening', base='tr-a', vibe='tr-a', fix=[NEON],
          label='저녁 · 🧥라이더 · 국밥집, 소주잔 들고 "먹어"',
          scene=f'cowboy shot, 1.4::sitting at table::, 1.3::holding shot glass::, soju bottle, bowl, grin, sharp teeth, looking at viewer, evening, indoors, restaurant, warm lighting, {BG}'),

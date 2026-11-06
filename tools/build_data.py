@@ -197,7 +197,7 @@ REWARDS = [  # 5명 공용 9종 (11/6 확정). from = 수현의 예전 가로 �
     {'key': 'bn', 'name': '토끼 귀 잠옷', 'emoji': '🐰'},
     {'key': 'xm', 'name': '산타', 'emoji': '🎄', 'from': 'xm'},
     {'key': 'nn', 'name': '수녀', 'emoji': '📿', 'from': 'nn'},
-    {'key': 't', 'name': '바캉스룩', 'emoji': '🏖️'},
+    {'key': 't', 'name': '비키니', 'emoji': '👙'},
     {'key': 'c', 'name': '겨울코트', 'emoji': '🧥', 'from': 'c'},
     {'key': 'id', 'name': '아이돌 무대의상', 'emoji': '🎤', 'from': 'id'},
     {'key': 'w', 'name': '웨딩드레스', 'emoji': '💍', 'from': 'w', 'need_aff': 240},
