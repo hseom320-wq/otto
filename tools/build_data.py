@@ -190,11 +190,10 @@ FOCUS = {
 UNLOCK_COST = {'daily': 3, 'cos': 6, 'w': 12}
 COS = {'nr', 'bn', 'xm', 'nn', 'md', 't'}
 
-# 보상씬: 할 일을 하나 끝낼 때마다 하나씩 나온다. 5명 공용 복장 (수현의 서비스 복장 기준)
+# 보상씬: 할 일을 하나 끝낼 때마다 하나씩 나온다. (바니는 11/6에 뺌, 공용 8종) 5명 공용 복장 (수현의 서비스 복장 기준)
 REWARDS = [  # 5명 공용 9종 (11/6 확정). from = 수현의 예전 가로 그림 세트
     {'key': 'md', 'name': '메이드', 'emoji': '🧹', 'from': 'md'},
     {'key': 'nr', 'name': '간호사', 'emoji': '🩺', 'from': 'nr'},
-    {'key': 'bn', 'name': '토끼 귀 잠옷', 'emoji': '🐰'},
     {'key': 'xm', 'name': '산타', 'emoji': '🎄', 'from': 'xm'},
     {'key': 'nn', 'name': '수녀', 'emoji': '📿', 'from': 'nn'},
     {'key': 't', 'name': '비키니', 'emoji': '👙'},

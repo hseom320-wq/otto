@@ -177,6 +177,7 @@ def reward_specs():
     for code, rows in R.items():
         base = f'{code}-a'
         for key, scene in rows.items():
+            if key == 'bn': continue  # 바니는 11/6 사용자 결정으로 뺌
             name, emoji, tags = COSTUME[key]
             fix = [(A_OUTFIT[code], KEEP[code] + tags)]
             if code == 'hr' and key in ('t', 'w'): fix.append(HR_OPEN)
