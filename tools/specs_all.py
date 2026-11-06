@@ -2,7 +2,7 @@
 
 보상씬 복장 (11/6 확정): 5명 공용 9종 — 메이드·간호사·바니·산타·수녀·비키니·겨울코트·아이돌 무대의상(모두 부끄러워함)·웨딩
                          + 수현 전용 바텐더. 복장 태그는 수현 기준에서 수현 고유 소품(초커)만 빼고 각자의 외형과 합친다.
-수위: 15세 이용가 수준. 노출·몸매 강조 구도는 쓰지 않는다 (네거티브로 막음).
+수위: 노출·몸매 강조 구도는 쓰지 않는다 (네거티브로 막음). 11/6에 완화해 봤더니 바로 가슴골·다리 사이 초점 그림이 나와서 이 설정으로 되돌렸다.
 """
 
 # 각자의 기본(a) 복장 태그 — 보상씬에서는 이걸 빼고 복장을 넣는다
@@ -18,9 +18,9 @@ KEEP = {
     'ns': '', 'ys': '1.3::glasses::, 1.3::round eyewear::, thin-framed eyewear, ',
     'hr': '1.3::wedding ring::, ', 'sy': '', 'tr': '1.3::arm tattoo::, ',
 }
-BODY_FIX = [('thick thighs, ', '')]  # 허벅지에 시선이 쏠리는 것만 뺀다 (11/6 완화)
+BODY_FIX = [('thick thighs, ', ''), ('1.2::wide hips::', ''), ('wide hips, ', ''), ('1.3::large breasts::', 'medium breasts'), ('large breasts', 'medium breasts'), ('glossy skin, ', ''), ('shiny skin, ', ''), ('curvy, ', ''), ('hourglass figure, ', '')]  # 몸매 강조 줄이기
 NEON = ('glowing city lights, neon lights, ', '')
-SAFE_NEG = ', 1.4::deep cleavage::, 1.2::cleavage::, 1.4::huge breasts::, 1.4::leotard::, 1.4::lingerie::, 1.5::panties::, 1.5::pantyshot::, 1.4::upskirt::, 1.5::spread legs::, 1.4::crotch::, 1.4::breast focus::, 1.4::ass focus::, 1.4::thigh focus::, 1.4::sexually suggestive::, 1.3::underboob::, 1.3::sideboob::, 1.3::from below::, 1.3::latex::, 1.3::breast press::, 1.3::cleavage cutout::, 1.3::pelvic curtain::'
+SAFE_NEG = ', 1.6::cleavage::, 1.5::huge breasts::, 1.4::large breasts::, 1.4::revealing clothes::, 1.3::skin tight::, 1.3::thighhighs::, 1.3::side slit::, 1.4::leotard::, 1.4::bikini::, 1.5::panties::, 1.5::pantyshot::, 1.3::bare shoulders::, 1.3::off-shoulder::, 1.3::strapless::, 1.3::miniskirt::, 1.4::navel::, 1.4::midriff::, 1.4::crop top::, 1.5::spread legs::, 1.4::crotch::, 1.3::sitting on ground::, 1.4::unbuttoned::, 1.3::unzipped::, 1.3::open shirt::, 1.3::open clothes::, 1.3::breast focus::, 1.3::ass focus::, 1.4::thigh focus::, 1.3::sexually suggestive::, 1.2::underboob::, 1.2::sideboob::, 1.4::from below::, 1.4::latex::, 1.4::shiny clothes::, 1.3::abs::'
 WARM = '1.3::warm lighting::, 1.2::orange tint::, morning sunlight'
 WARM_NEG = ', 1.4::blue tint::, 1.3::cool lighting::, 1.2::blue theme::'
 HR_OPEN = ('1.4::closed eyes::', '1.3::half-closed eyes::, 1.4::purple eyes::')  # 혜린이 눈을 뜨는 장면
@@ -28,14 +28,14 @@ BG = '1.3::blurry background::'
 
 COSTUME = {
     'md': ('메이드', '🧹', '1.4::victorian maid::, 1.5::long maid dress::, 1.4::black long dress::, 1.4::floor length skirt::, 1.3::high collar::, 1.4::long sleeves::, 1.3::white cuffs::, 1.4::frilled shoulders::, 1.5::full length white apron::, maid headdress, 1.2::modest::'),
-    'nr': ('간호사', '🩺', '1.4::nurse::, white nurse uniform, nurse cap, short sleeves, white dress, 1.2::knee-length skirt::, stethoscope around neck'),
+    'nr': ('간호사', '🩺', '1.4::nurse::, white nurse uniform, nurse cap, 1.3::long sleeves::, 1.3::loose clothes::, 1.4::white scrubs::, 1.3::white pants::, stethoscope around neck, 1.2::modest::'),
     'bn': ('토끼 귀 잠옷', '🐰', '1.4::animal hood::, 1.4::rabbit hood::, 1.3::hood up::, 1.4::bunny pajamas::, 1.3::onesie::, fluffy, 1.3::long sleeves::, 1.3::loose clothes::, pastel pink, 1.2::modest::'),
-    'xm': ('산타', '🎄', '1.4::santa costume::, red dress, 1.3::fur-trimmed dress::, fur-trimmed sleeves, long sleeves, 1.2::santa hat::, red thighhighs'),
-    'nn': ('수녀', '📿', '1.4::nun::, 1.5::black long dress::, 1.4::high neck::, 1.3::black veil::, white headscarf, 1.3::detached sleeves::, black detached sleeves, white cuffs, 1.3::white thighhighs::, black shoes'),
-    't': ('비키니', '👙', '1.4::bikini::, 1.3::open shirt::, 1.3::white shirt over swimsuit::, 1.2::shirt over bikini::, beach, barefoot'),
+    'xm': ('산타', '🎄', '1.4::santa costume::, 1.3::red coat::, 1.3::fur-trimmed coat::, 1.3::buttoned coat::, fur-trimmed sleeves, 1.3::long sleeves::, 1.3::high collar::, 1.2::long skirt::, 1.2::santa hat::, 1.2::modest::'),
+    'nn': ('수녀', '📿', '1.4::nun::, 1.4::traditional nun::, 1.5::black habit::, 1.5::loose robe::, 1.4::high neck::, 1.4::long sleeves::, 1.3::wide sleeves::, 1.3::white coif::, 1.3::black veil::, 1.3::floor length skirt::, 1.4::modest::'),
+    't': ('바캉스룩', '🏖️', '1.4::oversized t-shirt::, 1.3::white t-shirt::, 1.4::loose clothes::, 1.3::baggy clothes::, short sleeves, 1.3::board shorts::, knee-length shorts, 1.2::bucket hat::, sandals, 1.3::modest::'),
     'c': ('겨울코트', '🧥', '1.3::open coat::, beige long coat, winter coat, 1.4::turtleneck sweater::, knit sweater, ribbed sweater, long sleeves, 1.2::plaid scarf::, knit scarf, black skirt, black pantyhose, ankle boots, winter clothes'),
-    'id': ('아이돌 무대의상', '🎤', '1.4::idol::, 1.3::idol clothes::, frilled dress, 1.2::sparkling costume::, short sleeves, 1.2::hair ribbon::, white boots, 1.3::holding microphone::'),
-    'w': ('웨딩드레스', '💍', '1.5::wedding dress::, 1.4::white dress::, 1.3::lace sleeves::, 1.2::off-shoulder::, 1.4::bridal veil::, 1.3::lace::, 1.3::long skirt::, white gloves, 1.3::bouquet::'),
+    'id': ('아이돌 무대의상', '🎤', '1.4::idol::, 1.3::idol clothes::, frilled dress, 1.3::high collar::, 1.2::sparkling costume::, 1.2::puffy sleeves::, 1.3::knee-length skirt::, 1.2::hair ribbon::, 1.3::holding microphone::, 1.2::modest::'),
+    'w': ('웨딩드레스', '💍', '1.5::wedding dress::, 1.4::white dress::, 1.4::high neck::, 1.4::long sleeves::, 1.3::lace sleeves::, 1.3::covered collarbone::, 1.4::bridal veil::, 1.3::lace::, 1.3::long skirt::, 1.3::bouquet::, 1.3::modest::'),
     'bt': ('바텐더', '🍸', '1.4::bartender::, black vest, white dress shirt, long sleeves, 1.3::black bow tie::, black slacks, rolled-up sleeves'),
 }
 EXTRA_NEG = {'nn': ['cross', 'necklace', 'pendant', 'jewelry'], 'xm': [], 'bn': []}
@@ -149,18 +149,18 @@ SCENES = [
          label='밤 · 🏠홈웨어 · 소파에서 맥주캔 들고 꾸벅',
          scene=f'cowboy shot, 1.4::sitting on couch::, slouching, 1.2::hugging pillow::, 1.3::holding can::, beer can, 1.3::dozing::, head tilt, half-closed eyes, looking at viewer, night, indoors, 1.3::dark room::, living room, television, cushion, {BG}'),
     # 태린 — 라이더(a) / 낮은 과외룩(b)
-    dict(code='tr', slot='morning', base='tr-a', vibe='tr-a', vibe_strength=0.45, neg_add=WARM_NEG, fix=[NEON],
+    dict(code='tr', slot='morning', base='tr-a', vibe='tr-a', vibe_strength=0.45, neg_add=WARM_NEG, fix=[NEON, ('1.2::partially unbuttoned::', '1.3::buttoned shirt::')],
          label='아침 · 🧥라이더 · 오토바이에 기대 헬멧 내밀기',
          scene=f'cowboy shot, standing, leaning on motorcycle, motorcycle, pov, 1.4::holding out helmet::, offering helmet, smirk, sharp teeth, looking at viewer, morning, outdoors, parking lot, sunlight, {WARM}, {BG}'),
     dict(code='tr', slot='day', base='tr-b', vibe='tr-b',
          label='낮 · 🧤과외룩 · 과외 가는 길, 장갑 끼며 돌아봄',
-         scene=f'cowboy shot, standing, 1.2::adjusting gloves::, turning head, looking at viewer, 1.2::smirk::, sharp teeth, day, outdoors, city street, sidewalk, winter, sunlight, {BG}'),
-    dict(code='tr', slot='evening', base='tr-a', vibe='tr-a', fix=[NEON],
+         scene=f'1.4::upper body::, standing, 1.2::adjusting gloves::, turning head, looking at viewer, 1.2::smirk::, sharp teeth, day, outdoors, city street, sidewalk, winter, sunlight, {BG}'),
+    dict(code='tr', slot='evening', base='tr-a', vibe='tr-a', fix=[NEON, ('1.2::partially unbuttoned::', '1.3::buttoned shirt::')],
          label='저녁 · 🧥라이더 · 국밥집, 소주잔 들고 "먹어"',
-         scene=f'cowboy shot, 1.4::sitting at table::, 1.3::holding shot glass::, soju bottle, bowl, grin, sharp teeth, looking at viewer, evening, indoors, restaurant, warm lighting, {BG}'),
-    dict(code='tr', slot='night', base='tr-a', vibe='tr-a', 
+         scene=f'1.4::upper body::, 1.4::sitting at table::, 1.3::holding shot glass::, soju bottle, bowl, grin, sharp teeth, looking at viewer, evening, indoors, restaurant, warm lighting, {BG}'),
+    dict(code='tr', slot='night', base='tr-a', vibe='tr-a', fix=[('1.2::partially unbuttoned::', '1.3::buttoned shirt::')],
          label='밤 · 🧥라이더 · 장부 쓰다 펜 들고 올려봄',
-         scene=f'cowboy shot, 1.4::sitting on stairs::, 1.3::holding notebook::, holding pen, looking up, looking at viewer, light smirk, night, indoors, stairwell, dim lighting, {BG}'),
+         scene=f'1.4::upper body::, 1.4::sitting on stairs::, 1.3::holding notebook::, holding pen, looking up, looking at viewer, light smirk, night, indoors, stairwell, dim lighting, {BG}'),
 ]
 
 
@@ -185,12 +185,12 @@ def reward_specs():
             if code == 'ns' and key == 'c': fix.append(('1.3::black choker::, plain choker, ', 'silver necklace, '))
             soft = BODY_FIX + [NEON]  # 있으면 바꾸고 없으면 넘어감
             neg_rm = EXTRA_NEG.get(key, [])
-            extra = {}
-            if code == 'tr': neg_extra = ', 1.4::shiny clothes::'
+            extra = dict(vibe_strength=0.4) if code == 'tr' else {}  # 태린은 참고 그림의 올려다보는 구도가 강하게 따라와서 약하게
+            if code == 'tr': neg_extra = ', 1.6::latex::, 1.5::shiny clothes::, 1.4::crossed arms::, 1.3::breast press::, 1.5::cleavage cutout::'
             else: neg_extra = ''
             out.append(dict(code=code, slot=f'r_{key}', base=base, vibe=f'{code}-a', fix=fix, soft=soft, **extra,
                             neg_add=SAFE_NEG + EXTRA_ADD.get(key, '') + neg_extra, neg_rm=neg_rm,
-                            label=f'보상씬 · {emoji} {name}', scene=f'{scene}, {BG}'))
+                            label=f'보상씬 · {emoji} {name}', scene=f"{scene.replace('cowboy shot', '1.3::upper body::, 1.2::straight-on::')}, {BG}"))
     return out
 
 
