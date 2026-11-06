@@ -194,10 +194,10 @@ COS = {'nr', 'bn', 'xm', 'nn', 'md', 't'}
 REWARDS = [  # 5명 공용 9종 (11/6 확정). from = 수현의 예전 가로 그림 세트
     {'key': 'md', 'name': '메이드', 'emoji': '🧹', 'from': 'md'},
     {'key': 'nr', 'name': '간호사', 'emoji': '🩺', 'from': 'nr'},
-    {'key': 'bn', 'name': '바니', 'emoji': '🐰', 'from': 'bn'},
+    {'key': 'bn', 'name': '토끼 귀 잠옷', 'emoji': '🐰'},
     {'key': 'xm', 'name': '산타', 'emoji': '🎄', 'from': 'xm'},
     {'key': 'nn', 'name': '수녀', 'emoji': '📿', 'from': 'nn'},
-    {'key': 't', 'name': '비키니', 'emoji': '👙', 'from': 't'},
+    {'key': 't', 'name': '래시가드 수영복', 'emoji': '🏖️'},
     {'key': 'c', 'name': '겨울코트', 'emoji': '🧥', 'from': 'c'},
     {'key': 'id', 'name': '아이돌 무대의상', 'emoji': '🎤', 'from': 'id'},
     {'key': 'w', 'name': '웨딩드레스', 'emoji': '💍', 'from': 'w', 'need_aff': 240},
@@ -245,7 +245,7 @@ def main():
         rewards = []
         for r in REWARDS + REWARDS_EXTRA.get(code, []):
             m = media(f'assets/{code}/reward/{r["key"]}')
-            if not m and code == 'ns':  # 수현은 예전 가로 그림이라도 쓴다
+            if not m and code == 'ns' and r.get('from'):  # 수현은 예전 가로 그림이라도 쓴다
                 m = media(f'assets/ns/{r["from"]}/cover')
                 if m: m['focus'] = FOCUS.get(f'ns/{r["from"]}', 50)
             if (w := media(f'assets/{code}/reward-wide/{r["key"]}')):
