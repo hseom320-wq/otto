@@ -299,6 +299,9 @@ addEventListener('storage', e => {
   if ($('planView').hidden) cheerIfDone();
 });
 
+// 다른 기능(혼잣말 등)이 다음 시험을 알 수 있게
+window.nextExamInfo = () => { const s = status(); return s && s.next ? { subject: s.next.exams[0].name, n: s.dday } : null; };
+
 // ---------- 대화(Gemini)에도 기말 상황을 알려 준다 ----------
 const basePrompt = window.promptExtra;
 window.promptExtra = function (c) {

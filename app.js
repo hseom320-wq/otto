@@ -423,6 +423,37 @@ async function send(text) {
 const MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
 // 예전 키는 AIza…, 2026년부터 새로 받는 키는 AQ.…로 시작한다
 const hasAI = () => /^(AIza|AQ\.)[\w.-]{20,}$/.test(S.key || '');
+// 붙여 넣은 키 다듬기: 보이지 않는 공백·줄바꿈·따옴표를 빼고, 주소째 붙여 넣었으면 key= 뒤만 쓴다
+function cleanKey(v) {
+  let k = String(v || '').replace(/[\s\u200B-\u200D\u2060\uFEFF\u00A0]/g, '').replace(/^["'`]+|["'`]+$/g, '');
+  const m = k.match(/[?&]key=([^&#]+)/); if (m) k = decodeURIComponent(m[1]);
+  const n = k.match(/(AIza[\w-]{20,}|AQ\.[\w.-]{20,})/); if (n) k = n[1];
+  return k;
+}
+// 구글이 돌려준 오류를 알아듣기 쉬운 말로
+function keyError(status, msg) {
+  const m = String(msg || '');
+  if (/API key not valid|API_KEY_INVALID|invalid api key/i.test(m)) return 'Gemini 키가 틀렸어요. AI Studio에서 키를 다시 복사해 주세요.';
+  if (/expired/i.test(m)) return 'Gemini 키가 만료됐어요. AI Studio에서 새 키를 만들어 주세요.';
+  if (/has not been used|is disabled|SERVICE_DISABLED|enable it/i.test(m)) return '이 키의 프로젝트에서 Gemini API가 꺼져 있어요. AI Studio에서 키를 새로 만들면 보통 해결돼요.';
+  if (/location|region|country|not supported/i.test(m)) return '이 계정이나 지역에서는 Gemini API를 쓸 수 없대요. 다른 구글 계정으로 키를 만들어 보세요.';
+  if (/organization|policy|admin|workspace/i.test(m) || status === 403) return '구글이 이 키를 막았어요. 학교 계정이면 관리자 설정 때문일 수 있어요. 개인 구글 계정으로 키를 만들어 보세요.';
+  if (status === 401) return 'Gemini 키를 확인하지 못했어요. 키를 다시 붙여 넣어 주세요.';
+  return '';
+}
+// 이 키로 쓸 수 있는 모델을 물어봐서 고른다 (모델 이름이 바뀌어도 동작하게)
+async function findModel(force) {
+  if (!force && S.gModel && S.gModelKey === S.key.slice(-6)) return S.gModel;
+  const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': S.key } })
+    .then(x => (x.status === 401 || x.status === 403) && S.key.startsWith('AQ.') ? fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${encodeURIComponent(S.key)}`) : x);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(keyError(r.status, j.error && j.error.message) || `Gemini 연결 실패 (${r.status})`); e.raw = j.error && j.error.message; throw e; }
+  const names = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace('models/', ''));
+  const pickOne = MODELS.find(n => names.includes(n)) || names.find(n => /flash/.test(n) && !/lite|image|tts|live|audio|thinking/.test(n)) || names.find(n => /flash/.test(n)) || names[0];
+  if (!pickOne) throw new Error('이 키로 쓸 수 있는 Gemini 모델이 없어요.');
+  S.gModel = pickOne; S.gModelKey = S.key.slice(-6); save();
+  return pickOne;
+}
 // JSON 스키마(소문자 type) → Gemini responseSchema(대문자 type)
 function gSchema(x) {
   if (Array.isArray(x)) return x.map(gSchema);
@@ -448,7 +479,9 @@ async function askJSON({ system, messages, schema, maxTokens = 8192 }) {
   };
   if (system) body.systemInstruction = { parts: (Array.isArray(system) ? system : [{ text: system }]).map(x => ({ text: x.text })) };
   let lastErr;
-  for (const m of MODELS) {
+  let found = null; try { found = await findModel(); } catch (e) { if (e.raw) throw e; }
+  const order = [...new Set([found, ...MODELS].filter(Boolean))];
+  for (const m of order) {
     let r;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
     const send = (inQuery) => fetch(inQuery ? `${url}?key=${encodeURIComponent(S.key)}` : url,
@@ -459,9 +492,11 @@ async function askJSON({ system, messages, schema, maxTokens = 8192 }) {
       if ((r.status === 401 || r.status === 403) && S.key.startsWith('AQ.')) r = await send(true);
     }
     catch (e) { throw new Error('인터넷 연결을 확인해 주세요.'); }
-    if (r.status === 404) { lastErr = new Error('모델을 찾지 못했어요'); continue; }
-    if (r.status === 401 || r.status === 403) throw new Error('Gemini 키가 맞지 않아요. 설정에서 확인해 주세요.');
-    if (r.status === 400) { const j = await r.json().catch(() => ({})); const msg = (j.error && j.error.message) || ''; throw new Error(/API key/i.test(msg) ? 'Gemini 키가 맞지 않아요. 설정에서 확인해 주세요.' : '요청을 처리하지 못했어요. 다르게 해 볼래요?'); }
+    if (r.status === 404) { lastErr = new Error('모델을 찾지 못했어요'); if (m === S.gModel) S.gModel = ''; continue; }
+    if (r.status === 401 || r.status === 403 || r.status === 400) {
+      const j = await r.json().catch(() => ({})); const msg = (j.error && j.error.message) || '';
+      throw new Error(keyError(r.status, msg) || (r.status === 400 ? '요청을 처리하지 못했어요. 다르게 해 볼래요?' : 'Gemini 키가 맞지 않아요. 설정에서 확인해 주세요.'));
+    }
     if (r.status === 429) throw new Error('오늘 무료 사용량을 다 썼어요. 잠시 후에 다시.');
     if (!r.ok) { lastErr = new Error('연결이 불안정해요'); continue; }
     const j = await r.json();
@@ -564,8 +599,23 @@ SHEETS.set = {
     n.onchange = () => { S.me = n.value.trim(); save(); };
     f1.appendChild(n);
     const f2 = el('div', 'field', '<b>Gemini 키 (대화·노트 정리, 무료)</b>'), k = el('input', 'in'); k.type = 'password'; k.value = S.key; k.placeholder = 'AQ.… 또는 AIza…'; k.autocomplete = 'off'; k.id = 'gkey';
-    k.onchange = () => { S.key = k.value.trim(); save(); toast(!S.key ? '키를 지웠어요' : hasAI() ? '키를 저장했어요' : 'AQ. 또는 AIza로 시작하는 Gemini 키를 넣어 주세요'); };
-    f2.append(k, el('p', 'hint', '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>에서 무료로 받아요. 하루 사용량 제한 안에서는 돈이 안 들어요. 키는 이 기기에만 저장되고 Google에만 보내져요.'));
+    k.autocapitalize = 'off'; k.spellcheck = false;
+    const kRow = el('div', 'row'), kTest = el('button', 'btn sm', '확인'), kMsg = el('p', 'hint key-msg');
+    kMsg.textContent = S.key ? (hasAI() ? '저장된 키가 있어요. "확인"을 누르면 실제로 연결해 봐요.' : '저장된 키 모양이 이상해요. 다시 붙여 넣어 주세요.') : '';
+    // 붙여 넣는 순간 바로 저장한다 (창을 그냥 닫아도 저장되게)
+    const storeKey = () => { const v = cleanKey(k.value); if (v !== S.key) { S.key = v; S.gModel = ''; save(); } return v; };
+    k.oninput = () => { storeKey(); kMsg.textContent = !S.key ? '' : hasAI() ? '저장했어요. "확인"을 눌러 연결해 보세요.' : 'AQ. 또는 AIza로 시작하는 키를 넣어 주세요.'; };
+    k.onchange = () => { const v = storeKey(); if (v !== k.value) k.value = v; toast(!S.key ? '키를 지웠어요' : hasAI() ? '키를 저장했어요' : 'AQ. 또는 AIza로 시작하는 Gemini 키를 넣어 주세요'); };
+    kTest.onclick = async () => {
+      storeKey();
+      if (!hasAI()) { kMsg.textContent = 'AQ. 또는 AIza로 시작하는 키를 먼저 넣어 주세요.'; return; }
+      kTest.disabled = true; kMsg.textContent = '연결해 보는 중…';
+      try { const m = await findModel(true); kMsg.textContent = `연결됐어요 (${m}). 이제 대화가 진짜 AI로 바뀌어요.`; }
+      catch (e) { kMsg.textContent = (e.message || '연결하지 못했어요.') + (e.raw ? `\n구글 메시지: ${e.raw.slice(0, 160)}` : ''); }
+      kTest.disabled = false;
+    };
+    kRow.append(k, kTest);
+    f2.append(kRow, kMsg, el('p', 'hint', '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>에서 무료로 받아요. 하루 사용량 제한 안에서는 돈이 안 들어요. 키는 이 기기에만 저장되고 Google에만 보내져요.'));
     const f3 = el('div', 'field', '<b>하루가 바뀌는 시각</b>'), sel = el('select');
     [3, 4, 5, 6, 7].forEach(h => { const o = el('option', null, `새벽 ${h}시`); o.value = h; if (h === S.dayStart) o.selected = true; sel.appendChild(o); });
     sel.onchange = () => { S.dayStart = +sel.value; save(); };

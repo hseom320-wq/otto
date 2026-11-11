@@ -94,6 +94,7 @@ async function loadNow() {
       artist: (it.artists || []).map(a => a.name).join(', ') || (it.show && it.show.name) || '',
       cover: ((it.album && it.album.images) || it.images || []).slice(-2)[0]?.url || '',
       device: j.device ? j.device.name : '',
+      progress: j.progress_ms || 0, duration: it.duration_ms || 0, at: Date.now(),
     } : (j && j.device ? { playing: false, title: '', artist: '', cover: '', device: j.device.name } : null);
   } catch (e) { if (e.code === 'unlinked') now = null; }
   renderChip();
@@ -141,13 +142,41 @@ const toggle = () => act(async () => {
 });
 const skip = dir => act(() => api('POST', `/me/player/${dir > 0 ? 'next' : 'previous'}`));
 
-// ---------- 비서 화면: 음악 칩 ----------
+// ---------- CD 연출 ----------
+// 재생 바 밑에서 CD가 돈다. CD 그림은 assets/ui/cd.webp (없으면 앨범 표지, 그것도 없으면 무늬만)
+const CD_ART = 'assets/ui/cd.webp';
+function cdHTML(size) {
+  const spin = now && now.playing ? ' spin' : '';
+  // 다시 그려도 도는 각도가 이어지게, 시계 기준으로 시작 위치를 맞춘다
+  return `<span class="disc${spin}" style="--cd:${size}px;animation-delay:-${Date.now() % 4000}ms" aria-hidden="true"><span class="disc-art" style="background-image:url(${CD_ART})${now && now.cover ? `,url(${esc(now.cover)})` : ''}"></span><i class="disc-hole"></i></span>`;
+}
+// 재생 위치 (스포티파이가 알려 준 위치에서 시간이 흐른 만큼 더한다)
+function pos() {
+  if (!now || !now.duration) return null;
+  const p = Math.min(now.duration, now.progress + (now.playing ? Date.now() - now.at : 0));
+  return { p, d: now.duration, r: p / now.duration };
+}
+const mmss = ms => `${Math.floor(ms / 60000)}:${pad(Math.floor(ms / 1000) % 60)}`;
+function tickBars() {
+  const x = pos();
+  document.querySelectorAll('.mbar i').forEach(i => { i.style.width = x ? (x.r * 100).toFixed(2) + '%' : '0'; });
+  document.querySelectorAll('.mtime').forEach(t => { t.textContent = x ? `${mmss(x.p)} / ${mmss(x.d)}` : ''; });
+  // 곡이 끝날 즈음엔 다음 곡 정보를 받아 온다
+  if (x && now.playing && x.p >= x.d - 500 && !busy && Date.now() - now.at > 3000) loadNow().then(refreshMusic);
+}
+setInterval(() => { if (!document.hidden) tickBars(); }, 500);
+window.musicNow = () => (now && now.playing && now.title ? { title: now.title, artist: now.artist } : null);
+
+// ---------- 비서 화면: 음악 칩 (재생 중이면 제목·재생 바, 그 밑에 도는 CD) ----------
 function renderChip() {
   const b = $('musicChip'); if (!b) return;
   const on = now && now.playing && now.title;
   b.className = 'music-chip' + (on ? ' on' : '');
-  b.innerHTML = on ? `<i>♪</i><span>${esc(now.title)}</span>` : '<i>♪</i>';
+  b.innerHTML = on
+    ? `<span class="mc-top"><i>♪</i><span class="mc-title">${esc(now.title)}</span></span><span class="mbar"><i></i></span>${cdHTML(58)}`
+    : '<span class="mc-top"><i>♪</i></span>';
   b.setAttribute('aria-label', on ? `음악 열기. 지금 ${now.title}, ${now.artist}` : '음악 열기');
+  tickBars();
 }
 
 // ---------- 음악 시트 ----------
@@ -175,6 +204,11 @@ SHEETS.music = {
       const k = el('button', 'np-key' + (i === 1 ? ' main' : ''), t); k.setAttribute('aria-label', label); k.onclick = fn; keys.appendChild(k);
     });
     np.append(cover, meta, keys); b.appendChild(np);
+    // 재생 바, 그 밑에 도는 CD
+    if (now && now.title) {
+      const deck = el('section', 'deck', `<div class="mbar big"><i></i></div><span class="mtime"></span>${cdHTML(172)}`);
+      b.appendChild(deck);
+    }
     if (devices && !devices.length) {
       const w = el('div', 'card');
       w.innerHTML = '<p class="hint top">재생할 기기를 찾지 못했어요. 폰에서 스포티파이 앱을 한 번 열어 둔 뒤 다시 눌러 주세요.</p>';
