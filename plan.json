@@ -1,0 +1,1066 @@
+{
+  "meta": {
+    "title": "기말 작전 일지",
+    "term": "2026학년도 2학기 기말고사",
+    "start": "2026-11-11",
+    "end": "2026-12-09",
+    "firstExam": "2026-12-03",
+    "timezone": "Asia/Seoul",
+    "updated": "2026-11-11",
+    "restAfterSchoolMinutes": 90
+  },
+  "gpa": {
+    "now": 2.36,
+    "nowAsOf": "2026-10-19",
+    "method": "국·영·수·사·과·한국사만 반영. 단위수 가중 평균. 2025학년도와 2026학년도를 50:50으로 합침. 등급은 5등급제이고 숫자가 낮을수록 좋음.",
+    "year2025": {
+      "units": 46,
+      "points": 122
+    },
+    "semester1_2026": {
+      "units": 24,
+      "points": 53
+    },
+    "formula": "2학기 = Σ(단위×등급)/Σ단위 · 2026학년도 = (53 + Σ(단위×등급)) / (24 + Σ단위) · 전체 = (122/46 + 2026학년도) / 2"
+  },
+  "cuts": [
+    {
+      "value": 2.4,
+      "name": "명지대 미술사·역사학 서류형"
+    },
+    {
+      "value": 2.24,
+      "name": "가톨릭대 국사학 면접형"
+    },
+    {
+      "value": 2.15,
+      "name": "명지대 미술사·역사학 면접형"
+    },
+    {
+      "value": 2.06,
+      "name": "가톨릭대 국사학 서류형"
+    }
+  ],
+  "cutsNote": "2026학년도 학종 최종등록자 70% 컷(9등급)을 5등급제로 바꾼 추정값. 모집 인원이 3~6명이라 해마다 크게 바뀜.",
+  "kinds": {
+    "m": {
+      "label": "미적",
+      "subject": "mi"
+    },
+    "e": {
+      "label": "영어",
+      "subject": "eng"
+    },
+    "x": {
+      "label": "기타",
+      "subject": null
+    }
+  },
+  "subjects": [
+    {
+      "id": "mi",
+      "name": "미적분Ⅰ",
+      "units": 4,
+      "countedInGpa": true,
+      "exam": {
+        "date": "2026-12-03",
+        "period": 1,
+        "start": "08:30",
+        "end": "09:20",
+        "minutes": 50
+      },
+      "midterm": {
+        "score": 38.7,
+        "grade": 3
+      },
+      "note": "중간 38.7점 · 3등급",
+      "targetGrade": 2,
+      "targetScore": 75
+    },
+    {
+      "id": "hanji",
+      "name": "한국지리탐구",
+      "units": 3,
+      "countedInGpa": true,
+      "exam": {
+        "date": "2026-12-03",
+        "period": 2,
+        "start": "09:45",
+        "end": "10:25",
+        "minutes": 40
+      },
+      "midterm": null,
+      "note": "중간 없음 · 기말 하나로 결정",
+      "targetGrade": 1,
+      "targetScore": 95,
+      "unitsAssumed": true
+    },
+    {
+      "id": "yun",
+      "name": "현대사회와 윤리",
+      "units": 3,
+      "countedInGpa": true,
+      "exam": {
+        "date": "2026-12-04",
+        "period": 1,
+        "start": "08:30",
+        "end": "09:10",
+        "minutes": 40
+      },
+      "midterm": {
+        "score": 85.8,
+        "grade": 2
+      },
+      "note": "중간 85.8점 · 2등급",
+      "targetGrade": 2,
+      "targetScore": 95
+    },
+    {
+      "id": "il",
+      "name": "심화일본어",
+      "units": null,
+      "countedInGpa": false,
+      "exam": {
+        "date": "2026-12-07",
+        "period": 1,
+        "start": "08:40",
+        "end": "09:10",
+        "minutes": 30
+      },
+      "midterm": null,
+      "note": "10분 대기 · 1반은 8반에서 시험",
+      "targetGrade": null,
+      "targetScore": 85,
+      "scoreLabel": "목표 총점"
+    },
+    {
+      "id": "dong",
+      "name": "동아시아역사기행",
+      "units": 3,
+      "countedInGpa": true,
+      "exam": {
+        "date": "2026-12-07",
+        "period": 3,
+        "start": "10:40",
+        "end": "11:10",
+        "minutes": 30
+      },
+      "midterm": {
+        "score": null,
+        "grade": 1
+      },
+      "note": "중간 1문항 틀림 · 1등급",
+      "targetGrade": 1,
+      "targetScore": 100
+    },
+    {
+      "id": "eng",
+      "name": "영어Ⅱ",
+      "units": 4,
+      "countedInGpa": true,
+      "exam": {
+        "date": "2026-12-08",
+        "period": 1,
+        "start": "08:30",
+        "end": "09:20",
+        "minutes": 50
+      },
+      "midterm": {
+        "score": 56.4,
+        "grade": 3
+      },
+      "note": "중간 56.4점 · 3등급",
+      "targetGrade": 2,
+      "targetScore": 80
+    },
+    {
+      "id": "dok",
+      "name": "독서와 작문",
+      "units": 4,
+      "countedInGpa": true,
+      "exam": {
+        "date": "2026-12-09",
+        "period": 1,
+        "start": "08:30",
+        "end": "09:20",
+        "minutes": 50
+      },
+      "midterm": {
+        "score": 96.4,
+        "grade": 1
+      },
+      "note": "중간 96.4점 · 1등급",
+      "targetGrade": 1,
+      "targetScore": 95
+    },
+    {
+      "id": "eon",
+      "name": "언어생활탐구",
+      "units": 3,
+      "countedInGpa": true,
+      "exam": null,
+      "midterm": {
+        "score": 100,
+        "grade": 1
+      },
+      "note": "중간 100점 · 1등급",
+      "targetGrade": 1,
+      "targetScore": null
+    }
+  ],
+  "phases": [
+    {
+      "name": "개념과 1회독",
+      "start": "2026-11-11",
+      "end": "2026-11-22",
+      "aim": "미적은 개념과 유형 문제, 영어는 본문을 하나씩 분석해서 11.20까지 한 바퀴. 한지와 현사윤 1회독을 시작한다.",
+      "days": [
+        {
+          "date": "2026-11-11",
+          "dow": "수",
+          "dday": "D-22",
+          "slot": "영어 학원 · 저녁 약 2시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1111m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "중간 틀린 문제 다시 풀기 + 기말 범위 확인"
+            },
+            {
+              "id": "1111e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "기말 범위 본문 목록 만들기"
+            },
+            {
+              "id": "1111x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 지역 탐구 보고서 수행 마무리 (이번 주)"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-12",
+          "dow": "목",
+          "dday": "D-21",
+          "slot": "미적·국어 학원 · 약 30분",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1112m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "학원 숙제"
+            },
+            {
+              "id": "1112e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "단어 30분 (이동 시간)"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-13",
+          "dow": "금",
+          "dday": "D-20",
+          "slot": "영어 학원 · 약 3시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1113m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "개념 1단원 + 예제"
+            },
+            {
+              "id": "1113e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 1개 분석 (구조·어법 표시)"
+            },
+            {
+              "id": "1113x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 보고서 수행"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-14",
+          "dow": "토",
+          "dday": "D-19",
+          "slot": "국어·미적·영어 학원 · 저녁 약 3시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1114m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "학원 숙제"
+            },
+            {
+              "id": "1114e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "학원 숙제 + 본문 1개 분석"
+            },
+            {
+              "id": "1114x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "일본어 네컷만화 수행 준비"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-15",
+          "dow": "일",
+          "dday": "D-18",
+          "slot": "오전 약 3시간 + 저녁 1시간 30분",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1115m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "개념 1단원 + 유형 문제 (오전)"
+            },
+            {
+              "id": "1115e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 1개 분석 (저녁)"
+            },
+            {
+              "id": "1115x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "역사 스터디 (1시부터)"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-16",
+          "dow": "월",
+          "dday": "D-17",
+          "slot": "약 5시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1116m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "유형 문제 2시간 + 오답 정리"
+            },
+            {
+              "id": "1116e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 2개 분석"
+            },
+            {
+              "id": "1116x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 개념 1회독 시작"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-17",
+          "dow": "화",
+          "dday": "D-16",
+          "slot": "미적 학원 · 약 3시간 30분",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1117m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "학원 숙제 + 오답 정리"
+            },
+            {
+              "id": "1117e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 1개 분석"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-18",
+          "dow": "수",
+          "dday": "D-15",
+          "slot": "영어 학원 · 약 3시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1118m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "오답 30분"
+            },
+            {
+              "id": "1118e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "학원 숙제 + 본문 1개 분석"
+            },
+            {
+              "id": "1118x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "현사윤 개념 1회독 시작"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-19",
+          "dow": "목",
+          "dday": "D-14",
+          "slot": "미적·국어 학원 · 약 30분",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1119m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "학원 숙제"
+            },
+            {
+              "id": "1119e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "단어 30분 (이동 시간)"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-20",
+          "dow": "금",
+          "dday": "D-13",
+          "slot": "영어 학원 · 약 3시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1120m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "유형 문제 + 오답 정리"
+            },
+            {
+              "id": "1120e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 1개 분석, 본문 1회독 끝내기"
+            },
+            {
+              "id": "1120x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 개념 1회독"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-21",
+          "dow": "토",
+          "dday": "D-12",
+          "slot": "국어·미적·영어 학원 · 저녁 약 3시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1121m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "학원 숙제"
+            },
+            {
+              "id": "1121e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "학원 숙제 + 본문 빈칸 암기 시작"
+            },
+            {
+              "id": "1121x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "현사윤 개념 1회독"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-22",
+          "dow": "일",
+          "dday": "D-11",
+          "slot": "오전 약 3시간 + 저녁 1시간 30분",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1122m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "단원별 어려운 유형 다시 풀기 (오전)"
+            },
+            {
+              "id": "1122e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 빈칸 암기 (저녁)"
+            },
+            {
+              "id": "1122x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "역사 스터디 · 일본어 단어 30분"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "기출과 암기",
+      "start": "2026-11-23",
+      "end": "2026-11-29",
+      "aim": "미적은 50분 타이머를 맞추고 기출을 푼다. 영어는 빈칸 암기, 변형 문제, 서술형으로 넘어간다.",
+      "days": [
+        {
+          "date": "2026-11-23",
+          "dow": "월",
+          "dday": "D-10",
+          "slot": "약 5시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1123m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "기출 1회 (50분 타이머) + 오답"
+            },
+            {
+              "id": "1123e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 빈칸·순서 문제"
+            },
+            {
+              "id": "1123x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 자료·그래프 문제"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-24",
+          "dow": "화",
+          "dday": "D-9",
+          "slot": "미적 학원 · 약 3시간 30분",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1124m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "학원 숙제 + 기출 오답"
+            },
+            {
+              "id": "1124e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 2개 변형 문제"
+            },
+            {
+              "id": "1124x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "현사윤 1회독 끝내기"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-25",
+          "dow": "수",
+          "dday": "D-8",
+          "slot": "영어 학원 · 약 3시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1125m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "오답 30분"
+            },
+            {
+              "id": "1125e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "학원 숙제 + 변형 문제"
+            },
+            {
+              "id": "1125x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 2회독"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-26",
+          "dow": "목",
+          "dday": "D-7",
+          "slot": "미적·국어 학원 · 약 30분",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1126m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "학원 숙제"
+            },
+            {
+              "id": "1126e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "단어 30분 (이동 시간)"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-27",
+          "dow": "금",
+          "dday": "D-6",
+          "slot": "영어 학원 · 약 3시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1127m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "기출 1회 (50분 타이머) + 오답"
+            },
+            {
+              "id": "1127e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 전체 훑기"
+            },
+            {
+              "id": "1127x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "현사윤 문제 풀이"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-28",
+          "dow": "토",
+          "dday": "D-5",
+          "slot": "국어·미적·영어 학원 · 저녁 약 3시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1128m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "학원 숙제"
+            },
+            {
+              "id": "1128e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "서술형 대비 (어법·영작)"
+            },
+            {
+              "id": "1128x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 2회독 끝내기"
+            }
+          ]
+        },
+        {
+          "date": "2026-11-29",
+          "dow": "일",
+          "dday": "D-4",
+          "slot": "오전 약 3시간 + 저녁 1시간 30분",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1129m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "기출 1회 + 오답 (오전)"
+            },
+            {
+              "id": "1129e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 빈칸 최종"
+            },
+            {
+              "id": "1129x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "역사 스터디 · 동역기 가볍게 1회독"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "직전 3일",
+      "start": "2026-11-30",
+      "end": "2026-12-02",
+      "aim": "첫날에 미적과 한지가 같이 있다. 이 둘만 붙잡고, 현사윤은 2회독까지 끝내 둔다.",
+      "days": [
+        {
+          "date": "2026-11-30",
+          "dow": "월",
+          "dday": "D-3",
+          "slot": "약 5시간",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1130m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "오답 노트 전체 다시 풀기"
+            },
+            {
+              "id": "1130e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 소리 내 읽기"
+            },
+            {
+              "id": "1130x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 3회독 + 현사윤 2회독"
+            }
+          ]
+        },
+        {
+          "date": "2026-12-01",
+          "dow": "화",
+          "dday": "D-2",
+          "slot": "미적 학원 · 약 3시간 30분",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1201m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "학원 직전 수업 + 실수 유형 정리"
+            },
+            {
+              "id": "1201x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 자료 문제 최종 · 현사윤 2회독"
+            }
+          ]
+        },
+        {
+          "date": "2026-12-02",
+          "dow": "수",
+          "dday": "D-1",
+          "slot": "12시 전에 자기",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1202m",
+              "kind": "m",
+              "label": "미적",
+              "subject": "mi",
+              "text": "공식·실수 노트 + 쉬운 문제로 감 유지"
+            },
+            {
+              "id": "1202x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "한지 최종 정리"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "시험 주간",
+      "start": "2026-12-03",
+      "end": "2026-12-09",
+      "aim": "일본어와 동역기는 짧게 챙기고, 남는 시간은 12.8 영어에 쓴다.",
+      "days": [
+        {
+          "date": "2026-12-03",
+          "dow": "목",
+          "dday": "D-DAY",
+          "slot": "1일차",
+          "exams": [
+            {
+              "subject": "mi",
+              "name": "미적분Ⅰ",
+              "period": 1,
+              "start": "08:30",
+              "end": "09:20",
+              "minutes": 50
+            },
+            {
+              "subject": "hanji",
+              "name": "한국지리탐구",
+              "period": 2,
+              "start": "09:45",
+              "end": "10:25",
+              "minutes": 40
+            }
+          ],
+          "tasks": [
+            {
+              "id": "1203x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "오후에 현사윤 최종 정리"
+            }
+          ]
+        },
+        {
+          "date": "2026-12-04",
+          "dow": "금",
+          "dday": null,
+          "slot": "2일차",
+          "exams": [
+            {
+              "subject": "yun",
+              "name": "현대사회와 윤리",
+              "period": 1,
+              "start": "08:30",
+              "end": "09:10",
+              "minutes": 40
+            }
+          ],
+          "tasks": [
+            {
+              "id": "1204e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 전체 1회독"
+            },
+            {
+              "id": "1204x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "오후에 심화일본어 시작"
+            }
+          ]
+        },
+        {
+          "date": "2026-12-05",
+          "dow": "토",
+          "dday": null,
+          "slot": "주말",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1205e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "본문 빈칸·변형 문제"
+            },
+            {
+              "id": "1205x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "심화일본어 + 동역기"
+            }
+          ]
+        },
+        {
+          "date": "2026-12-06",
+          "dow": "일",
+          "dday": null,
+          "slot": "주말",
+          "exams": [],
+          "tasks": [
+            {
+              "id": "1206e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "서술형·어법 최종"
+            },
+            {
+              "id": "1206x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "심화일본어·동역기 최종"
+            }
+          ]
+        },
+        {
+          "date": "2026-12-07",
+          "dow": "월",
+          "dday": null,
+          "slot": "3일차",
+          "exams": [
+            {
+              "subject": "il",
+              "name": "심화일본어",
+              "period": 1,
+              "start": "08:40",
+              "end": "09:10",
+              "minutes": 30
+            },
+            {
+              "subject": "dong",
+              "name": "동아시아역사기행",
+              "period": 3,
+              "start": "10:40",
+              "end": "11:10",
+              "minutes": 30
+            }
+          ],
+          "tasks": [
+            {
+              "id": "1207e",
+              "kind": "e",
+              "label": "영어",
+              "subject": "eng",
+              "text": "오후에 본문 소리 내 읽기 + 실수 노트"
+            }
+          ]
+        },
+        {
+          "date": "2026-12-08",
+          "dow": "화",
+          "dday": null,
+          "slot": "4일차",
+          "exams": [
+            {
+              "subject": "eng",
+              "name": "영어Ⅱ",
+              "period": 1,
+              "start": "08:30",
+              "end": "09:20",
+              "minutes": 50
+            }
+          ],
+          "tasks": [
+            {
+              "id": "1208x",
+              "kind": "x",
+              "label": "기타",
+              "subject": null,
+              "text": "오후에 독작 정리"
+            }
+          ]
+        },
+        {
+          "date": "2026-12-09",
+          "dow": "수",
+          "dday": null,
+          "slot": "5일차",
+          "exams": [
+            {
+              "subject": "dok",
+              "name": "독서와 작문",
+              "period": 1,
+              "start": "08:30",
+              "end": "09:20",
+              "minutes": 50
+            }
+          ],
+          "tasks": []
+        }
+      ]
+    }
+  ],
+  "state": {
+    "storageKey": "final-plan-2026-2",
+    "where": "localStorage",
+    "shape": {
+      "v": 1,
+      "done": {
+        "<할 일 id>": true
+      },
+      "grade": {
+        "<과목 id>": 2
+      },
+      "score": {
+        "<과목 id>": 75
+      }
+    },
+    "note": "done 에는 끝낸 할 일의 id만 true 로 들어간다. grade·score 는 사용자가 화면에서 바꾼 목표값이고, 없으면 subjects 의 targetGrade·targetScore 를 쓴다."
+  }
+}

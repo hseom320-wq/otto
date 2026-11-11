@@ -84,7 +84,7 @@ button { cursor: pointer; border: 0; background: none; }
 .line b::before { content: ""; width: 14px; height: 2px; border-radius: 1px; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 .line p { margin: 6px 0 0; max-width: 34em; font-family: var(--f-voice); font-size: 17.5px; line-height: 1.7; color: #f4f2ee; word-break: keep-all; white-space: pre-wrap; min-height: 3.4em; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
 .line:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 6px; }
-.dock { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(6, 1fr); padding: 8px max(10px, env(safe-area-inset-right, 0px)) calc(var(--sb) + 10px) max(10px, env(safe-area-inset-left, 0px)); border-top: 1px solid rgba(255,255,255,.08); }
+.dock { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px max(10px, env(safe-area-inset-right, 0px)) calc(var(--sb) + 10px) max(10px, env(safe-area-inset-left, 0px)); border-top: 1px solid rgba(255,255,255,.08); }
 .dock button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0 4px; font-size: 11px; letter-spacing: .01em; color: rgba(238,242,246,.66); transition: color .15s; }
 .dock button:active, .dock button:focus-visible { color: #fff; }
 .dock svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
@@ -315,3 +315,21 @@ button { cursor: pointer; border: 0; background: none; }
 .focus-keys { display: flex; gap: 10px; max-width: 420px; }
 .focus-keys .pk[hidden] { display: none; }
 @media (min-aspect-ratio: 1/1) { .focus { padding-left: 10%; padding-right: 40%; } }
+
+/* ---------- 기말 작전 일지 (plan.js) ---------- */
+.dock button { white-space: nowrap; }
+.final-chip { position: absolute; left: max(18px, env(safe-area-inset-left, 0px)); top: calc(var(--st) + 112px); display: inline-flex; align-items: baseline; gap: 8px; max-width: 80%; padding: 6px 12px 6px 10px; border-radius: 8px; background: rgba(10,11,14,.55); border-left: 2px solid var(--amber); font-size: 13.5px; color: #f2f4f7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.final-chip[hidden] { display: none; }
+.final-chip b { font-family: var(--f-num); font-weight: 500; font-size: 16px; }
+.final-chip.late { border-left-color: #ff7a6b; color: #ffd6d0; }
+.final-chip.ok { border-left-color: #7fd6a0; }
+.final-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#home.focusing .final-chip { opacity: 0; pointer-events: none; }
+.planview { position: absolute; inset: 0; z-index: 28; display: flex; flex-direction: column; background: #0b0d14; }
+.planview[hidden] { display: none; }
+.planview-bar { flex: none; display: flex; align-items: center; gap: 12px; padding: calc(var(--st) + 8px) max(12px, env(safe-area-inset-right, 0px)) 8px max(8px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid rgba(255,255,255,.08); }
+.planview-bar b { flex: 1; min-width: 0; font-size: 15px; font-weight: 700; text-align: right; color: rgba(238,242,246,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.planview-back { flex: none; height: 40px; padding: 0 14px 0 10px; border-radius: 10px; background: rgba(255,255,255,.08); font-size: 14.5px; font-weight: 600; color: #fff; }
+.planview-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.planview iframe { flex: 1; min-height: 0; width: 100%; border: 0; background: #E6EAE0; }
+@media (prefers-color-scheme: dark) { .planview iframe { background: #101714; } }
