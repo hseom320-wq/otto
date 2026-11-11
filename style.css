@@ -318,7 +318,7 @@ button { cursor: pointer; border: 0; background: none; }
 
 /* ---------- 기말 작전 일지 (plan.js) ---------- */
 .dock button { white-space: nowrap; }
-.final-chip { position: absolute; left: max(18px, env(safe-area-inset-left, 0px)); top: calc(var(--st) + 112px); display: inline-flex; align-items: baseline; gap: 8px; max-width: 80%; padding: 6px 12px 6px 10px; border-radius: 8px; background: rgba(10,11,14,.55); border-left: 2px solid var(--amber); font-size: 13.5px; color: #f2f4f7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.final-chip { position: absolute; left: max(18px, env(safe-area-inset-left, 0px)); top: calc(var(--st) + 112px); display: inline-flex; align-items: baseline; gap: 8px; max-width: 60%; padding: 6px 12px 6px 10px; border-radius: 8px; background: rgba(10,11,14,.55); border-left: 2px solid var(--amber); font-size: 13.5px; color: #f2f4f7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .final-chip[hidden] { display: none; }
 .final-chip b { font-family: var(--f-num); font-weight: 500; font-size: 16px; }
 .final-chip.late { border-left-color: #ff7a6b; color: #ffd6d0; }
@@ -333,3 +333,30 @@ button { cursor: pointer; border: 0; background: none; }
 .planview-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .planview iframe { flex: 1; min-height: 0; width: 100%; border: 0; background: #E6EAE0; }
 @media (prefers-color-scheme: dark) { .planview iframe { background: #101714; } }
+
+/* ---------- 음악 (music.js) ---------- */
+.music-chip { position: absolute; right: max(18px, env(safe-area-inset-right, 0px)); top: calc(var(--st) + 112px); display: inline-flex; align-items: center; gap: 7px; max-width: 30%; height: 33px; padding: 0 11px; border-radius: 17px; background: rgba(10,11,14,.55); border: 1px solid rgba(255,255,255,.14); font-size: 13px; color: #f2f4f7; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.music-chip i { flex: none; font-style: normal; font-size: 15px; line-height: 1; }
+.music-chip span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.music-chip.on { border-color: #1ed760; }
+.music-chip.on i { color: #1ed760; }
+.music-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#home.focusing .music-chip { top: calc(var(--st) + 16px); }
+.np { display: grid; grid-template-columns: 64px 1fr; gap: 12px 14px; align-items: center; }
+.np-cover { width: 64px; height: 64px; border-radius: 8px; background: #232838 center / cover; display: grid; place-items: center; font-size: 24px; color: var(--mute); }
+.np-meta { min-width: 0; }
+.np-meta b, .np-meta small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-meta b { font-size: 16px; }
+.np-meta small { margin-top: 3px; font-size: 13px; color: var(--mute); }
+.np-keys { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; gap: 22px; }
+.np-key { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.07); font-size: 17px; color: #fff; letter-spacing: -.12em; }
+.np-key.main { width: 58px; height: 58px; background: #1ed760; color: #06140b; font-size: 19px; letter-spacing: 0; }
+.np-key:focus-visible, .pl-name:focus-visible, .pl-star:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.item.pl { gap: 12px; padding: 8px 2px; }
+.pl-cover { flex: none; width: 44px; height: 44px; border-radius: 6px; background: #232838 center / cover; }
+.pl-name { text-align: left; padding: 6px 0; overflow: hidden; }
+.item.pl.cur .pl-name { color: #1ed760; font-weight: 700; }
+.pl-star { flex: none; height: 30px; padding: 0 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,.16); font-size: 12px; color: var(--mute); white-space: nowrap; }
+.pl-star.on { border-color: var(--amber); color: var(--amber); }
+a.btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.card .row { display: flex; gap: 8px; margin-top: 10px; }
