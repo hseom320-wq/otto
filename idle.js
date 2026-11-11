@@ -1,11 +1,10 @@
 // 한울아파트 — 혼잣말
-// 비서 화면을 한동안 그냥 켜 두면 비서가 혼잣말이나 말을 건다. 화면을 만지면 다시 기다린다.
+// 비서 화면을 한동안 그냥 켜 두면 비서가 혼잣말이나 말을 건다 (횟수 제한 없음). 화면을 만지면 다시 기다린다.
 // 말풍선에만 나오고 대화 기록에는 남기지 않는다. app.js 등 다른 파일 뒤에 불러온다.
 'use strict';
 (() => {
 const FIRST = 60e3;          // 처음 말 걸기까지 (1분)
 const GAP = [100e3, 200e3];  // 그다음부터 간격 (1분 40초~3분 20초)
-const MAX = 6;               // 한 번 가만히 있는 동안 최대 몇 번
 const LINES = {
   ns: {
     any: ['…심심하네.', '야, 자냐?', '그니까, 폰만 보고 있지 말고.', '아, 갑자기 라면 땡긴다.', '…아까 그거 생각하니까 또 웃기네.', '너 지금 딴생각하지.', '이 시간에 게임 한 판 하면 딱인데.', '…뭐. 그냥 불러 봤다.'],
@@ -86,7 +85,7 @@ function lineFor(c) {
   return fill(t);
 }
 setInterval(() => {
-  if (quiet() || n >= MAX) return;
+  if (quiet()) return;
   const now = Date.now();
   if (!nextAt) nextAt = last + FIRST;
   if (now < nextAt) return;

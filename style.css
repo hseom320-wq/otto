@@ -382,3 +382,8 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .key-msg { white-space: pre-line; }
 .field .row .in { flex: 1; min-width: 0; }
 @media (prefers-reduced-motion: reduce) { .disc.spin { animation-duration: 16s; } .mbar i { transition: none; } }
+
+/* 대사 소리 설정 */
+.vol-row { gap: 10px; margin-top: 4px; }
+.vol-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.vol-num { flex: none; width: 2.2em; text-align: right; font-family: var(--f-num); color: var(--mute); }
