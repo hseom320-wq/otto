@@ -63,6 +63,7 @@ const examText = x => `${x.name} ${x.period}교시 ${x.start}`;
 // 캐릭터 설정 파일은 건드리지 않고, 기말 브리핑에 쓰는 문장만 여기에 따로 둔다.
 const VOICE = {
   ns: {
+    sDay: '{subject} 시험 D-{n}.', sLeft: '오늘 할 거 {n}개.', sLate: '밀린 거 {n}개 있다. 그것부터 해.',
     dday: '{subject} 시험 D-{n}. 그니까, 딴짓할 때 아니다.',
     exam: '오늘 시험이다. {exams}. 그니까, 늦지 마.',
     slot: '오늘 공부 시간은 {slot}.',
@@ -75,6 +76,7 @@ const VOICE = {
     after: '기말 끝났다. …수고했어, 진짜로.',
   },
   ys: {
+    sDay: '{subject} 시험까지… D-{n}.', sLeft: '오늘 할 거… {n}개 있어어.', sLate: '밀린 것도… {n}개 있어어.',
     dday: '{subject} 시험까지… D-{n} 남았어어.',
     exam: '오늘… 시험 날이야아. {exams}. 늦지 마아…',
     slot: '오늘 공부 시간은… {slot}.',
@@ -87,6 +89,7 @@ const VOICE = {
     after: '기말… 끝났어어. 수고했어어.',
   },
   hr: {
+    sDay: '{user} 씨~ {subject} 시험 D-{n}~', sLeft: '오늘 할 건 {n}개야~', sLate: '밀린 것도 {n}개 있네~?',
     dday: '{user} 씨~ {subject} 시험까지 D-{n} 남았어~',
     exam: '{user} 씨, 오늘 시험이지~? {exams}. 아침은 꼭 먹고 가~',
     slot: '오늘 공부 시간은 {slot}~',
@@ -99,6 +102,7 @@ const VOICE = {
     after: '기말 끝났네~ …진짜 수고했어.',
   },
   sy: {
+    sDay: '{subject} 시험 D-{n}.', sLeft: '오늘 할 일 {n}개.', sLate: '밀린 거 {n}개. 15분만 하자.',
     dday: '{subject} 시험까지 D-{n}.',
     exam: '오늘 시험. {exams}. 10분 일찍 들어가.',
     slot: '오늘 공부 시간: {slot}.',
@@ -111,6 +115,7 @@ const VOICE = {
     after: '기말 끝. …우리 둘 다 칭찬받아야 돼에.',
   },
   tr: {
+    sDay: '{subject} 시험 D-{n}.', sLeft: '오늘 장부에 {n}개.', sLate: '밀린 거 {n}개. 지금 갚아.',
     dday: '{subject} 시험 D-{n}. 장부에 적어 놨다.',
     exam: '오늘 시험이다. {exams}. 지각하면 가만 안 둔다.',
     slot: '오늘 공부 시간은 {slot}.',
@@ -124,6 +129,7 @@ const VOICE = {
   },
 };
 const FALLBACK = {
+  sDay: '{subject} 시험 D-{n}.', sLeft: '오늘 할 일 {n}개.', sLate: '밀린 일 {n}개.',
   dday: '{subject} 시험까지 D-{n}.', exam: '오늘 시험: {exams}.', slot: '오늘 공부 시간은 {slot}.', list: '오늘 할 일.',
   late: '밀린 일이 {n}개 있어.', noLate: '밀린 일은 없어.', done: '오늘 할 일을 다 끝냈어.', rest: '오늘은 적힌 할 일이 없어.',
   before: '기말 계획은 {date}부터 시작해.', after: '기말이 끝났어. 수고했어.',
@@ -146,8 +152,21 @@ function briefing(c, short) {
   return out.join('\n');
 }
 
+// 말풍선용 짧은 브리핑: D-day(시험 당일은 과목·교시·시작 시간) + 남은 할 일 개수 + 밀린 일 개수
+function briefShort(c) {
+  const s = status(); if (!s) return '';
+  if (s.before || s.after) return briefing(c);
+  const out = [];
+  if (s.exams.length) out.push(V(c, 'exam', { exams: s.exams.map(examText).join(', ') }));
+  else if (s.next) out.push(V(c, 'sDay', { subject: s.next.exams[0].name, n: s.dday }));
+  if (s.allDone) out.push(V(c, 'done'));
+  else if (s.left) out.push(V(c, 'sLeft', { n: s.left }));
+  if (s.late.length) out.push(V(c, 'sLate', { n: s.late.length }));
+  return out.join('\n');
+}
+
 // ---------- 브리핑 내보내기 ----------
-// 앱을 열거나 비서를 바꾸면 그 비서 말투로 말풍선에 나온다. 그날 그 비서의 첫 브리핑만 대화 기록에 남긴다.
+// 앱을 열거나 비서를 바꾸면 그 비서 말투로 나온다. 말풍선에는 짧게, 대화창에는 자세한 브리핑을 남긴다(그날 그 비서의 첫 브리핑만).
 let greetAt = 0, greetLen = 0, briefT = 0;
 function saidMap() {
   if (!S.finalSaid || typeof S.finalSaid !== 'object') S.finalSaid = {};
@@ -157,9 +176,14 @@ function saidMap() {
 }
 function deliver(code) {
   if (!P || !C || C.code !== code || !$('home').classList.contains('on')) return;
-  const text = briefing(C); if (!text) return;
+  const text = briefing(C), short = briefShort(C); if (!text) return;
   const m = saidMap(), k = `${todayISO()}:${code}`;
-  if (!m[k]) { m[k] = 1; say(text); } else setBubble(text, true);
+  if (!m[k]) {
+    m[k] = 1;
+    st(code).log.push({ who: 'her', text, at: Date.now(), fp: 1 }); trimLog();
+    if (sheetOpen === 'chat') renderChat();
+  }
+  setBubble(short, true);
   const s = status(); if (s && s.allDone) m[k] = 2;
   save(); renderChip();
 }
@@ -172,7 +196,13 @@ function queueBrief(code) {
   }, 1100);
 }
 const baseEnter = enter;
-enter = function (code) { baseEnter(code); renderChip(); queueBrief(code); };
+enter = function (code) {
+  baseEnter(code);
+  // 마지막 말이 긴 브리핑이었으면 말풍선에 그대로 띄우지 않는다 (곧 짧은 브리핑이 나온다)
+  const last = st(code).log.filter(m => m.who === 'her').pop();
+  if (last && last.fp) setBubble('');
+  renderChip(); queueBrief(code);
+};
 const baseGreetLine = greetLine;
 greetLine = function (c) { const t = baseGreetLine(c); greetAt = Date.now(); greetLen = [...t].length; return t; };
 
