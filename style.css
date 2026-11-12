@@ -387,3 +387,23 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .vol-row { gap: 10px; margin-top: 4px; }
 .vol-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .vol-num { flex: none; width: 2.2em; text-align: right; font-family: var(--f-num); color: var(--mute); }
+
+/* ---------- 캐릭터 움직임 (motion.js) ---------- */
+/* 숨쉬기(아래를 축으로 아주 조금 늘었다 줄었다)와 좌우로 아주 조금 흔들리기. 그림 한 장으로 하는 비주얼 노벨식 연출 */
+/* 움찔할 때 화면 끝이 비지 않게 무대를 화면보다 조금 크게 둔다 */
+.stage { position: absolute; inset: -2.5%; overflow: hidden; }
+#home { overflow: hidden; }
+.stage .bg { transform-origin: 50% 94%; }
+.moving .stage .bg { animation: breathe 4.8s ease-in-out infinite, sway 10s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { scale: 1 1; } 45% { scale: 1 1.008; } }
+@keyframes sway { 0%, 100% { rotate: -0.22deg; } 50% { rotate: 0.22deg; } }
+/* 건드리면 움찔 (누른 반대쪽으로 살짝 피했다 돌아온다) */
+.stage { transform-origin: 50% 100%; }
+.moving .stage.flinch-l { animation: flinchL .46s cubic-bezier(.2, .8, .3, 1); }
+.moving .stage.flinch-r { animation: flinchR .46s cubic-bezier(.2, .8, .3, 1); }
+.moving .stage.jolt { animation: jolt .5s cubic-bezier(.3, .7, .4, 1); }
+.moving .stage.talk { animation: talk .38s ease-out; }
+@keyframes flinchL { 0% { transform: none; } 16% { transform: translateX(-.9%) rotate(-.35deg); } 42% { transform: translateX(.35%) rotate(.12deg); } 72% { transform: translateX(-.15%); } 100% { transform: none; } }
+@keyframes flinchR { 0% { transform: none; } 16% { transform: translateX(.9%) rotate(.35deg); } 42% { transform: translateX(-.35%) rotate(-.12deg); } 72% { transform: translateX(.15%); } 100% { transform: none; } }
+@keyframes jolt { 0%, 100% { transform: none; } 12% { transform: translateY(-.8%); } 26% { transform: translateX(-1%); } 40% { transform: translateX(.9%); } 54% { transform: translateX(-.7%); } 68% { transform: translateX(.4%); } }
+@keyframes talk { 0% { transform: none; } 30% { transform: translateY(-.45%); } 100% { transform: none; } }

@@ -33,8 +33,10 @@
 
   <!-- 메인: 오늘의 비서 -->
   <section id="home" class="screen">
-    <img id="bg" class="bg" alt="">
-    <video id="bgv" class="bg" muted loop playsinline autoplay hidden></video>
+    <div id="stage" class="stage">
+      <img id="bg" class="bg" alt="">
+      <video id="bgv" class="bg" muted loop playsinline autoplay hidden></video>
+    </div>
     <div class="shade"></div>
     <button id="tapHit" class="tap-hit" aria-label="캐릭터 건드리기"></button>
     <header class="hud">
@@ -119,5 +121,6 @@
 <script src="device.js"></script>
 <script src="idle.js"></script>
 <script src="voice.js"></script>
+<script src="motion.js"></script>
 </body>
 </html>
