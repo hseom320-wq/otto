@@ -417,3 +417,13 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .moving #home.has-video .actor { animation: none; }
 .bg.still { opacity: 0; transition: opacity .3s ease; pointer-events: none; }
 .bg.still.on { opacity: 1; }
+
+/* ---------- 한울냥 (neko.js) ---------- */
+#home { z-index: 0; } /* 고양이·스티커가 시트 위로 올라오지 않게 */
+.neko { position: absolute; left: 0; top: 0; z-index: 4; touch-action: none; cursor: grab; will-change: transform; -webkit-tap-highlight-color: transparent; }
+.neko:active { cursor: grabbing; }
+.neko[hidden], .neko-shadow[hidden] { display: none; }
+.neko-body { will-change: transform; }
+.neko img { display: block; max-width: none; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.35)); }
+.neko-shadow { position: absolute; left: 0; top: 0; z-index: 3; height: 12px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.55), rgba(0,0,0,0)); pointer-events: none; transform-origin: 50% 50%; }
+#home.focusing .neko, #home.focusing .neko-shadow { opacity: .35; pointer-events: none; }
