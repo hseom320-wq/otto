@@ -1,4 +1,4 @@
-"""표정 바꾸기 (NovelAI V4.5 인페인트, 아날스 사용)
+"""표정 바꾸기 (NovelAI 감정 바꾸기 · Director Tools, 아날스 사용. 예전 인페인트 방식 make()도 남겨 둠)
 
 장면 그림에서 얼굴 부분만 잘라 표정만 다시 그리고, 바뀐 부분(눈·눈썹·입)만 투명 배경 조각으로 저장한다.
 앱은 원래 장면 그림 위에 이 조각을 겹쳐서 표정을 바꾼다 (자세·옷·배경은 그대로).
@@ -37,6 +37,28 @@ FACES = {
         keep='1girl, solo, short hair, 1.6::black hair::, 1.3::dark hair::, blue eyes, ear piercing, stud earrings, 1.3::black choker::, '
              '1.2::messy hair::, bedhead, 1.2::portrait::, close-up, head tilt, 1.4::toothbrush in mouth::, holding toothbrush, '
              'looking at viewer, indoors'),
+    'ns-day': dict(
+        img='assets/ns/scene/day.webp', prompt='characters/prompts/ns-scene-day.json', crop=(376, 368),
+        eyes=[(295, 205), (400, 195), (440, 320), (665, 345), (665, 435), (520, 435), (400, 335), (295, 325)],
+        face=[(290, 200), (405, 190), (520, 300), (665, 345), (665, 445), (560, 455), (470, 520), (380, 525), (318, 470), (288, 330)],
+        vibe=None,
+        keep='1girl, solo, short hair, 1.6::black hair::, 1.3::dark hair::, blue eyes, ear piercing, stud earrings, 1.3::black choker::, '
+             '1.4::glasses::, 1.3::round eyewear::, black-framed eyewear, 1.2::portrait::, close-up, head tilt, dutch angle, '
+             'looking at viewer, looking over eyewear, indoors'),
+    'ns-evening': dict(
+        img='assets/ns/scene/evening.webp', prompt='characters/prompts/ns-scene-evening.json', crop=(98, 128),
+        eyes=[(178, 318), (300, 285), (370, 228), (532, 222), (538, 322), (300, 405), (182, 405)],
+        face=[(178, 318), (290, 280), (370, 228), (532, 220), (540, 322), (470, 425), (412, 485), (318, 485), (228, 442), (178, 400)],
+        vibe=None,
+        keep='1girl, solo, short hair, 1.6::black hair::, 1.3::dark hair::, blue eyes, ear piercing, stud earrings, 1.3::black choker::, '
+             'bartender, white dress shirt, black bow tie, 1.2::portrait::, close-up, head tilt, looking down at viewer, indoors, bar, dim lighting'),
+    'ns-night': dict(
+        img='assets/ns/scene/night.webp', prompt='characters/prompts/ns-scene-night.json', crop=(0, 288),
+        eyes=[(118, 280), (265, 248), (380, 212), (542, 198), (552, 300), (300, 360), (120, 362)],
+        face=[(118, 280), (260, 248), (380, 212), (542, 198), (552, 300), (472, 422), (420, 485), (298, 495), (198, 432), (118, 362)],
+        vibe=None,
+        keep='1girl, solo, short hair, 1.6::black hair::, 1.3::dark hair::, blue eyes, ear piercing, stud earrings, 1.3::black choker::, '
+             'white hoodie, 1.2::portrait::, close-up, looking up at viewer, from above, indoors, dark room, screen light'),
 }
 
 
@@ -80,6 +102,47 @@ def infill(crop_im, mask, prompt, neg, seed, vibe=None):
     data = g.post('/ai/generate-image', {'input': prompt, 'model': MODEL, 'action': 'infill', 'parameters': p})
     z = zipfile.ZipFile(io.BytesIO(data))
     return Image.open(io.BytesIO(z.read(z.namelist()[0]))).convert('RGB')
+
+
+# 표정 → 노벨AI 감정 바꾸기 값
+EMOTION = {'smile': 'happy', 'angry': 'angry', 'shy': 'embarrassed', 'surprised': 'surprised', 'sleepy': 'tired'}
+BIG = 1088  # 무료 칸(1024x1024 이하)은 막혀 있어서 조금 키워 보낸다 (아날스 사용)
+
+
+def emotion(crop_im, emo, defry=0):
+    """얼굴 주변 그림을 통째로 보내 표정만 바꾼 그림을 받는다. 눈 색·머리·빛은 그대로 유지된다."""
+    big = crop_im.resize((BIG, BIG), Image.LANCZOS)
+    data = g.post('/ai/augment-image', {'req_type': 'emotion', 'prompt': f'{emo};;', 'defry': defry,
+                                         'width': BIG, 'height': BIG, 'image': b64png(big)})
+    try:
+        z = zipfile.ZipFile(io.BytesIO(data)); im = Image.open(io.BytesIO(z.read(z.namelist()[0])))
+    except zipfile.BadZipFile:
+        im = Image.open(io.BytesIO(data))
+    return im.convert('RGB').resize(crop_im.size, Image.LANCZOS)
+
+
+def make_emotion(key, expr):
+    f = FACES[key]
+    code, scene = key.split('-', 1)
+    base = Image.open(os.path.join(ROOT, f['img'])).convert('RGB')
+    x0, y0 = f['crop']
+    crop_im = base.crop((x0, y0, x0 + CROP, y0 + CROP))
+    out = emotion(crop_im, EMOTION[expr])
+    if os.environ.get('PREVIEW_DIR'): out.save(os.path.join(os.environ['PREVIEW_DIR'], f'{key}-{expr}-raw.png'))
+    # 얼굴(눈썹~턱) 부분만 넉넉히, 가장자리는 부드럽게 붙인다
+    m = Image.new('L', (CROP, CROP), 0); ImageDraw.Draw(m).polygon(f['face'], fill=255)
+    alpha = m.filter(ImageFilter.MaxFilter(21)).filter(ImageFilter.GaussianBlur(10))
+    patch = out.convert('RGBA'); patch.putalpha(alpha)
+    bx = alpha.getbbox(); patch = patch.crop(bx)
+    d = os.path.join(ROOT, 'assets', code, 'face'); os.makedirs(d, exist_ok=True)
+    name = f'{scene}-{expr}'
+    patch.save(os.path.join(d, name + '.webp'), 'WEBP', quality=90, method=6)
+    meta = {'character': code, 'scene': scene, 'expression': expr, 'source': 'NovelAI Director Tools (emotion)',
+            'emotion': EMOTION[expr], 'based_on': f['img'], 'crop': [x0, y0, CROP, CROP],
+            'patch': {'x': x0 + bx[0], 'y': y0 + bx[1], 'w': bx[2] - bx[0], 'h': bx[3] - bx[1]}}
+    json.dump(meta, open(os.path.join(ROOT, 'characters', 'prompts', f'{code}-face-{name}.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    prev = crop_im.copy(); prev.paste(out, (0, 0), alpha)
+    return meta, prev
 
 
 def make(key, expr):
@@ -132,10 +195,10 @@ def match_color(src, out, region):
 
 if __name__ == '__main__':
     key = sys.argv[1]
-    exprs = sys.argv[2:] or list(EXPR)
+    exprs = sys.argv[2:] or [e for e in EXPR if e != 'blink']
     prevdir = os.environ.get('PREVIEW_DIR')
     for i, e in enumerate(exprs):
         if i: time.sleep(20)  # 천천히
-        meta, prev = make(key, e)
+        meta, prev = make_emotion(key, e)
         if prevdir: prev.save(os.path.join(prevdir, f'{key}-{e}.png'))
         print('ok', key, e, meta['patch'], flush=True)

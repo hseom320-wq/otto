@@ -35,15 +35,34 @@ function setFor() {
   Object.values(cur.faces).forEach(f => { const i = new Image(); i.src = f.img; });
   if (video) { const i = new Image(); i.src = base; }
 }
-function hideAll() { showing = ''; layer.hidden = true; still.classList.remove('on'); }
+function hideAll() {
+  const was = showing && video && still.classList.contains('on');
+  showing = ''; layer.hidden = true;
+  // 영상의 첫 장면이 원래 그림과 같으니, 처음부터 다시 틀고 덮개를 걷으면 이음새 없이 돌아온다
+  if (was) { const v = $('bgv'); try { v.currentTime = 0; v.play().catch(() => {}); } catch (e) {} }
+  still.classList.remove('on');
+}
 function place() {
   if (!cur || !showing) return;
   const f = cur.faces[showing]; if (!f) return;
-  const ref = video ? still : $('bg'), W = ref.clientWidth, H = ref.clientHeight;
-  const k = Math.max(W / cur.w, H / cur.h);
-  const pos = ((video ? $('bgv') : $('bg')).style.objectPosition || '50% 30%').split(' ').map(v => parseFloat(v) / 100);
-  const ox = (W - cur.w * k) * (isNaN(pos[0]) ? .5 : pos[0]), oy = (H - cur.h * k) * (isNaN(pos[1]) ? .3 : pos[1]);
-  Object.assign(layer.style, { left: ox + f.x * k + 'px', top: oy + f.y * k + 'px', width: f.w * k + 'px', height: f.h * k + 'px' });
+  let map; // 원래 그림 좌표 (x, y) → 화면 좌표
+  const v = $('bgv');
+  if (video && v.videoWidth) {
+    // 영상은 원래 그림을 꽉 채워 가운데를 잘라 만든 것이라, 그 잘린 만큼까지 맞춰서 원래 그림을 영상과 똑같은 자리에 놓는다
+    const W = v.clientWidth, H = v.clientHeight, vw = v.videoWidth, vh = v.videoHeight;
+    const s = Math.max(vw / cur.w, vh / cur.h), cx = (cur.w * s - vw) / 2, cy = (cur.h * s - vh) / 2;
+    const K = Math.max(W / vw, H / vh);
+    const pos = (v.style.objectPosition || '50% 30%').split(' ').map(t => parseFloat(t) / 100);
+    const ox = (W - vw * K) * (isNaN(pos[0]) ? .5 : pos[0]) - cx * K, oy = (H - vh * K) * (isNaN(pos[1]) ? .3 : pos[1]) - cy * K;
+    map = { k: s * K, ox, oy };
+    Object.assign(still.style, { left: ox + 'px', top: oy + 'px', width: cur.w * s * K + 'px', height: cur.h * s * K + 'px', right: 'auto', bottom: 'auto', objectFit: 'fill' });
+  } else {
+    const ref = video ? still : $('bg'), W = ref.clientWidth, H = ref.clientHeight;
+    const k = Math.max(W / cur.w, H / cur.h);
+    const pos = ((video ? v : $('bg')).style.objectPosition || '50% 30%').split(' ').map(t => parseFloat(t) / 100);
+    map = { k, ox: (W - cur.w * k) * (isNaN(pos[0]) ? .5 : pos[0]), oy: (H - cur.h * k) * (isNaN(pos[1]) ? .3 : pos[1]) };
+  }
+  Object.assign(layer.style, { left: map.ox + f.x * map.k + 'px', top: map.oy + f.y * map.k + 'px', width: f.w * map.k + 'px', height: f.h * map.k + 'px' });
 }
 function show(expr) {
   if (!cur) { setFor(); if (!cur) return; }
