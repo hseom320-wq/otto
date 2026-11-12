@@ -116,7 +116,7 @@ SHEETS.set.render = function () {
   const field = box.closest('.field');
   const st = el('p', 'hint push-st');
   const info = pushInfo();
-  st.textContent = !info.ready ? '앱을 닫아도 알림 받기: 알림 서버 준비 중이에요. 지금은 앱이 켜져 있을 때만 와요.'
+  st.textContent = !info.ready ? '알림은 앱이 켜져 있거나 뒤에 열려 있을 때 와요. (앱을 완전히 닫았을 때 받는 기능은 알림 서버를 연결해야 해요)'
     : info.ok ? `앱을 닫아도 알림이 와요 (타이머 끝·일정 10분 전·모닝콜·저녁 9시 기말 할 일·시험 날 아침).` : '앱을 닫아도 알림 받기: 알림을 켜면 연결돼요.';
   const t = el('button', 'btn sm ghost', '알림 시험');
   t.onclick = async () => { t.disabled = true; st.textContent = await pushTest(); t.disabled = false; };
