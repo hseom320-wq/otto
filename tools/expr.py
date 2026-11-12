@@ -60,7 +60,7 @@ FACES = {
         keep='1girl, solo, short hair, 1.6::black hair::, 1.3::dark hair::, blue eyes, ear piercing, stud earrings, 1.3::black choker::, '
              'white hoodie, 1.2::portrait::, close-up, looking up at viewer, from above, indoors, dark room, screen light'),
     # 태블릿(가로) 그림 — 감정 바꾸기용이라 얼굴 범위(face)와 자를 자리(crop)만 적는다
-    'ns-wide_morning': dict(img='assets/ns/scene-wide/morning.webp', crop=(1088, 168), hint='blue toothbrush in mouth, blue eyes',
+    'ns-wide_morning': dict(img='assets/ns/scene-wide/morning.webp', crop=(1088, 168), hint='blue toothbrush in mouth, blue eyes', eyes_only_y=455,
         face=[(175, 270), (300, 258), (420, 330), (522, 372), (518, 452), (440, 505), (350, 545), (250, 532), (188, 470), (163, 380)]),
     'ns-wide_day': dict(img='assets/ns/scene-wide/day.webp', crop=(1188, 168),
         face=[(28, 212), (160, 222), (342, 268), (352, 342), (300, 402), (220, 428), (130, 422), (58, 382), (18, 300)]),
@@ -156,6 +156,9 @@ def make_emotion(key, expr):
     if os.environ.get('PREVIEW_DIR'): out.save(os.path.join(os.environ['PREVIEW_DIR'], f'{key}-{expr}-raw.png'))
     # 얼굴(눈썹~턱) 부분만 넉넉히, 가장자리는 부드럽게 붙인다
     m = Image.new('L', (CROP, CROP), 0); ImageDraw.Draw(m).polygon(f['face'], fill=255)
+    # 졸림은 눈만 바꾸면 된다: 입에 문 칫솔처럼 쉽게 망가지는 아래쪽은 원래 그림 그대로
+    if expr == 'sleepy' and f.get('eyes_only_y'):
+        ImageDraw.Draw(m).rectangle((0, f['eyes_only_y'], CROP, CROP), fill=0)
     # 홍조가 없는 표정은 얼굴 색(특히 눈동자)을 원래 그림에 맞춘다 — 감정 도구가 눈을 밝은 파랑으로 바꾸는 걸 잡는다
     if expr in ('angry', 'sleepy'):
         out = match_color(crop_im, out, m)
