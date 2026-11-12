@@ -3,7 +3,7 @@
 // 조각 목록은 data/faces.json (tools/build_faces.py 가 만든다). 조각이 있는 그림에서만 동작한다.
 // - 대사의 감정(AI가 정한 값, 없으면 글에서 짐작)에 맞춰 표정이 바뀌고, 한동안 말이 없으면 원래 얼굴로 돌아온다.
 // - 장면이 영상(숨쉬기·눈 깜빡임이 든 반복 영상)이면, 표정이 필요할 때만 원래 그림으로 부드럽게 바꿔 표정을 보여 주고 다시 영상으로 돌아간다.
-// - 건드리면 잠깐 놀라거나 부끄러워한다.
+// - 표정끼리는 서서히 겹쳐 바뀐다(두 겹을 번갈아 쓴다). 건드리면 놀랐다가 → 부끄러워하다가 → 원래 얼굴로 이어진다.
 // app.js·voice.js·motion.js 뒤에 불러온다.
 'use strict';
 (() => {
@@ -14,9 +14,11 @@ const HOLD = 9000; // 표정을 이만큼 유지하다가 원래 얼굴로
 // 영상 위에 잠깐 덮을 원래 그림 + 얼굴 조각. 무대(.actor) 안에서 그림과 같은 방식(꽉 채우고 넘치는 쪽 자르기)으로 놓는다
 const still = document.createElement('img');
 still.className = 'bg still'; still.alt = ''; still.decoding = 'async';
-const layer = document.createElement('img');
-layer.className = 'face'; layer.alt = ''; layer.hidden = true; layer.decoding = 'async';
-$('bgv').after(still, layer);
+// 표정 조각 두 겹: 새 표정은 안 쓰는 겹에 올려 서서히 나타나게 하고, 쓰던 겹은 서서히 사라지게 한다
+const mk = () => { const i = document.createElement('img'); i.className = 'face'; i.alt = ''; i.decoding = 'async'; return i; };
+const layers = [mk(), mk()];
+let front = 0; // 지금 보이는 겹
+$('bgv').after(still, ...layers);
 let cur = null;      // 지금 그림의 표정 묶음 {w, h, faces}
 let base = '';       // 지금 장면의 원래 그림 경로
 let video = false;   // 영상 장면인지
@@ -37,14 +39,15 @@ function setFor() {
 }
 function hideAll() {
   const was = showing && video && still.classList.contains('on');
-  showing = ''; layer.hidden = true;
+  showing = ''; layers.forEach(l => l.classList.remove('on'));
   // 영상의 첫 장면이 원래 그림과 같으니, 처음부터 다시 틀고 덮개를 걷으면 이음새 없이 돌아온다
   if (was) { const v = $('bgv'); try { v.currentTime = 0; v.play().catch(() => {}); } catch (e) {} }
   still.classList.remove('on');
 }
-function place() {
-  if (!cur || !showing) return;
-  const f = cur.faces[showing]; if (!f) return;
+function place(expr, layer) {
+  expr = expr || showing; layer = layer || layers[front];
+  if (!cur || !expr) return;
+  const f = cur.faces[expr]; if (!f) return;
   let map; // 원래 그림 좌표 (x, y) → 화면 좌표
   const v = $('bgv');
   if (video && v.videoWidth) {
@@ -64,18 +67,25 @@ function place() {
   }
   Object.assign(layer.style, { left: map.ox + f.x * map.k + 'px', top: map.oy + f.y * map.k + 'px', width: f.w * map.k + 'px', height: f.h * map.k + 'px' });
 }
+let showT = 0;
 function show(expr) {
   if (!cur) { setFor(); if (!cur) return; }
   const f = expr && cur.faces[expr];
   if (!f) { hideAll(); return; }
+  if (expr === showing) return;
   showing = expr;
   if (video) {
     if (still.getAttribute('src') !== base) still.src = base;
     still.style.objectPosition = $('bgv').style.objectPosition;
     still.classList.add('on');
   }
-  if (layer.getAttribute('src') !== f.img) layer.src = f.img;
-  place(); layer.hidden = false;
+  // 안 쓰던 겹에 새 표정을 올리고, 그림이 준비되면 겹을 맞바꾼다 (서서히 겹쳐 바뀜)
+  const next = 1 - front, l = layers[next], old = layers[front];
+  place(expr, l);
+  const swap = () => { if (showing !== expr) return; l.classList.add('on'); old.classList.remove('on'); front = next; };
+  clearTimeout(showT);
+  if (l.getAttribute('src') !== f.img) { l.src = f.img; (l.decode ? l.decode() : Promise.resolve()).then(swap, swap); }
+  else showT = setTimeout(swap, 0);
 }
 // 감정 → 표정 (잠깐 보였다가 원래 얼굴로)
 function feel(mood, ms) {
@@ -100,11 +110,19 @@ typeInto = function (el, text, id) {
   }
   return baseType.apply(this, arguments);
 };
-// 건드리면 잠깐 놀라거나 부끄러워한다
-let pokes = [], lastPoke = 0;
+// 건드리면: 흠칫 놀랐다가 → 부끄러워하다가 → 원래 얼굴로 (여러 번 건드리면 짜증)
+let pokes = [], lastPoke = 0, pokeT = [];
+function sequence(steps) {
+  pokeT.forEach(clearTimeout); pokeT = []; clearTimeout(holdT);
+  let at = 0;
+  steps.forEach(([expr, ms]) => { pokeT.push(setTimeout(() => show(expr), at)); at += ms; });
+  pokeT.push(setTimeout(() => { if (Date.now() - lastPoke >= at - 50) show(''); }, at));
+}
 $('tapHit').addEventListener('pointerdown', () => {
   const now = Date.now(); lastPoke = now; pokes = pokes.filter(t => now - t < 3000); pokes.push(now);
-  feel(pokes.length >= 4 ? 'angry' : pick(['confused', 'sweat']), 1800);
+  if (pokes.length >= 4) sequence([['angry', 2600]]);
+  else if (pokes.length >= 2) sequence([['shy', 2200]]);
+  else sequence([['surprised', 650], ['shy', 1900]]);
 });
 // 그림이 바뀌거나(시간대·보상씬·비서 바꾸기) 화면 크기가 바뀌면 다시 맞춘다
 const watch = new MutationObserver(rs => {
@@ -112,7 +130,7 @@ const watch = new MutationObserver(rs => {
 });
 watch.observe($('bg'), { attributes: true, attributeFilter: ['src', 'hidden', 'style'] });
 watch.observe($('bgv'), { attributes: true, attributeFilter: ['src', 'hidden', 'poster', 'style'] });
-addEventListener('resize', () => requestAnimationFrame(place));
+addEventListener('resize', () => requestAnimationFrame(() => place()));
 
 fetch('data/faces.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).then(j => { FACES = j || {}; setFor(); }).catch(() => {});
 })();
