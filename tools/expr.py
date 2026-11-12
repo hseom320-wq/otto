@@ -59,6 +59,15 @@ FACES = {
         vibe=None,
         keep='1girl, solo, short hair, 1.6::black hair::, 1.3::dark hair::, blue eyes, ear piercing, stud earrings, 1.3::black choker::, '
              'white hoodie, 1.2::portrait::, close-up, looking up at viewer, from above, indoors, dark room, screen light'),
+    # 태블릿(가로) 그림 — 감정 바꾸기용이라 얼굴 범위(face)와 자를 자리(crop)만 적는다
+    'ns-wide_morning': dict(img='assets/ns/scene-wide/morning.webp', crop=(1088, 168), hint='toothbrush in mouth',
+        face=[(175, 270), (300, 258), (420, 330), (522, 372), (518, 452), (440, 505), (350, 545), (250, 532), (188, 470), (163, 380)]),
+    'ns-wide_day': dict(img='assets/ns/scene-wide/day.webp', crop=(1188, 168),
+        face=[(28, 212), (160, 222), (342, 268), (352, 342), (300, 402), (220, 428), (130, 422), (58, 382), (18, 300)]),
+    'ns-wide_evening': dict(img='assets/ns/scene-wide/evening.webp', crop=(1028, 208),
+        face=[(213, 168), (340, 172), (450, 228), (532, 248), (532, 322), (470, 382), (380, 422), (290, 412), (228, 352), (203, 260)]),
+    'ns-wide_night': dict(img='assets/ns/scene-wide/night.webp', crop=(888, 128),
+        face=[(213, 318), (380, 318), (480, 298), (622, 288), (627, 382), (570, 472), (480, 552), (380, 572), (288, 522), (223, 430)]),
 }
 
 
