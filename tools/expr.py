@@ -30,7 +30,7 @@ EXPR = {
 # 얼굴 위치 (잘라 낸 칸 안의 좌표). face: 눈썹~턱 다각형, eyes: 눈·눈썹 다각형. blink 는 eyes 만 다시 그린다
 FACES = {
     'ns-morning': dict(
-        img='assets/ns/scene/morning.webp', prompt='characters/prompts/ns-scene-morning.json', crop=(120, 200),
+        img='assets/ns/scene/morning.webp', prompt='characters/prompts/ns-scene-morning.json', crop=(120, 200), hint='toothbrush in mouth',
         eyes=[(120, 300), (250, 240), (470, 170), (500, 280), (270, 370), (125, 385)],
         face=[(118, 300), (250, 245), (300, 238), (470, 178), (500, 275), (440, 330), (400, 420), (335, 470), (240, 455), (175, 420), (125, 385)],
         vibe=None,  # 인페인트에 참고 그림을 넣으면 노벨AI가 500 오류를 낸다
@@ -105,14 +105,15 @@ def infill(crop_im, mask, prompt, neg, seed, vibe=None):
 
 
 # 표정 → 노벨AI 감정 바꾸기 값
-EMOTION = {'smile': 'happy', 'angry': 'angry', 'shy': 'embarrassed', 'surprised': 'surprised', 'sleepy': 'tired'}
+# sleepy 는 'tired'가 눈 밑을 시커멓게 그려서 'bored'(반쯤 감긴 눈)를 쓴다
+EMOTION = {'smile': 'happy', 'angry': 'angry', 'shy': 'embarrassed', 'surprised': 'surprised', 'sleepy': 'bored'}
 BIG = 1088  # 무료 칸(1024x1024 이하)은 막혀 있어서 조금 키워 보낸다 (아날스 사용)
 
 
-def emotion(crop_im, emo, defry=0):
+def emotion(crop_im, emo, defry=0, hint=''):
     """얼굴 주변 그림을 통째로 보내 표정만 바꾼 그림을 받는다. 눈 색·머리·빛은 그대로 유지된다."""
     big = crop_im.resize((BIG, BIG), Image.LANCZOS)
-    data = g.post('/ai/augment-image', {'req_type': 'emotion', 'prompt': f'{emo};;', 'defry': defry,
+    data = g.post('/ai/augment-image', {'req_type': 'emotion', 'prompt': f'{emo};;{hint}', 'defry': defry,
                                          'width': BIG, 'height': BIG, 'image': b64png(big)})
     try:
         z = zipfile.ZipFile(io.BytesIO(data)); im = Image.open(io.BytesIO(z.read(z.namelist()[0])))
@@ -127,7 +128,7 @@ def make_emotion(key, expr):
     base = Image.open(os.path.join(ROOT, f['img'])).convert('RGB')
     x0, y0 = f['crop']
     crop_im = base.crop((x0, y0, x0 + CROP, y0 + CROP))
-    out = emotion(crop_im, EMOTION[expr])
+    out = emotion(crop_im, EMOTION[expr], hint=f.get('hint', ''))  # hint: 꼭 남겨야 할 것 (예: 입에 문 칫솔)
     if os.environ.get('PREVIEW_DIR'): out.save(os.path.join(os.environ['PREVIEW_DIR'], f'{key}-{expr}-raw.png'))
     # 얼굴(눈썹~턱) 부분만 넉넉히, 가장자리는 부드럽게 붙인다
     m = Image.new('L', (CROP, CROP), 0); ImageDraw.Draw(m).polygon(f['face'], fill=255)

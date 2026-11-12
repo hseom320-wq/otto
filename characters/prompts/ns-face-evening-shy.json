@@ -1,0 +1,20 @@
+{
+ "character": "ns",
+ "scene": "evening",
+ "expression": "shy",
+ "source": "NovelAI Director Tools (emotion)",
+ "emotion": "embarrassed",
+ "based_on": "assets/ns/scene/evening.webp",
+ "crop": [
+  98,
+  128,
+  704,
+  704
+ ],
+ "patch": {
+  "x": 241,
+  "y": 313,
+  "w": 433,
+  "h": 336
+ }
+}
