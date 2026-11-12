@@ -346,7 +346,7 @@ SHEETS.mail = {
 const baseSet = SHEETS.set.render;
 SHEETS.set.render = function () {
   baseSet();
-  const b = body(), reset = b.lastElementChild;
+  const b = body(), reset = b.querySelector('.reset-all') || b.lastElementChild;
   const mc = el('div', 'field', '<b>인터폰 모닝콜</b>');
   const r1 = el('div', 'row'), on = el('input'), tm = el('input', 'in tm-in');
   on.type = 'checkbox'; on.id = 'mcOn'; on.checked = S.morning.on; tm.type = 'time'; tm.id = 'mcTime'; tm.value = S.morning.time;

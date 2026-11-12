@@ -623,9 +623,11 @@ SHEETS.set = {
     const f4 = el('div', 'field', `<b>기억하는 것 (${S.memory.length})</b>`);
     if (!S.memory.length) f4.appendChild(el('p', 'hint', '대화하다 보면 캐릭터들이 기억해 둬요.'));
     S.memory.slice().reverse().forEach(m => { const r = el('div', 'todo', `<span>${esc(m.text)}</span><button class="del" aria-label="잊기">✕</button>`); r.querySelector('.del').onclick = () => { S.memory = S.memory.filter(x => x !== m); save(); refresh(); }; f4.appendChild(r); });
-    const reset = el('button', 'btn ghost', '모든 기록 지우기');
+    const reset = el('button', 'btn ghost reset-all', '모든 기록 지우기');
     reset.onclick = () => { if (confirm('할 일, 대화, 하트, 옷장 기록을 모두 지울까요?')) { localStorage.removeItem(KEY); location.reload(); } };
-    b.append(f1, f2, f3, f4, reset);
+    const ver = el('p', 'hint ver', '');
+    if (window.caches) caches.keys().then(ks => { const v = ks.find(k => k.startsWith('hanul-')); if (v) ver.textContent = `앱 버전 ${v.replace('hanul-', '')}`; }).catch(() => {});
+    b.append(f1, f2, f3, f4, reset, ver);
   },
 };
 
@@ -650,7 +652,19 @@ async function init() {
   };
   if (S.pick && S.pick.day === today()) { enter(S.pick.code); show('home'); }
   else { renderLift(); show('lift'); }
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    // 새 버전이 올라오면: 앱을 다시 열거나 화면으로 돌아올 때 확인하고, 새 버전이 자리 잡으면 한 번 새로 고친다
+    const hadSW = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadSW || reloaded) return; reloaded = true;
+      toast('새 버전으로 바꾸는 중…'); setTimeout(() => location.reload(), 900);
+    });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+      reg.update().catch(() => {});
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+    }).catch(() => {});
+  }
 }
 // 앱을 켜 둔 채 하루가 바뀌면 다시 묻는다
 document.addEventListener('visibilitychange', () => {

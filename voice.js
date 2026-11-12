@@ -90,7 +90,7 @@ typeInto = function (el, text, id = 'x') {
 const baseSet = SHEETS.set.render;
 SHEETS.set.render = function () {
   baseSet();
-  const b = body(), reset = b.lastElementChild;
+  const b = body(), reset = b.querySelector('.reset-all') || b.lastElementChild;
   const fv = el('div', 'field', '<b>대사 소리</b>');
   const on = el('input'); on.type = 'checkbox'; on.id = 'voiceOn'; on.checked = V.on;
   const lab = el('label', 'sw', '대사가 나올 때 타닥타닥 소리 내기'); lab.prepend(on);

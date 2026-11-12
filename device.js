@@ -76,7 +76,7 @@ function doImport(file) {
 const baseSet = SHEETS.set.render;
 SHEETS.set.render = function () {
   baseSet();
-  const b = body(), reset = b.lastElementChild;
+  const b = body(), reset = b.querySelector('.reset-all') || b.lastElementChild;
   // 전체화면
   const fs = el('div', 'field', '<b>전체화면</b>');
   const on = el('input'); on.type = 'checkbox'; on.id = 'fsOn'; on.checked = fsOn();
