@@ -535,28 +535,32 @@
      "img": "assets/ns/scene/morning.webp",
      "video": "assets/ns/scene/morning.mp4",
      "wide": {
-      "img": "assets/ns/scene-wide/morning.webp"
+      "img": "assets/ns/scene-wide/morning.webp",
+      "video": "assets/ns/scene-wide/morning.mp4"
      }
     },
     "day": {
      "img": "assets/ns/scene/day.webp",
      "video": "assets/ns/scene/day.mp4",
      "wide": {
-      "img": "assets/ns/scene-wide/day.webp"
+      "img": "assets/ns/scene-wide/day.webp",
+      "video": "assets/ns/scene-wide/day.mp4"
      }
     },
     "evening": {
      "img": "assets/ns/scene/evening.webp",
      "video": "assets/ns/scene/evening.mp4",
      "wide": {
-      "img": "assets/ns/scene-wide/evening.webp"
+      "img": "assets/ns/scene-wide/evening.webp",
+      "video": "assets/ns/scene-wide/evening.mp4"
      }
     },
     "night": {
      "img": "assets/ns/scene/night.webp",
      "video": "assets/ns/scene/night.mp4",
      "wide": {
-      "img": "assets/ns/scene-wide/night.webp"
+      "img": "assets/ns/scene-wide/night.webp",
+      "video": "assets/ns/scene-wide/night.mp4"
      }
     }
    },
