@@ -30,7 +30,7 @@ EXPR = {
 # 얼굴 위치 (잘라 낸 칸 안의 좌표). face: 눈썹~턱 다각형, eyes: 눈·눈썹 다각형. blink 는 eyes 만 다시 그린다
 FACES = {
     'ns-morning': dict(
-        img='assets/ns/scene/morning.webp', prompt='characters/prompts/ns-scene-morning.json', crop=(120, 200), hint='toothbrush in mouth',
+        img='assets/ns/scene/morning.webp', prompt='characters/prompts/ns-scene-morning.json', crop=(120, 200), hint='blue toothbrush in mouth, blue eyes',
         eyes=[(120, 300), (250, 240), (470, 170), (500, 280), (270, 370), (125, 385)],
         face=[(118, 300), (250, 245), (300, 238), (470, 178), (500, 275), (440, 330), (400, 420), (335, 470), (240, 455), (175, 420), (125, 385)],
         vibe=None,  # 인페인트에 참고 그림을 넣으면 노벨AI가 500 오류를 낸다

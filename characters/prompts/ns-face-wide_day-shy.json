@@ -3,7 +3,8 @@
  "scene": "wide_day",
  "expression": "shy",
  "source": "NovelAI Director Tools (emotion)",
- "emotion": "embarrassed",
+ "emotion": "shy",
+ "defry": 2,
  "based_on": "assets/ns/scene-wide/day.webp",
  "crop": [
   1188,

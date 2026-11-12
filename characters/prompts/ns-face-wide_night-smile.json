@@ -4,6 +4,7 @@
  "expression": "smile",
  "source": "NovelAI Director Tools (emotion)",
  "emotion": "happy",
+ "defry": 3,
  "based_on": "assets/ns/scene-wide/night.webp",
  "crop": [
   888,

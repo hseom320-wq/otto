@@ -4,6 +4,7 @@
  "expression": "surprised",
  "source": "NovelAI Director Tools (emotion)",
  "emotion": "surprised",
+ "defry": 5,
  "based_on": "assets/ns/scene/night.webp",
  "crop": [
   0,

@@ -3,7 +3,8 @@
  "scene": "wide_morning",
  "expression": "sleepy",
  "source": "NovelAI Director Tools (emotion)",
- "emotion": "bored",
+ "emotion": "neutral",
+ "defry": 2,
  "based_on": "assets/ns/scene-wide/morning.webp",
  "crop": [
   1088,

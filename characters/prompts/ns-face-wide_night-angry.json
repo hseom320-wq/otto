@@ -3,7 +3,8 @@
  "scene": "wide_night",
  "expression": "angry",
  "source": "NovelAI Director Tools (emotion)",
- "emotion": "angry",
+ "emotion": "irritated",
+ "defry": 2,
  "based_on": "assets/ns/scene-wide/night.webp",
  "crop": [
   888,
