@@ -1,7 +1,7 @@
 // 한울아파트 — 한울냥 (화면을 돌아다니는 하얀 아기 고양이 마스코트)
 // 비서 화면을 아무 데나 뛰어다니다가 앉거나, 올려다보거나, 폴짝 뛰거나, 졸거나(밤엔 더 자주) 한다.
 // 손가락으로 잡으면 목덜미를 잡힌 채 대롱대롱 매달리고, 휙 던지면 날아가서 벽에 튕기고 떨어진다. 세게 떨어지면 어지러워한다.
-// 톡 치면 폴짝 뛰며 방울이 울린다. 그림: assets/ui/neko/*.webp (자세 8개). 설정에서 끌 수 있다.
+// 톡 치면 폴짝 뛰며 방울이 울린다. 그림: assets/ui/neko2/*.webp (자세 8개). 설정에서 끌 수 있다.
 // app.js 등 다른 파일 뒤에 불러온다.
 'use strict';
 (() => {
@@ -17,7 +17,7 @@ const img = document.createElement('img'); img.alt = ''; img.draggable = false; 
 nb.appendChild(img); root.appendChild(nb);
 const shadow = document.createElement('div'); shadow.className = 'neko-shadow';
 $('home').append(shadow, root);
-POSES.forEach(p => { const i = new Image(); i.src = `assets/ui/neko/${p}.webp`; });
+POSES.forEach(p => { const i = new Image(); i.src = `assets/ui/neko2/${p}.webp`; });
 
 const N = { x: 0, y: 0, vx: 0, vy: 0, mode: 'idle', pose: 'sit', dir: 1, until: 0, tx: 0, ty: 0, floor: 0, frame: 0, spin: 0, squash: 0, hop: 0 };
 let H = 74;            // 앉은 모습 키(px)
@@ -38,7 +38,7 @@ function draw() {
   if (!SP) return;
   const p = SP[N.pose] || SP.sit, k = H / sit();
   const w = p.w * k, h = p.h * k;
-  if (img.dataset.p !== N.pose) { img.src = `assets/ui/neko/${N.pose}.webp`; img.dataset.p = N.pose; }
+  if (img.dataset.p !== N.pose) { img.src = `assets/ui/neko2/${N.pose}.webp`; img.dataset.p = N.pose; }
   img.style.width = w + 'px'; img.style.height = h + 'px';
   // 잡혔을 때는 목덜미(그림 위쪽 가운데)가 손가락 자리, 나머지는 발(아래쪽 가운데)이 자리
   const held = N.mode === 'held';
@@ -235,7 +235,7 @@ function place() {
 }
 function apply() { root.hidden = shadow.hidden = !on; if (on) place(); }
 addEventListener('resize', () => { if (on) place(); });
-fetch('assets/ui/neko/sprites.json', { cache: 'no-cache' }).then(r => r.json()).then(j => { SP = j; apply(); requestAnimationFrame(tick); }).catch(() => { root.hidden = shadow.hidden = true; });
+fetch('assets/ui/neko2/sprites.json', { cache: 'no-cache' }).then(r => r.json()).then(j => { SP = j; apply(); requestAnimationFrame(tick); }).catch(() => { root.hidden = shadow.hidden = true; });
 
 const baseSet = SHEETS.set.render;
 SHEETS.set.render = function () {

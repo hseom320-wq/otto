@@ -1,9 +1,8 @@
 """표정 조각 목록 만들기: characters/prompts/<코드>-face-<장면>-<표정>.json → data/faces.json
 앱(face.js)이 이 목록을 보고 장면 그림 위에 표정 조각을 겹친다.
 
-장면에 반복 영상(<그림>.mp4)이 있으면, 영상 위에 잠깐 덮는 원래 그림과 표정 조각의 색을
-영상 첫 장면에 맞춘 판(…-v.webp)도 만든다. 영상과 그림의 밝기·색이 조금 달라서
-표정이 바뀔 때 화면이 어두워지거나 밝아지는 걸 막는다.
+장면에 반복 영상(<그림>.mp4)이 있으면, 표정마다 "영상 첫 장면 + 표정"을 짧은 영상(<표정>.mp4)으로 만든다.
+앱은 표정을 보여 줄 때 이 영상으로 바꿔서, 영상과 그림의 색 차이로 밝기가 튀는 일이 없다.
   python3 tools/build_faces.py
 """
 import glob, json, os
@@ -47,6 +46,8 @@ out = {}
 for p in sorted(glob.glob(os.path.join(ROOT, 'characters', 'prompts', '*-face-*.json'))):
     m = json.load(open(p, encoding='utf-8'))
     code, scene, expr = m['character'], m['scene'], m['expression']
+    if expr == 'surprised':
+        continue  # 놀람은 눈이 원래 그림과 너무 달라져서 쓰지 않는다
     img = os.path.join(ROOT, 'assets', code, 'face', f'{scene}-{expr}.webp')
     if not os.path.exists(img):
         continue
@@ -55,7 +56,14 @@ for p in sorted(glob.glob(os.path.join(ROOT, 'characters', 'prompts', '*-face-*.
     s = out.setdefault(code, {}).setdefault(base, {'w': w, 'h': h, 'faces': {}})
     s['faces'][expr] = {'img': f'assets/{code}/face/{scene}-{expr}.webp', **m['patch']}
 
-# 영상이 있는 장면: 색을 영상에 맞춘 그림·조각
+# 영상이 있는 장면: 표정마다 "영상 첫 장면 + 표정"을 짧은 영상으로 만든다.
+# 폰은 영상과 그림의 색을 다르게 그려서, 영상 위에 그림을 덮으면 밝기가 튄다. 표정도 영상으로 만들면 같은 방식으로 그려져서 똑같다.
+import subprocess
+def encode(rgb, out):
+    h, w = rgb.shape[:2]
+    p = subprocess.Popen(['ffmpeg', '-loglevel', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{w}x{h}', '-r', '24', '-i', '-',
+                          '-frames:v', '12', '-an', '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out], stdin=subprocess.PIPE)
+    p.stdin.write(rgb.tobytes() * 12); p.stdin.close(); p.wait()
 for code, scenes in out.items():
     for base, s in scenes.items():
         mp4 = os.path.join(ROOT, base[:-5] + '.mp4')
@@ -66,15 +74,21 @@ for code, scenes in out.items():
             continue
         still = Image.open(os.path.join(ROOT, base)).convert('RGB')
         lut = luts(still, frame)
-        vs = base[:-5] + '-v.webp'
-        apply(still, lut).save(os.path.join(ROOT, vs), 'WEBP', quality=88, method=6)
-        s['vstill'] = vs
+        H, W = frame.shape[:2]
+        k = max(W / still.width, H / still.height)
+        cx, cy = (still.width * k - W) / 2, (still.height * k - H) / 2
+        fdir = os.path.join(ROOT, 'assets', code, 'face')
         for expr, f in s['faces'].items():
             pim = Image.open(os.path.join(ROOT, f['img'])).convert('RGBA')
             rgb = apply(pim.convert('RGB'), lut).convert('RGBA'); rgb.putalpha(pim.getchannel('A'))
-            iv = f['img'][:-5] + '-v.webp'
-            rgb.save(os.path.join(ROOT, iv), 'WEBP', quality=90, method=6)
-            f['img_v'] = iv
+            rgb = rgb.resize((max(1, round(pim.width * k)), max(1, round(pim.height * k))), Image.LANCZOS)
+            canvas = Image.fromarray(frame).convert('RGBA')
+            canvas.alpha_composite(rgb, (round(f['x'] * k - cx), round(f['y'] * k - cy)))
+            name = os.path.basename(f['img'])[:-5]
+            vout = os.path.join(fdir, f'{name}.mp4')
+            encode(np.asarray(canvas.convert('RGB')), vout)
+            f['vid'] = os.path.relpath(vout, ROOT)
+        s['video'] = os.path.relpath(mp4, ROOT)
 
 json.dump(out, open(os.path.join(ROOT, 'data', 'faces.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-print({c: {b: (sorted(v['faces']), 'video' if 'vstill' in v else '') for b, v in s.items()} for c, s in out.items()})
+print({c: {b: (sorted(v['faces']), 'video' if 'video' in v else '') for b, v in s.items()} for c, s in out.items()})

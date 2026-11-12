@@ -119,10 +119,10 @@ EMOTION = {'smile': 'happy', 'angry': 'angry', 'shy': 'embarrassed', 'surprised'
 # 잔잔한 표정 (원래 그림체·성격에 맞게): (감정, defry 바꾸는 세기 0=가장 세게 ~ 5=가장 약하게, 덧붙일 말)
 SUBTLE = {
     'smile': ('happy', 3, 'gentle closed-mouth smile'),
-    'angry': ('irritated', 2, 'narrowed eyes, slight frown'),
+    'angry': ('irritated', 2, 'both eyes open, narrowed eyes, slight frown, dark blue eyes'),
     'shy': ('shy', 2, 'light blush, looking away'),
     'surprised': ('surprised', 5, 'closed mouth, slightly widened eyes, raised eyebrows, blue eyes'),  # 'surprised'는 약하게 해도 입을 크게 벌리고, 'confused'는 눈이 소용돌이가 된다
-    'sleepy': ('neutral', 2, 'sleepy, drowsy, half-closed eyes'),
+    'sleepy': ('neutral', 2, 'sleepy, drowsy, half-closed eyes, dark blue eyes'),
 }
 STYLE = os.environ.get('EXPR_STYLE', 'subtle')  # subtle(기본) | strong(예전 세게)
 BIG = 1088  # 무료 칸(1024x1024 이하)은 막혀 있어서 조금 키워 보낸다 (아날스 사용)
@@ -156,6 +156,9 @@ def make_emotion(key, expr):
     if os.environ.get('PREVIEW_DIR'): out.save(os.path.join(os.environ['PREVIEW_DIR'], f'{key}-{expr}-raw.png'))
     # 얼굴(눈썹~턱) 부분만 넉넉히, 가장자리는 부드럽게 붙인다
     m = Image.new('L', (CROP, CROP), 0); ImageDraw.Draw(m).polygon(f['face'], fill=255)
+    # 홍조가 없는 표정은 얼굴 색(특히 눈동자)을 원래 그림에 맞춘다 — 감정 도구가 눈을 밝은 파랑으로 바꾸는 걸 잡는다
+    if expr in ('angry', 'sleepy'):
+        out = match_color(crop_im, out, m)
     alpha = m.filter(ImageFilter.MaxFilter(21)).filter(ImageFilter.GaussianBlur(10))
     patch = out.convert('RGBA'); patch.putalpha(alpha)
     bx = alpha.getbbox(); patch = patch.crop(bx)
