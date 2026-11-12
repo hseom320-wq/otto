@@ -102,6 +102,8 @@ function renderPlan(b) {
   // 자유 타이머 + 설정
   const free = el('button', 'btn ghost wide', '계획 없이 50분 공부하기'); free.onclick = () => startFocus({ id: null, subject: '자습', text: '자습', range: '' });
   b.appendChild(free);
+  const fb = finalButtons(); if (fb) b.appendChild(fb);
+  b.appendChild(weekBox());
   const f = foot();
   const r1 = el('div', 'row set-row'), w = el('input', 'in tm-in'), e = el('input', 'in tm-in');
   w.type = 'time'; w.value = S.study.wStart; w.id = 'stW'; e.type = 'time'; e.value = S.study.eStart; e.id = 'stE';
@@ -240,52 +242,161 @@ function renderNote(b, n) {
 }
 
 // ---------- 공부 타이머 ----------
+// 타이머 상태는 S.focus 에 저장해서, 앱을 닫았다 열어도 이어진다 (닫혀 있는 동안 끝났으면 열 때 마무리).
+// 폰을 엎어 두면 비서가 칭찬하고, 다른 앱에 다녀오면 어디 갔다 왔냐고 묻는다. 과목별 공부 시간이 쌓인다.
+if (!S.slogSub) S.slogSub = {};                                       // 날짜 -> {과목: 분}
 let F = null, fT = 0, wake = null;
+const FL = { // 타이머 중 비서 한마디: 엎어 둠 · 다시 집어 듦 · 다른 앱에 다녀옴({n}분)
+  ns: { down: ['폰 엎었네. 그니까, 그렇게 하는 거야.', '오, 진짜 집중하네.'], up: ['벌써 폰 보냐.', '그니까, 아직 안 끝났거든.'], back: ['{n}분 동안 어디 갔다 왔냐.', '딴짓했지. 다 안다.'] },
+  ys: { down: ['폰 엎었어어…? 나도 원고 집중할게에.', '…같이 집중하는 거, 좋다아.'], up: ['벌써… 폰 보는 거야아?', '아직… 남았는데에.'], back: ['{n}분… 어디 갔었어어?', '나 혼자… 원고 하고 있었어어.'] },
+  hr: { down: ['어머, 폰 엎어 뒀네~ 잘하고 있어~', '그치~ 그렇게 하는 거야~'], up: ['벌써 폰 봐~? 조금만 더 하자~', '어머, 아직 시간 남았어~'], back: ['{n}분 동안 어디 갔다 왔어~?', '다녀왔어~? 다시 하자~'] },
+  sy: { down: ['좋아, 폰 엎은 거 잘했어.', '이 페이스면 충분해.'], up: ['폰은 쉬는 시간에.', '…알림 확인은 나중에 해도 돼.'], back: ['{n}분 자리 비웠어. 괜찮아, 다시 하자.', '돌아왔네. 남은 것만 하면 돼.'] },
+  tr: { down: ['폰 엎었냐. 제법인데.', '그래, 그렇게 해.'], up: ['폰 내려놔.', '벌써 보냐. 장부에 적는다.'], back: ['{n}분. 어디 갔다 왔냐.', '튀었다가 돌아왔네. 앉아.'] },
+};
+const focusSay = (k, o) => { const l = (FL[C.code] || FL.ns)[k]; if (l) typeInto($('focusLine'), fillT(pick(l), o), 'focus'); };
+const saveF = () => { S.focus = F ? { ...F, code: C ? C.code : null } : null; save(); };
+const mmLeft = () => Math.ceil((F.paused || Math.max(0, F.end - Date.now())) / 60e3);
+const hhmm = t => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+function logMins(subject, mins) {
+  if (mins <= 0) return;
+  const d = calToday(); S.slog[d] = (S.slog[d] || 0) + mins;
+  const m = S.slogSub[d] || (S.slogSub[d] = {}); m[subject] = (m[subject] || 0) + mins;
+}
+
+// 닫혀 있어도 보이게: 진행 중인 타이머를 알림으로 띄워 둔다 (알림을 켠 경우)
+async function focusNote(close) {
+  try {
+    if (!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.getRegistration(); if (!reg) return;
+    (await reg.getNotifications({ tag: 'hanul-focus' })).forEach(n => n.close());
+    if (close || !F || !S.notify || !('Notification' in window) || Notification.permission !== 'granted') return;
+    const body = F.paused ? `잠깐 멈춤 · ${mmLeft()}분 남았어요` : `${hhmm(F.end)}에 끝나요 · ${mmLeft()}분 남음`;
+    await reg.showNotification(`📚 ${F.x.subject} 공부 중`, { body: `${body}\n${C ? C.name : ''}가 옆에서 기다리는 중`, tag: 'hanul-focus', silent: true, requireInteraction: true, icon: 'icon-192.png', badge: 'icon-192.png', data: { url: './' } });
+  } catch (e) {}
+}
+function showFocusUI(noTick) {
+  const x = F.x;
+  $('focusSub').textContent = x.subject; $('focusPhase').textContent = x.range ? `${x.text.replace(x.subject + ' ', '')}, ${x.range}` : x.text.replace(x.subject + ' ', '');
+  $('focusWho').textContent = C.name;
+  $('focusPause').textContent = F.paused ? '계속하기' : '잠깐 멈춤'; $('focusStop').hidden = false;
+  $('focus').hidden = false; $('home').classList.add('focusing');
+  try { navigator.wakeLock && navigator.wakeLock.request('screen').then(w => wake = w).catch(() => {}); } catch (e) {}
+  clearInterval(fT); fT = setInterval(focusTick, 500); if (!noTick) focusTick();
+}
 function startFocus(x) {
   closeSheet();
   const len = S.study.len * 60e3;
-  F = { x, end: Date.now() + len, len, paused: 0, half: false };
-  $('focusSub').textContent = x.subject; $('focusPhase').textContent = x.range ? `${x.text.replace(x.subject + ' ', '')}, ${x.range}` : x.text.replace(x.subject + ' ', '');
-  $('focusWho').textContent = C.name;
+  F = { x, end: Date.now() + len, len, paused: 0, half: false, start: Date.now(), awayAt: 0, away: 0, awayN: 0, downAt: 0, downs: 0 };
+  saveF(); showFocusUI();
   typeInto($('focusLine'), fillT(C.app.study_start, { subject: x.subject }), 'focus');
-  $('focusPause').textContent = '잠깐 멈춤';
-  $('focus').hidden = false; $('home').classList.add('focusing');
-  try { navigator.wakeLock && navigator.wakeLock.request('screen').then(w => wake = w).catch(() => {}); } catch (e) {}
-  clearInterval(fT); fT = setInterval(focusTick, 500); focusTick();
+  // 아이폰은 기울기 센서를 쓰려면 허락이 필요하다 (버튼을 누른 지금 물어본다)
+  try { if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {}); } catch (e) {}
+  focusNote();
 }
 function focusTick() {
   if (!F) return;
   const left = F.paused ? F.paused : Math.max(0, F.end - Date.now());
   $('focusTime').textContent = `${pad(Math.floor(left / 60e3))}:${pad(Math.floor(left / 1e3) % 60)}`;
   $('focusBar').style.width = `${100 - left / F.len * 100}%`;
-  if (!F.half && left <= F.len / 2) { F.half = true; typeInto($('focusLine'), fillT(C.app.study_half), 'focus'); }
+  if (!F.half && left <= F.len / 2) { F.half = true; saveF(); typeInto($('focusLine'), fillT(C.app.study_half), 'focus'); }
   if (left <= 0 && !F.paused) finishFocus();
 }
-function finishFocus() {
-  const x = F.x, mins = Math.round(F.len / 60e3); clearInterval(fT); F = null;
+function finishFocus(whileAway) {
+  const x = F.x, mins = Math.round(F.len / 60e3), stats = { away: F.away, awayN: F.awayN, downs: F.downs };
+  clearInterval(fT); F = null; saveF();
   if (x.id) S.sdone[x.id] = mins;
-  const d = calToday(); S.slog[d] = (S.slog[d] || 0) + mins;
+  logMins(x.subject, mins);
   const s = st(C.code); s.aff = Math.min(C.affection.range[1], s.aff + 1); save();
-  ding(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {}
-  typeInto($('focusLine'), fillT(C.app.study_end), 'focus');
+  if (!whileAway) { ding(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} }
+  const extra = stats.downs ? ' 폰도 잘 엎어 뒀고.' : stats.awayN >= 2 ? ` 중간에 ${stats.awayN}번 나갔다 왔지만.` : '';
+  typeInto($('focusLine'), fillT(C.app.study_end) + (whileAway ? '' : extra), 'focus');
   $('focusTime').textContent = '00:00'; $('focusBar').style.width = '100%';
   $('focusPause').textContent = '닫기'; $('focusStop').hidden = true;
   if (window.popSticker) setTimeout(() => popSticker('sparkle'), 300);
+  focusNote(true);
+  // 앱이 뒤에 있으면 끝났다고 알린다
+  if (document.hidden && window.notifyFocusEnd) notifyFocusEnd(x.subject, mins);
+  if (window.pushSync) pushSync();
 }
-function closeFocus() { clearInterval(fT); F = null; $('focus').hidden = true; $('focusStop').hidden = false; $('home').classList.remove('focusing'); try { wake && wake.release(); } catch (e) {} renderHome(); }
+function closeFocus() { clearInterval(fT); F = null; saveF(); $('focus').hidden = true; $('focusStop').hidden = false; $('home').classList.remove('focusing'); try { wake && wake.release(); } catch (e) {} focusNote(true); if (window.pushSync) pushSync(); renderHome(); }
 $('focusPause').onclick = () => {
   if (!F) { closeFocus(); return; }
   if (F.paused) { F.end = Date.now() + F.paused; F.paused = 0; $('focusPause').textContent = '잠깐 멈춤'; }
   else { F.paused = Math.max(0, F.end - Date.now()); $('focusPause').textContent = '계속하기'; }
-  focusTick();
+  saveF(); focusNote(); if (window.pushSync) pushSync(); focusTick();
 };
 $('focusStop').onclick = () => {
   if (!F) return closeFocus();
   const done = Math.round((F.len - (F.paused || Math.max(0, F.end - Date.now()))) / 60e3);
-  if (done > 0) { const d = calToday(); S.slog[d] = (S.slog[d] || 0) + done; save(); }
+  logMins(F.x.subject, done); save();
   closeFocus(); toast(done > 0 ? `${done}분 공부했어요` : '타이머를 껐어요');
 };
-document.addEventListener('visibilitychange', () => { if (!document.hidden && F) focusTick(); });
+window.focusState = () => (F ? { subject: F.x.subject, end: F.end, paused: F.paused, len: F.len } : null);
+
+// 다른 앱에 다녀오면 어디 갔다 왔냐고 묻는다
+document.addEventListener('visibilitychange', () => {
+  if (!F) return;
+  if (document.hidden) { if (!F.paused) { F.awayAt = Date.now(); saveF(); focusNote(); } return; }
+  if (F.awayAt) {
+    const gone = Date.now() - F.awayAt; F.awayAt = 0;
+    if (gone > 20e3 && F.end > Date.now()) { F.away += gone; F.awayN++; focusSay('back', { n: Math.max(1, Math.round(gone / 60e3)) }); }
+    saveF();
+  }
+  focusTick();
+});
+// 폰을 엎어 두면 칭찬, 엎어 뒀다가 금방 다시 집으면 한마디 (기울기 센서)
+let downNow = false, downT = 0;
+addEventListener('deviceorientation', e => {
+  if (!F || F.paused || e.beta == null) return;
+  const down = Math.abs(e.beta) > 150 && Math.abs(e.gamma || 0) < 35;
+  if (down === downNow) return;
+  downNow = down; clearTimeout(downT);
+  if (down) downT = setTimeout(() => { if (!F || !downNow) return; F.downAt = Date.now(); F.downs++; saveF(); if (F.downs === 1 || Math.random() < .3) focusSay('down'); }, 1500);
+  else if (F.downAt && Date.now() - F.downAt > 60e3 && F.end - Date.now() > 60e3) { F.downAt = 0; saveF(); focusSay('up'); }
+});
+
+// 앱을 다시 열었을 때 이어서 (닫혀 있는 동안 끝났으면 마무리)
+(function restoreFocus() {
+  const f = S.focus;
+  if (!f || !f.x) return;
+  const go = () => {
+    if (!C || !$('home').classList.contains('on')) return setTimeout(go, 400);
+    if (F) return;
+    F = { awayAt: 0, away: 0, awayN: 0, downAt: 0, downs: 0, ...f }; delete F.code;
+    if (F.awayAt) { const gone = Math.min(Date.now(), F.end) - F.awayAt; if (gone > 20e3) { F.away += gone; F.awayN++; } F.awayAt = 0; }
+    const ended = !F.paused && F.end <= Date.now();
+    showFocusUI(ended);
+    if (ended) { finishFocus(true); toast('자리 비운 사이에 타이머가 끝났어요'); }
+    else typeInto($('focusLine'), F.paused ? '잠깐 멈춘 채로 있었어. 다시 할래?' : `이어서 하자. ${mmLeft()}분 남았어.`, 'focus');
+  };
+  setTimeout(go, 600);
+})();
+
+// ---------- 이번 주 공부 (막대 그래프) ----------
+function weekBox() {
+  const box = el('section', 'card week');
+  const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); return dk(d); });
+  const mins = days.map(d => S.slog[d] || 0), max = Math.max(60, ...mins), total = mins.reduce((a, b) => a + b, 0);
+  const subj = {}; days.forEach(d => Object.entries(S.slogSub[d] || {}).forEach(([k, v]) => subj[k] = (subj[k] || 0) + v));
+  const hm = m => (m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60 ? `${m % 60}분` : ''}`.trim() : `${m}분`);
+  box.innerHTML = `<h3>이번 주 공부<small>7일 합계 ${hm(total)}</small></h3>
+    <div class="wbars" role="img" aria-label="최근 7일 공부 시간: ${days.map((d, i) => `${WD[new Date(d + 'T12:00').getDay()]} ${mins[i]}분`).join(', ')}">
+    ${days.map((d, i) => `<div class="wb${d === calToday() ? ' today' : ''}"><span class="wv">${mins[i] ? mins[i] : ''}</span><i style="height:${Math.round(mins[i] / max * 100)}%"></i><span class="wd">${WD[new Date(d + 'T12:00').getDay()]}</span></div>`).join('')}</div>`;
+  const list = Object.entries(subj).sort((a, b) => b[1] - a[1]);
+  if (list.length) box.insertAdjacentHTML('beforeend', `<div class="wsub">${list.map(([k, v]) => `<span><b>${esc(k)}</b>${hm(v)}</span>`).join('')}</div>`);
+  else box.insertAdjacentHTML('beforeend', '<p class="hint">타이머로 공부하면 여기에 쌓여요.</p>');
+  return box;
+}
+// 기말 과목으로 바로 시작 (plan.js 가 과목 목록을 준다)
+function finalButtons() {
+  const list = window.finalSubjects ? finalSubjects() : [];
+  if (!list.length) return null;
+  const w = el('div', 'fsub');
+  w.appendChild(el('p', 'hint top', '기말 과목으로 50분 시작'));
+  const row = el('div', 'fsub-row');
+  list.forEach(n => { const x = el('button', 'btn ghost sm', esc(n)); x.onclick = () => startFocus({ id: null, subject: n, text: `${n} 기말 공부`, range: '' }); row.appendChild(x); });
+  w.appendChild(row); return w;
+}
 
 // ---------- 인사·대화·메인 화면에 붙이기 ----------
 const baseGreet = window.greetExtra;

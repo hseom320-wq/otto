@@ -299,6 +299,19 @@ addEventListener('storage', e => {
   if ($('planView').hidden) cheerIfDone();
 });
 
+// 공부 타이머가 기말 과목 버튼을 만들 수 있게 (아직 시험이 안 끝난 과목)
+window.finalSubjects = () => { if (!P) return []; const td = todayISO(); return (P.subjects || []).filter(x => x.exam && x.exam.date >= td).map(x => x.name); };
+window.finalStatus = () => status();
+// 알림 서버용: 오늘부터 앞으로 날짜별 남은 할 일 수·첫 할 일·시험
+window.finalDays = () => {
+  if (!P) return [];
+  const td = todayISO(), done = doneMap();
+  return DAYS.filter(d => d.date >= td).slice(0, 8).map(d => {
+    const left = d.tasks.filter(t => !done[t.id]);
+    return { date: d.date, left: left.length, first: left[0] ? `${kindName(left[0].kind)}: ${left[0].text}` : '', exams: d.exams };
+  });
+};
+
 // 다른 기능(혼잣말 등)이 다음 시험을 알 수 있게
 window.nextExamInfo = () => { const s = status(); return s && s.next ? { subject: s.next.exams[0].name, n: s.dday } : null; };
 

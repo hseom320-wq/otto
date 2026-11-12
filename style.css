@@ -427,3 +427,17 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .neko img { display: block; max-width: none; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.35)); }
 .neko-shadow { position: absolute; left: 0; top: 0; z-index: 3; height: 12px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.55), rgba(0,0,0,0)); pointer-events: none; transform-origin: 50% 50%; }
 #home.focusing .neko, #home.focusing .neko-shadow { opacity: .35; pointer-events: none; }
+
+/* ---------- 공부: 이번 주 그래프 · 기말 과목 버튼 ---------- */
+.card.week { margin-top: 14px; }
+.wbars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 120px; margin: 6px 0 4px; }
+.wb { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 3px; min-width: 0; }
+.wb i { display: block; width: 70%; min-height: 2px; border-radius: 4px 4px 1px 1px; background: rgba(255,255,255,.18); }
+.wb.today i { background: var(--accent); }
+.wb .wv { font-family: var(--f-num); font-size: 11px; color: var(--mute); min-height: 1em; }
+.wb .wd { font-size: 11.5px; color: var(--mute); }
+.wb.today .wd { color: #fff; font-weight: 700; }
+.wsub { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 13px; color: var(--mute); }
+.wsub b { color: #eef2f6; font-weight: 600; margin-right: 5px; }
+.fsub { margin-top: 12px; }
+.fsub-row { display: flex; flex-wrap: wrap; gap: 6px; }
