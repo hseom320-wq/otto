@@ -1,0 +1,20 @@
+{
+ "character": "ns",
+ "scene": "wide_morning",
+ "expression": "shy",
+ "source": "NovelAI Director Tools (emotion)",
+ "emotion": "embarrassed",
+ "based_on": "assets/ns/scene-wide/morning.webp",
+ "crop": [
+  1088,
+  168,
+  704,
+  704
+ ],
+ "patch": {
+  "x": 1216,
+  "y": 391,
+  "w": 430,
+  "h": 358
+ }
+}
