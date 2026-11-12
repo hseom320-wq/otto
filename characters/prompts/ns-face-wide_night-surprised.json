@@ -1,0 +1,20 @@
+{
+ "character": "ns",
+ "scene": "wide_night",
+ "expression": "surprised",
+ "source": "NovelAI Director Tools (emotion)",
+ "emotion": "surprised",
+ "based_on": "assets/ns/scene-wide/night.webp",
+ "crop": [
+  888,
+  128,
+  704,
+  704
+ ],
+ "patch": {
+  "x": 1066,
+  "y": 381,
+  "w": 485,
+  "h": 355
+ }
+}

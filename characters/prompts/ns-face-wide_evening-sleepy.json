@@ -1,0 +1,20 @@
+{
+ "character": "ns",
+ "scene": "wide_evening",
+ "expression": "sleepy",
+ "source": "NovelAI Director Tools (emotion)",
+ "emotion": "bored",
+ "based_on": "assets/ns/scene-wide/evening.webp",
+ "crop": [
+  1028,
+  208,
+  704,
+  704
+ ],
+ "patch": {
+  "x": 1196,
+  "y": 341,
+  "w": 400,
+  "h": 325
+ }
+}
