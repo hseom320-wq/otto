@@ -31,6 +31,8 @@ function guess(text) {
   return 'none';
 }
 
+window.guessMood = guess; // 표정(face.js)도 같은 짐작을 쓴다
+
 // ---------- 소리 만들기 ----------
 function ctx() {
   try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }

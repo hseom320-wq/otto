@@ -393,8 +393,8 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 /* 움찔할 때 화면 끝이 비지 않게 무대를 화면보다 조금 크게 둔다 */
 .stage { position: absolute; inset: -2.5%; overflow: hidden; }
 #home { overflow: hidden; }
-.stage .bg { transform-origin: 50% 94%; }
-.moving .stage .bg { animation: breathe 4.8s ease-in-out infinite, sway 10s ease-in-out infinite; }
+.actor { position: absolute; inset: 0; transform-origin: 50% 94%; }
+.moving .stage .actor { animation: breathe 4.8s ease-in-out infinite, sway 10s ease-in-out infinite; }
 @keyframes breathe { 0%, 100% { scale: 1 1; } 45% { scale: 1 1.008; } }
 @keyframes sway { 0%, 100% { rotate: -0.22deg; } 50% { rotate: 0.22deg; } }
 /* 건드리면 움찔 (누른 반대쪽으로 살짝 피했다 돌아온다) */
@@ -407,3 +407,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 @keyframes flinchR { 0% { transform: none; } 16% { transform: translateX(.9%) rotate(.35deg); } 42% { transform: translateX(-.35%) rotate(-.12deg); } 72% { transform: translateX(.15%); } 100% { transform: none; } }
 @keyframes jolt { 0%, 100% { transform: none; } 12% { transform: translateY(-.8%); } 26% { transform: translateX(-1%); } 40% { transform: translateX(.9%); } 54% { transform: translateX(-.7%); } 68% { transform: translateX(.4%); } }
 @keyframes talk { 0% { transform: none; } 30% { transform: translateY(-.45%); } 100% { transform: none; } }
+
+/* 표정 조각 (face.js): 장면 그림 위에 얼굴 부분만 겹친다 */
+.face { position: absolute; pointer-events: none; max-width: none; }
+.face[hidden] { display: none; }

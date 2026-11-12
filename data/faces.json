@@ -1,0 +1,52 @@
+{
+ "ns": {
+  "assets/ns/scene/morning.webp": {
+   "w": 1080,
+   "h": 2340,
+   "faces": {
+    "angry": {
+     "img": "assets/ns/face/morning-angry.webp",
+     "x": 227,
+     "y": 370,
+     "w": 403,
+     "h": 311
+    },
+    "blink": {
+     "img": "assets/ns/face/morning-blink.webp",
+     "x": 229,
+     "y": 361,
+     "w": 401,
+     "h": 235
+    },
+    "shy": {
+     "img": "assets/ns/face/morning-shy.webp",
+     "x": 227,
+     "y": 370,
+     "w": 403,
+     "h": 311
+    },
+    "sleepy": {
+     "img": "assets/ns/face/morning-sleepy.webp",
+     "x": 227,
+     "y": 370,
+     "w": 403,
+     "h": 311
+    },
+    "smile": {
+     "img": "assets/ns/face/morning-smile.webp",
+     "x": 227,
+     "y": 370,
+     "w": 403,
+     "h": 311
+    },
+    "surprised": {
+     "img": "assets/ns/face/morning-surprised.webp",
+     "x": 227,
+     "y": 370,
+     "w": 403,
+     "h": 311
+    }
+   }
+  }
+ }
+}
