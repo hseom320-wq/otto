@@ -11,13 +11,6 @@
      "w": 403,
      "h": 311
     },
-    "blink": {
-     "img": "assets/ns/face/morning-blink.webp",
-     "x": 229,
-     "y": 361,
-     "w": 401,
-     "h": 235
-    },
     "shy": {
      "img": "assets/ns/face/morning-shy.webp",
      "x": 227,

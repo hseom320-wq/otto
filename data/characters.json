@@ -533,6 +533,7 @@
    "scenes": {
     "morning": {
      "img": "assets/ns/scene/morning.webp",
+     "video": "assets/ns/scene/morning.mp4",
      "wide": {
       "img": "assets/ns/scene-wide/morning.webp"
      }

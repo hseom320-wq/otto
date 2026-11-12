@@ -411,3 +411,8 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 /* 표정 조각 (face.js): 장면 그림 위에 얼굴 부분만 겹친다 */
 .face { position: absolute; pointer-events: none; max-width: none; }
 .face[hidden] { display: none; }
+
+/* 영상 장면: 영상 자체가 숨쉬고 눈을 깜빡이니 그림용 흔들림은 끈다. 표정이 필요할 때만 원래 그림을 부드럽게 덮는다 */
+.moving #home.has-video .actor { animation: none; }
+.bg.still { opacity: 0; transition: opacity .3s ease; pointer-events: none; }
+.bg.still.on { opacity: 1; }
