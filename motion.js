@@ -33,6 +33,11 @@ typeInto = function (el, text, id) {
   return baseType.apply(this, arguments);
 };
 
+// 반복 영상 장면이면 영상 자체가 숨쉬고 깜빡이니, 그림용 숨쉬기·흔들림은 끈다 (움찔은 그대로)
+const markVideo = () => $('home').classList.toggle('has-video', !$('bgv').hidden);
+new MutationObserver(markVideo).observe($('bgv'), { attributes: true, attributeFilter: ['hidden', 'src'] });
+markVideo();
+
 // 설정 화면에 더하기
 const baseSet = SHEETS.set.render;
 SHEETS.set.render = function () {
