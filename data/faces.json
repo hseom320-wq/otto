@@ -9,37 +9,43 @@
      "x": 629,
      "y": 523,
      "w": 448,
-     "h": 406
+     "h": 406,
+     "img_v": "assets/ns/face/day-angry-v.webp"
     },
     "shy": {
      "img": "assets/ns/face/day-shy.webp",
      "x": 629,
      "y": 523,
      "w": 448,
-     "h": 406
+     "h": 406,
+     "img_v": "assets/ns/face/day-shy-v.webp"
     },
     "sleepy": {
      "img": "assets/ns/face/day-sleepy.webp",
      "x": 629,
      "y": 523,
      "w": 448,
-     "h": 406
+     "h": 406,
+     "img_v": "assets/ns/face/day-sleepy-v.webp"
     },
     "smile": {
      "img": "assets/ns/face/day-smile.webp",
      "x": 629,
      "y": 523,
      "w": 448,
-     "h": 406
+     "h": 406,
+     "img_v": "assets/ns/face/day-smile-v.webp"
     },
     "surprised": {
      "img": "assets/ns/face/day-surprised.webp",
      "x": 629,
      "y": 523,
      "w": 448,
-     "h": 406
+     "h": 406,
+     "img_v": "assets/ns/face/day-surprised-v.webp"
     }
-   }
+   },
+   "vstill": "assets/ns/scene/day-v.webp"
   },
   "assets/ns/scene/evening.webp": {
    "w": 1080,
@@ -50,37 +56,43 @@
      "x": 241,
      "y": 313,
      "w": 433,
-     "h": 336
+     "h": 336,
+     "img_v": "assets/ns/face/evening-angry-v.webp"
     },
     "shy": {
      "img": "assets/ns/face/evening-shy.webp",
      "x": 241,
      "y": 313,
      "w": 433,
-     "h": 336
+     "h": 336,
+     "img_v": "assets/ns/face/evening-shy-v.webp"
     },
     "sleepy": {
      "img": "assets/ns/face/evening-sleepy.webp",
      "x": 241,
      "y": 313,
      "w": 433,
-     "h": 336
+     "h": 336,
+     "img_v": "assets/ns/face/evening-sleepy-v.webp"
     },
     "smile": {
      "img": "assets/ns/face/evening-smile.webp",
      "x": 241,
      "y": 313,
      "w": 433,
-     "h": 336
+     "h": 336,
+     "img_v": "assets/ns/face/evening-smile-v.webp"
     },
     "surprised": {
      "img": "assets/ns/face/evening-surprised.webp",
      "x": 241,
      "y": 313,
      "w": 433,
-     "h": 336
+     "h": 336,
+     "img_v": "assets/ns/face/evening-surprised-v.webp"
     }
-   }
+   },
+   "vstill": "assets/ns/scene/evening-v.webp"
   },
   "assets/ns/scene/morning.webp": {
    "w": 1080,
@@ -91,37 +103,43 @@
      "x": 203,
      "y": 343,
      "w": 453,
-     "h": 363
+     "h": 363,
+     "img_v": "assets/ns/face/morning-angry-v.webp"
     },
     "shy": {
      "img": "assets/ns/face/morning-shy.webp",
      "x": 203,
      "y": 343,
      "w": 453,
-     "h": 363
+     "h": 363,
+     "img_v": "assets/ns/face/morning-shy-v.webp"
     },
     "sleepy": {
      "img": "assets/ns/face/morning-sleepy.webp",
      "x": 203,
      "y": 343,
      "w": 453,
-     "h": 363
+     "h": 363,
+     "img_v": "assets/ns/face/morning-sleepy-v.webp"
     },
     "smile": {
      "img": "assets/ns/face/morning-smile.webp",
      "x": 203,
      "y": 343,
      "w": 453,
-     "h": 363
+     "h": 363,
+     "img_v": "assets/ns/face/morning-smile-v.webp"
     },
     "surprised": {
      "img": "assets/ns/face/morning-surprised.webp",
      "x": 203,
      "y": 343,
      "w": 453,
-     "h": 363
+     "h": 363,
+     "img_v": "assets/ns/face/morning-surprised-v.webp"
     }
-   }
+   },
+   "vstill": "assets/ns/scene/morning-v.webp"
   },
   "assets/ns/scene/night.webp": {
    "w": 1080,
@@ -132,37 +150,43 @@
      "x": 83,
      "y": 451,
      "w": 505,
-     "h": 368
+     "h": 368,
+     "img_v": "assets/ns/face/night-angry-v.webp"
     },
     "shy": {
      "img": "assets/ns/face/night-shy.webp",
      "x": 83,
      "y": 451,
      "w": 505,
-     "h": 368
+     "h": 368,
+     "img_v": "assets/ns/face/night-shy-v.webp"
     },
     "sleepy": {
      "img": "assets/ns/face/night-sleepy.webp",
      "x": 83,
      "y": 451,
      "w": 505,
-     "h": 368
+     "h": 368,
+     "img_v": "assets/ns/face/night-sleepy-v.webp"
     },
     "smile": {
      "img": "assets/ns/face/night-smile.webp",
      "x": 83,
      "y": 451,
      "w": 505,
-     "h": 368
+     "h": 368,
+     "img_v": "assets/ns/face/night-smile-v.webp"
     },
     "surprised": {
      "img": "assets/ns/face/night-surprised.webp",
      "x": 83,
      "y": 451,
      "w": 505,
-     "h": 368
+     "h": 368,
+     "img_v": "assets/ns/face/night-surprised-v.webp"
     }
-   }
+   },
+   "vstill": "assets/ns/scene/night-v.webp"
   },
   "assets/ns/scene-wide/day.webp": {
    "w": 2560,
@@ -173,37 +197,43 @@
      "x": 1188,
      "y": 345,
      "w": 388,
-     "h": 287
+     "h": 287,
+     "img_v": "assets/ns/face/wide_day-angry-v.webp"
     },
     "shy": {
      "img": "assets/ns/face/wide_day-shy.webp",
      "x": 1188,
      "y": 345,
      "w": 388,
-     "h": 287
+     "h": 287,
+     "img_v": "assets/ns/face/wide_day-shy-v.webp"
     },
     "sleepy": {
      "img": "assets/ns/face/wide_day-sleepy.webp",
      "x": 1188,
      "y": 345,
      "w": 388,
-     "h": 287
+     "h": 287,
+     "img_v": "assets/ns/face/wide_day-sleepy-v.webp"
     },
     "smile": {
      "img": "assets/ns/face/wide_day-smile.webp",
      "x": 1188,
      "y": 345,
      "w": 388,
-     "h": 287
+     "h": 287,
+     "img_v": "assets/ns/face/wide_day-smile-v.webp"
     },
     "surprised": {
      "img": "assets/ns/face/wide_day-surprised.webp",
      "x": 1188,
      "y": 345,
      "w": 388,
-     "h": 287
+     "h": 287,
+     "img_v": "assets/ns/face/wide_day-surprised-v.webp"
     }
-   }
+   },
+   "vstill": "assets/ns/scene-wide/day-v.webp"
   },
   "assets/ns/scene-wide/evening.webp": {
    "w": 2560,
@@ -214,37 +244,43 @@
      "x": 1196,
      "y": 341,
      "w": 400,
-     "h": 325
+     "h": 325,
+     "img_v": "assets/ns/face/wide_evening-angry-v.webp"
     },
     "shy": {
      "img": "assets/ns/face/wide_evening-shy.webp",
      "x": 1196,
      "y": 341,
      "w": 400,
-     "h": 325
+     "h": 325,
+     "img_v": "assets/ns/face/wide_evening-shy-v.webp"
     },
     "sleepy": {
      "img": "assets/ns/face/wide_evening-sleepy.webp",
      "x": 1196,
      "y": 341,
      "w": 400,
-     "h": 325
+     "h": 325,
+     "img_v": "assets/ns/face/wide_evening-sleepy-v.webp"
     },
     "smile": {
      "img": "assets/ns/face/wide_evening-smile.webp",
      "x": 1196,
      "y": 341,
      "w": 400,
-     "h": 325
+     "h": 325,
+     "img_v": "assets/ns/face/wide_evening-smile-v.webp"
     },
     "surprised": {
      "img": "assets/ns/face/wide_evening-surprised.webp",
      "x": 1196,
      "y": 341,
      "w": 400,
-     "h": 325
+     "h": 325,
+     "img_v": "assets/ns/face/wide_evening-surprised-v.webp"
     }
-   }
+   },
+   "vstill": "assets/ns/scene-wide/evening-v.webp"
   },
   "assets/ns/scene-wide/morning.webp": {
    "w": 2560,
@@ -255,37 +291,43 @@
      "x": 1216,
      "y": 391,
      "w": 430,
-     "h": 358
+     "h": 358,
+     "img_v": "assets/ns/face/wide_morning-angry-v.webp"
     },
     "shy": {
      "img": "assets/ns/face/wide_morning-shy.webp",
      "x": 1216,
      "y": 391,
      "w": 430,
-     "h": 358
+     "h": 358,
+     "img_v": "assets/ns/face/wide_morning-shy-v.webp"
     },
     "sleepy": {
      "img": "assets/ns/face/wide_morning-sleepy.webp",
      "x": 1216,
      "y": 391,
      "w": 430,
-     "h": 358
+     "h": 358,
+     "img_v": "assets/ns/face/wide_morning-sleepy-v.webp"
     },
     "smile": {
      "img": "assets/ns/face/wide_morning-smile.webp",
      "x": 1216,
      "y": 391,
      "w": 430,
-     "h": 358
+     "h": 358,
+     "img_v": "assets/ns/face/wide_morning-smile-v.webp"
     },
     "surprised": {
      "img": "assets/ns/face/wide_morning-surprised.webp",
      "x": 1216,
      "y": 391,
      "w": 430,
-     "h": 358
+     "h": 358,
+     "img_v": "assets/ns/face/wide_morning-surprised-v.webp"
     }
-   }
+   },
+   "vstill": "assets/ns/scene-wide/morning-v.webp"
   },
   "assets/ns/scene-wide/night.webp": {
    "w": 2560,
@@ -296,37 +338,43 @@
      "x": 1066,
      "y": 381,
      "w": 485,
-     "h": 355
+     "h": 355,
+     "img_v": "assets/ns/face/wide_night-angry-v.webp"
     },
     "shy": {
      "img": "assets/ns/face/wide_night-shy.webp",
      "x": 1066,
      "y": 381,
      "w": 485,
-     "h": 355
+     "h": 355,
+     "img_v": "assets/ns/face/wide_night-shy-v.webp"
     },
     "sleepy": {
      "img": "assets/ns/face/wide_night-sleepy.webp",
      "x": 1066,
      "y": 381,
      "w": 485,
-     "h": 355
+     "h": 355,
+     "img_v": "assets/ns/face/wide_night-sleepy-v.webp"
     },
     "smile": {
      "img": "assets/ns/face/wide_night-smile.webp",
      "x": 1066,
      "y": 381,
      "w": 485,
-     "h": 355
+     "h": 355,
+     "img_v": "assets/ns/face/wide_night-smile-v.webp"
     },
     "surprised": {
      "img": "assets/ns/face/wide_night-surprised.webp",
      "x": 1066,
      "y": 381,
      "w": 485,
-     "h": 355
+     "h": 355,
+     "img_v": "assets/ns/face/wide_night-surprised-v.webp"
     }
-   }
+   },
+   "vstill": "assets/ns/scene-wide/night-v.webp"
   }
  }
 }

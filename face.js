@@ -34,9 +34,12 @@ function setFor() {
   cur = (base && code && FACES[code] && FACES[code][base]) || null;
   if (!cur) { hideAll(); return; }
   // 미리 받아 둔다 (바꿀 때 깜빡이지 않게)
-  Object.values(cur.faces).forEach(f => { const i = new Image(); i.src = f.img; });
-  if (video) { const i = new Image(); i.src = base; }
+  Object.values(cur.faces).forEach(f => { const i = new Image(); i.src = faceImg(f); });
+  if (video) { const i = new Image(); i.src = stillImg(); }
 }
+// 영상 장면에서는 색을 영상에 맞춘 판을 쓴다 (없으면 원래 것)
+const stillImg = () => (video && cur && cur.vstill) || base;
+const faceImg = f => (video && f.img_v) || f.img;
 function hideAll() {
   const was = showing && video && still.classList.contains('on');
   showing = ''; layers.forEach(l => l.classList.remove('on'));
@@ -75,7 +78,7 @@ function show(expr) {
   if (expr === showing) return;
   showing = expr;
   if (video) {
-    if (still.getAttribute('src') !== base) still.src = base;
+    if (still.getAttribute('src') !== stillImg()) still.src = stillImg();
     still.style.objectPosition = $('bgv').style.objectPosition;
     still.classList.add('on');
   }
@@ -84,7 +87,7 @@ function show(expr) {
   place(expr, l);
   const swap = () => { if (showing !== expr) return; l.classList.add('on'); old.classList.remove('on'); front = next; };
   clearTimeout(showT);
-  if (l.getAttribute('src') !== f.img) { l.src = f.img; (l.decode ? l.decode() : Promise.resolve()).then(swap, swap); }
+  if (l.getAttribute('src') !== faceImg(f)) { l.src = faceImg(f); (l.decode ? l.decode() : Promise.resolve()).then(swap, swap); }
   else showT = setTimeout(swap, 0);
 }
 // 감정 → 표정 (잠깐 보였다가 원래 얼굴로)
