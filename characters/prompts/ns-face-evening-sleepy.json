@@ -3,7 +3,8 @@
  "scene": "evening",
  "expression": "sleepy",
  "source": "NovelAI Director Tools (emotion)",
- "emotion": "bored",
+ "emotion": "neutral",
+ "defry": 2,
  "based_on": "assets/ns/scene/evening.webp",
  "crop": [
   98,

@@ -116,6 +116,15 @@ def infill(crop_im, mask, prompt, neg, seed, vibe=None):
 # 표정 → 노벨AI 감정 바꾸기 값
 # sleepy 는 'tired'가 눈 밑을 시커멓게 그려서 'bored'(반쯤 감긴 눈)를 쓴다
 EMOTION = {'smile': 'happy', 'angry': 'angry', 'shy': 'embarrassed', 'surprised': 'surprised', 'sleepy': 'bored'}
+# 잔잔한 표정 (원래 그림체·성격에 맞게): (감정, defry 바꾸는 세기 0=가장 세게 ~ 5=가장 약하게, 덧붙일 말)
+SUBTLE = {
+    'smile': ('happy', 3, 'gentle closed-mouth smile'),
+    'angry': ('irritated', 2, 'narrowed eyes, slight frown'),
+    'shy': ('shy', 2, 'light blush, looking away'),
+    'surprised': ('surprised', 5, 'closed mouth, slightly widened eyes, raised eyebrows, blue eyes'),  # 'surprised'는 약하게 해도 입을 크게 벌리고, 'confused'는 눈이 소용돌이가 된다
+    'sleepy': ('neutral', 2, 'sleepy, drowsy, half-closed eyes'),
+}
+STYLE = os.environ.get('EXPR_STYLE', 'subtle')  # subtle(기본) | strong(예전 세게)
 BIG = 1088  # 무료 칸(1024x1024 이하)은 막혀 있어서 조금 키워 보낸다 (아날스 사용)
 
 
@@ -137,7 +146,13 @@ def make_emotion(key, expr):
     base = Image.open(os.path.join(ROOT, f['img'])).convert('RGB')
     x0, y0 = f['crop']
     crop_im = base.crop((x0, y0, x0 + CROP, y0 + CROP))
-    out = emotion(crop_im, EMOTION[expr], hint=f.get('hint', ''))  # hint: 꼭 남겨야 할 것 (예: 입에 문 칫솔)
+    hint = f.get('hint', '')  # hint: 꼭 남겨야 할 것 (예: 입에 문 칫솔)
+    if STYLE == 'subtle':
+        emo, defry, extra = SUBTLE[expr]
+        out = emotion(crop_im, emo, defry, ', '.join(x for x in (extra, hint) if x))
+    else:
+        emo, defry = EMOTION[expr], 0
+        out = emotion(crop_im, emo, hint=hint)
     if os.environ.get('PREVIEW_DIR'): out.save(os.path.join(os.environ['PREVIEW_DIR'], f'{key}-{expr}-raw.png'))
     # 얼굴(눈썹~턱) 부분만 넉넉히, 가장자리는 부드럽게 붙인다
     m = Image.new('L', (CROP, CROP), 0); ImageDraw.Draw(m).polygon(f['face'], fill=255)
@@ -148,7 +163,7 @@ def make_emotion(key, expr):
     name = f'{scene}-{expr}'
     patch.save(os.path.join(d, name + '.webp'), 'WEBP', quality=90, method=6)
     meta = {'character': code, 'scene': scene, 'expression': expr, 'source': 'NovelAI Director Tools (emotion)',
-            'emotion': EMOTION[expr], 'based_on': f['img'], 'crop': [x0, y0, CROP, CROP],
+            'emotion': emo, 'defry': defry, 'based_on': f['img'], 'crop': [x0, y0, CROP, CROP],
             'patch': {'x': x0 + bx[0], 'y': y0 + bx[1], 'w': bx[2] - bx[0], 'h': bx[3] - bx[1]}}
     json.dump(meta, open(os.path.join(ROOT, 'characters', 'prompts', f'{code}-face-{name}.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     prev = crop_im.copy(); prev.paste(out, (0, 0), alpha)
