@@ -125,29 +125,54 @@ function render() {
   q('.b-off').hidden = !frame;
   if (page === 'home') {
     const t = todayText();
-    view.innerHTML = `<div class="tv-home"><div class="tv-btns">${Object.entries(SITES).map(([k, s]) => `<button data-site="${k}" style="--c:${s.color}">${s.icon}<span>${s.name}</span></button>`).join('')}</div>${t ? `<p class="tv-today">${t}</p>` : ''}</div>`;
+    // 보다 만 영상이 있으면 바로 이어 보기
+    const r = (S.tvRecent || []).find(x => x.pos > 10 && (!x.len || x.pos < x.len - 20));
+    view.innerHTML = `<div class="tv-home"><div class="tv-btns">${Object.entries(SITES).map(([k, s]) => `<button data-site="${k}" style="--c:${s.color}">${s.icon}<span>${s.name}</span></button>`).join('')}</div>
+      ${r ? `<button class="tv-resume"><img src="${esc(r.thumb || `https://i.ytimg.com/vi/${r.id}/mqdefault.jpg`)}" alt=""><span>이어보기 · ${esc(r.title || '보던 영상')}</span></button>` : ''}${t ? `<p class="tv-today">${t}</p>` : ''}</div>`;
+    if (r) view.querySelector('.tv-resume').onclick = () => ytPlay({ id: r.id }, r.title, r.thumb);
     view.querySelectorAll('.tv-btns button').forEach(b => b.onclick = () => go(b.dataset.site === 'youtube' ? 'yt' : b.dataset.site));
   } else if (page === 'yt') {
-    const list = results || (S.tvRecent || []);
+    const recent = S.tvRecent || [], list = results || recent;
+    const seen = Object.fromEntries(recent.map(x => [x.id, x]));
+    const searches = S.tvSearches || [];
+    const item = x => {
+      const r = seen[x.id] || {}, pct = r.pos && r.len ? Math.min(100, Math.round(r.pos / r.len * 100)) : 0;
+      return `<div class="tv-item"><button class="tv-vid" data-id="${esc(x.id)}" data-title="${esc(x.title || r.title || '')}" data-thumb="${esc(x.thumb || '')}">
+        <i class="th"><img src="${esc(x.thumb || `https://i.ytimg.com/vi/${x.id}/mqdefault.jpg`)}" alt="" loading="lazy">${pct > 2 && pct < 97 ? `<em style="width:${pct}%"></em><u>이어보기</u>` : (pct >= 97 ? '<u>다 봄</u>' : '')}</i>
+        <span><b>${esc(x.title || r.title || '유튜브 영상')}</b>${(x.ch || r.ch) ? `<small>${esc(x.ch || r.ch)}</small>` : ''}${S.tvSubj && S.tvSubj[x.id] ? `<small class="subj">${esc(S.tvSubj[x.id])} 공부</small>` : ''}</span></button>
+        ${results ? '' : `<button class="tv-del" data-del="${esc(x.id)}" aria-label="최근 목록에서 지우기">×</button>`}</div>`;
+    };
     view.innerHTML = `<div class="tv-yt">
       <form class="tv-search"><span class="logo">${SITES.youtube.icon}</span><input type="search" enterkeyhint="search" placeholder="검색 또는 링크 붙여넣기" aria-label="유튜브 검색 또는 링크"><button>찾기</button></form>
       <div class="tv-scroll">
+        ${searches.length ? `<div class="tv-chips">${results ? '<button class="chip home">← 최근 영상</button>' : ''}${searches.map(t => `<button class="chip" data-q="${esc(t)}">${esc(t)}</button>`).join('')}</div>` : (results ? '<div class="tv-chips"><button class="chip home">← 최근 영상</button></div>' : '')}
         ${ytMsg ? `<p class="tv-msg">${ytMsg}</p>` : ''}
-        ${list.length ? `<p class="tv-h">${results ? `"${esc(lastQ)}" 검색 결과` : '최근에 본 영상'}</p>` : ''}
-        <div class="tv-list">${list.map(x => `<button data-id="${esc(x.id)}" data-title="${esc(x.title || '')}" data-thumb="${esc(x.thumb || '')}"><img src="${esc(x.thumb || `https://i.ytimg.com/vi/${x.id}/mqdefault.jpg`)}" alt="" loading="lazy"><span><b>${esc(x.title || '유튜브 영상')}</b>${x.ch ? `<small>${esc(x.ch)}</small>` : ''}</span></button>`).join('')}</div>
+        ${list.length ? `<p class="tv-h"><span>${results ? `"${esc(lastQ)}" 검색 결과` : '최근에 본 영상'}</span>${results ? '' : '<button class="tv-clear">모두 지우기</button>'}</p>` : ''}
+        <div class="tv-list">${list.map(item).join('')}</div>
         ${!results && !ytMsg ? `<p class="tv-msg">${list.length ? '' : '아직 본 영상이 없어요. '}유튜브 앱에서 영상의 <b>공유 → 한울아파트</b>를 눌러도 여기서 나와요.</p>` : ''}
         <div class="tv-row"><button class="paste">복사한 링크 틀기</button><button class="out">유튜브 앱으로</button></div>
       </div></div>`;
     const inp = view.querySelector('input');
     if (results) inp.value = lastQ;
-    view.querySelector('form').onsubmit = async e => {
-      e.preventDefault(); const t = inp.value.trim(); if (!t) return;
-      const y = ytParse(t); if (y) { ytPlay(y); return; }
-      inp.blur(); lastQ = t; ytMsg = '찾는 중…'; results = null; render();
+    const search = async t => {
+      lastQ = t; ytMsg = '찾는 중…'; results = null; render();
+      S.tvSearches = [t, ...(S.tvSearches || []).filter(x => x !== t)].slice(0, 8); save();
       try { results = await ytSearch(t); ytMsg = results.length ? '' : '검색 결과가 없어요.'; }
       catch (err) { results = null; ytMsg = searchError(err); }
-      if (page === 'yt') render();
+      if (page === 'yt') { render(); const sc = view.querySelector('.tv-scroll'); if (sc) sc.scrollTop = 0; }
     };
+    view.querySelector('form').onsubmit = e => {
+      e.preventDefault(); const t = inp.value.trim(); if (!t) return;
+      const y = ytParse(t); if (y) { ytPlay(y); return; }
+      inp.blur(); search(t);
+    };
+    // 폰을 세워 들었을 때는 TV가 작으니, 검색 칸을 누르면 화면을 크게 키운다
+    inp.addEventListener('focus', () => { if (!full && innerWidth < innerHeight && innerWidth < 700) { autoFull = true; setFull(true); } });
+    view.querySelectorAll('.chip[data-q]').forEach(b => b.onclick = () => { if (!full && innerWidth < innerHeight && innerWidth < 700) { autoFull = true; setFull(true); } search(b.dataset.q); });
+    const home = view.querySelector('.chip.home'); if (home) home.onclick = () => { results = null; ytMsg = ''; render(); };
+    view.querySelectorAll('.tv-del').forEach(b => b.onclick = () => { S.tvRecent = (S.tvRecent || []).filter(x => x.id !== b.dataset.del); save(); render(); });
+    const clr = view.querySelector('.tv-clear');
+    if (clr) clr.onclick = () => { if (confirm('최근에 본 영상 목록을 모두 지울까요?')) { S.tvRecent = []; save(); render(); } };
     view.querySelector('.paste').onclick = async () => {
       let t = '';
       try { t = await navigator.clipboard.readText(); } catch (e) {}
@@ -155,7 +180,7 @@ function render() {
       if (y) ytPlay(y); else { ytMsg = t ? '복사한 글에 유튜브 링크가 없어요.' : '복사한 링크를 못 읽었어요. 검색 칸을 길게 눌러 붙여 넣어 주세요.'; render(); }
     };
     view.querySelector('.out').onclick = () => openOut('youtube');
-    view.querySelectorAll('.tv-list button').forEach(b => b.onclick = () => ytPlay({ id: b.dataset.id }, b.dataset.title, b.dataset.thumb));
+    view.querySelectorAll('.tv-vid').forEach(b => b.onclick = () => ytPlay({ id: b.dataset.id }, b.dataset.title, b.dataset.thumb));
     const key = view.querySelector('.setkey');
     if (key) key.onclick = () => { const k = prompt('유튜브 검색용 구글 API 키 (이 기기에만 저장돼요)', S.ytKey || ''); if (k != null) { S.ytKey = k.trim(); save(); ytMsg = ''; render(); } };
   } else if (page === 'band') {
@@ -188,24 +213,72 @@ function showFrame(src, info) {
   view.innerHTML = ''; view.appendChild(frame);
   v.classList.add('on');
   if (info.site === 'youtube') page = 'play';
-  watch = { site: info.site, title: info.title || '', ms: 0, from: document.hidden ? 0 : Date.now() };
+  yt = info.id ? { id: info.id, api: false, state: -1, pos: 0, len: 0, saved: 0 } : null;
+  if (yt) frame.addEventListener('load', hello, { once: true });
+  watch = { site: info.site, id: info.id || '', title: info.title || '', ms: 0, from: 0 };
+  sync();
   v.dataset.page = page; q('.b-back').hidden = false; q('.b-off').hidden = false;
 }
 function stopFrame(quiet) {
+  if (yt) remember(true);
   if (frame) { frame.remove(); frame = null; }
+  yt = null;
   v.classList.remove('on');
   q('.b-off').hidden = true;
   stopWatch(quiet);
 }
-// 본 시간 재기 (앱이 화면에 보일 때만)
+// 본 시간 재기: 앱이 화면에 보이고, (유튜브가 알려 주면) 영상이 실제로 재생 중일 때만 센다
 function tick() { if (watch && watch.from) { watch.ms += Date.now() - watch.from; watch.from = 0; } }
-document.addEventListener('visibilitychange', () => { if (!watch) return; if (document.hidden) tick(); else watch.from = Date.now(); });
+function running() { return !document.hidden && (!yt || !yt.api || yt.state === 1 || yt.state === 3); }
+function sync() { if (!watch) return; tick(); if (running()) watch.from = Date.now(); }
+document.addEventListener('visibilitychange', sync);
 function stopWatch(quiet) {
   if (!watch) return; tick();
   const w = watch; watch = null;
   const m = Math.round(w.ms / 60e3);
-  if (m >= 1) ask(w.site, m, w.title);
+  if (m >= 1) ask(w.site, m, (yt && yt.title) || w.title, w.id);
   else if (!quiet) say(pick(IDLE));
+}
+
+// ---------- 유튜브 플레이어와 대화 (재생 중인지, 어디까지 봤는지, 제목) ----------
+let yt = null;
+function hello() {
+  let n = 0;
+  const ping = () => {
+    if (!yt || yt.api || !frame || n++ > 12) return;
+    try { frame.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), 'https://www.youtube.com'); } catch (e) {}
+    setTimeout(ping, 600);
+  };
+  ping();
+}
+addEventListener('message', e => {
+  if (!frame || !yt || e.source !== frame.contentWindow || !/youtube\.com$/.test(new URL(e.origin).hostname)) return;
+  let d; try { d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (err) { return; }
+  const i = d && d.info; if (!i || typeof i !== 'object') return;
+  if (!yt.api) { yt.api = true; sync(); }
+  if (i.videoData && i.videoData.video_id && i.videoData.video_id !== yt.id) { remember(true); Object.assign(yt, { id: i.videoData.video_id, pos: 0, len: 0, title: '' }); }
+  if (i.videoData && i.videoData.title) { yt.title = i.videoData.title; yt.ch = i.videoData.author || ''; if (watch) watch.title = yt.title; }
+  if (typeof i.currentTime === 'number') yt.pos = i.currentTime;
+  if (typeof i.duration === 'number' && i.duration > 0) yt.len = i.duration;
+  if (typeof i.playerState === 'number' && i.playerState !== yt.state) {
+    yt.state = i.playerState; sync();
+    if (i.playerState === 0) say(pick(['끝났네. …하나 더 볼 거야, 아니면 공부?', '다 봤다. 그니까, 이제 뭐 할 건데.']));
+  }
+  remember();
+});
+// 최근 목록에 어디까지 봤는지·제목을 적어 둔다 (몇 초에 한 번만 저장)
+function remember(now) {
+  if (!yt || !yt.id) return;
+  if (!now && Date.now() - yt.saved < 5000) return;
+  yt.saved = Date.now();
+  const l = S.tvRecent || (S.tvRecent = []);
+  let r = l.find(x => x.id === yt.id);
+  if (!r) { r = { id: yt.id, thumb: `https://i.ytimg.com/vi/${yt.id}/mqdefault.jpg` }; l.unshift(r); if (l.length > 20) l.length = 20; }
+  if (yt.title) r.title = yt.title;
+  if (yt.ch) r.ch = yt.ch;
+  if (yt.pos) r.pos = Math.floor(yt.pos);
+  if (yt.len) r.len = Math.floor(yt.len);
+  save();
 }
 
 // ---------- 유튜브 ----------
@@ -219,16 +292,20 @@ function ytParse(text) {
   return /^[\w-]{11}$/.test(s.trim()) ? { id: s.trim() } : null;
 }
 function ytPlay(y, title, thumb) {
-  const p = new URLSearchParams({ autoplay: '1', playsinline: '1', rel: '0' });
-  if (y.t) p.set('start', y.t);
+  const p = new URLSearchParams({ autoplay: '1', playsinline: '1', rel: '0', enablejsapi: '1', origin: location.origin });
+  const old = y.id && (S.tvRecent || []).find(x => x.id === y.id);
+  // 보다 만 영상은 보던 곳부터 (거의 끝까지 봤으면 처음부터)
+  const start = y.t || (old && old.pos > 10 && (!old.len || old.pos < old.len - 20) ? old.pos : 0);
+  if (start) p.set('start', start);
   if (y.list) p.set('list', y.list);
   const src = y.id ? `https://www.youtube.com/embed/${y.id}?${p}` : `https://www.youtube.com/embed/videoseries?${p}`;
   if (y.id) {
-    S.tvRecent = [{ id: y.id, title: title || '', thumb: thumb || `https://i.ytimg.com/vi/${y.id}/mqdefault.jpg` }, ...(S.tvRecent || []).filter(x => x.id !== y.id)].slice(0, 20);
+    const r = Object.assign({}, old || {}, { id: y.id, title: title || (old && old.title) || '', thumb: thumb || (old && old.thumb) || `https://i.ytimg.com/vi/${y.id}/mqdefault.jpg` });
+    S.tvRecent = [r, ...(S.tvRecent || []).filter(x => x.id !== y.id)].slice(0, 20);
     save();
   }
-  showFrame(src, { site: 'youtube', title });
-  say(pick(PLAYING));
+  showFrame(src, { site: 'youtube', title: title || (old && old.title) || '', id: y.id || '' });
+  say(start && !y.t ? '저번에 보던 데부터 튼다.' : pick(PLAYING));
 }
 const ytKey = () => (S.ytKey || (/^AIza[\w-]{30,}$/.test(S.key || '') ? S.key : ''));
 async function ytSearch(qs) {
@@ -268,15 +345,48 @@ async function openOut(k, url) {
 }
 
 // ---------- 아래 버튼: 뒤로 / 크게 보기 / 끄기 ----------
+let autoFull = false; // 검색 칸·가로 돌리기로 저절로 커진 경우 (돌아갈 때 저절로 작아진다)
 function setFull(on) {
   full = on; v.classList.toggle('full', on);
+  if (!on) autoFull = false;
   const b = q('.b-big'); b.innerHTML = on ? `${ICON.small}<span>작게 보기</span>` : `${ICON.big}<span>크게 보기</span>`;
   b.setAttribute('aria-label', on ? '작게 보기' : '크게 보기');
   placeScreen();
 }
-q('.b-big').onclick = () => setFull(!full);
-q('.b-back').onclick = () => go(page === 'play' ? 'yt' : 'home');
+q('.b-big').onclick = () => { setFull(!full); autoFull = false; };
+function back() { // 영상 → 목록 → 채널. 저절로 커졌던 화면은 목록에서 채널로 갈 때 작아진다
+  if (page === 'play') { go('yt'); return; }
+  if (autoFull) setFull(false);
+  if (page === 'yt' && results) { results = null; ytMsg = ''; render(); return; }
+  go('home');
+}
+q('.b-back').onclick = back;
 q('.b-off').onclick = () => go(page === 'play' ? 'yt' : page);
+// 폰을 가로로 돌리면 영상이 화면 가득, 다시 세우면 원래대로
+let wasWide = innerWidth > innerHeight;
+addEventListener('resize', () => {
+  if (v.hidden) return;
+  const wide = innerWidth > innerHeight, phone = Math.min(innerWidth, innerHeight) < 600;
+  if (wide !== wasWide && phone) {
+    if (wide && frame && !full) { setFull(true); autoFull = true; }
+    else if (!wide && autoFull) setFull(false);
+  }
+  wasWide = wide;
+});
+
+// ---------- 폰의 뒤로 가기: 앱이 꺼지지 않고 한 단계씩 돌아간다 ----------
+let leaving = false;
+function stepBack() {
+  if (!q('.tv-ask').hidden) { q('.tv-ask .skip').click(); return true; }
+  if (full && !autoFull) { setFull(false); return true; }
+  if (page !== 'home') { back(); return true; }
+  return false;
+}
+addEventListener('popstate', () => {
+  if (v.hidden || (history.state && history.state.tv)) return;
+  if (!leaving && stepBack()) { try { history.pushState({ tv: 1 }, ''); } catch (e) {} return; }
+  leaving = false; close(true);
+});
 
 // ---------- 들어가기·나가기 ----------
 let opening = false;
@@ -284,19 +394,21 @@ async function open() {
   if (opening || !v.hidden) return; opening = true;
   if (window.closeSheet && typeof sheetOpen !== 'undefined' && sheetOpen) closeSheet();
   v.hidden = false; full = false; v.classList.remove('full'); layout(); catPose(false); if (!frame) { page = 'home'; render(); }
+  if (!(history.state && history.state.tv)) { try { history.pushState({ tv: 1 }, ''); } catch (e) {} }
   v.classList.remove('enter'); void v.offsetWidth; v.classList.add('enter');
   $('home').classList.add('to-tv');
   await sleep(700);
   opening = false; catLoop();
   if (!checkReturn() && !frame) say(pick(IDLE));
 }
-async function close() {
+async function close(fromPop) {
   if (frame) { stopFrame(); page = 'home'; render(); }
-  if (!q('.tv-ask').hidden) return; // 공부/놀기 대답부터
+  if (!q('.tv-ask').hidden) { if (fromPop) { try { history.pushState({ tv: 1 }, ''); } catch (e) {} } return; } // 공부/놀기 대답부터
+  if (!fromPop && history.state && history.state.tv) { leaving = true; history.back(); return; } // 뒤로 가기 기록을 지우면 popstate가 다시 부른다
   v.classList.remove('enter'); v.classList.add('leave'); $('home').classList.remove('to-tv');
   await sleep(450); v.hidden = true; v.classList.remove('leave'); setFull(false); clearTimeout(catT);
 }
-q('.tv-back').onclick = close;
+q('.tv-back').onclick = () => close();
 
 // ---------- 다녀오면: 공부였어? 놀았어? ----------
 function checkReturn() {
@@ -313,26 +425,31 @@ function subjects() {
   Object.values((S.tt && S.tt.cells) || {}).forEach(x => { if (x && !/창체|스포츠|음악|미술/.test(x)) set.add(x); });
   return [...set].slice(0, 9);
 }
-function ask(site, mins, title) {
+function ask(site, mins, title, id) {
   if (full) setFull(false);
   const box = q('.tv-ask'), s = SITES[site] || { name: '영상' };
   let m = mins;
+  // 전에 이 영상을 공부로 기록했으면 그 과목을 맨 앞에 표시해 둔다
+  const last = id && S.tvSubj && S.tvSubj[id];
+  const subs = subjects(); if (last && last !== '자습') { const i = subs.indexOf(last); if (i > 0) subs.splice(i, 1); if (i !== 0) subs.unshift(last); }
   box.innerHTML = `<p><b>${esc(title || s.name)}</b>, <span class="m"></span> 봤어요.</p>
     <div class="adj"><button data-d="-10" aria-label="10분 빼기">−10</button><span class="m2"></span><button data-d="10" aria-label="10분 더하기">+10</button></div>
     <p class="sub">공부였으면 과목을 고르세요</p>
-    <div class="subs">${subjects().map(x => `<button data-sub="${esc(x)}">${esc(x)}</button>`).join('')}<button data-sub="자습">기타 공부</button></div>
-    <button class="play">놀았어</button>`;
+    <div class="subs">${subs.map(x => `<button data-sub="${esc(x)}"${x === last ? ' class="last"' : ''}>${esc(x)}</button>`).join('')}<button data-sub="자습"${last === '자습' ? ' class="last"' : ''}>기타 공부</button></div>
+    <button class="play">놀았어</button><button class="skip">기록 안 함</button>`;
   const upd = () => { box.querySelector('.m').textContent = dur(m); box.querySelector('.m2').textContent = dur(m); };
   upd();
   box.querySelectorAll('.adj button').forEach(b => b.onclick = () => { m = Math.max(1, Math.min(600, m + +b.dataset.d)); upd(); });
   const done = (kind, sub) => {
     S.tvlog = S.tvlog || {}; const d = dayKey(); (S.tvlog[d] = S.tvlog[d] || []).push({ site, mins: m, kind, sub: sub || null });
+    if (id) { S.tvSubj = S.tvSubj || {}; if (kind === 'study') S.tvSubj[id] = sub; else delete S.tvSubj[id]; }
     if (kind === 'study' && window.addStudy) addStudy(sub, m); else save();
     box.hidden = true; if (page === 'home') render();
     say(fillT(pick(kind === 'study' ? PRAISE : SCOLD), { t: dur(m) }));
   };
   box.querySelectorAll('.subs button').forEach(b => b.onclick = () => done('study', b.dataset.sub));
   box.querySelector('.play').onclick = () => done('play');
+  box.querySelector('.skip').onclick = () => { box.hidden = true; if (page === 'home') render(); say('…그래, 이번 건 안 센다.'); };
   box.hidden = false;
   say(m >= 60 ? `${dur(m)}이나? …뭐 봤는데.` : '다 봤어? 뭐였는데.');
 }
