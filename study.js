@@ -16,6 +16,20 @@ const homeOn = () => $('home').classList.contains('on') && C;
 // ---------- 저장 ----------
 const DEF_PERIODS = ['08:40', '09:40', '10:40', '11:40', '13:30', '14:30', '15:30'];
 if (!S.tt) S.tt = { periods: DEF_PERIODS.slice(), cells: {} };      // cells['요일(1~5)-교시'] = 과목
+// 내 학교 시간표 (2학년 2학기, 2026). 수업 50분·쉬는 시간 10분, 4교시 뒤 점심 1시간. 금요일 6·7교시 창체는 없는 날도 있다(2시 또는 4시 끝)
+const MY_TT = {
+  periods: ['08:40', '09:40', '10:40', '11:40', '13:30', '14:30', '15:30'],
+  cells: {
+    '1-1': '현대사회와 윤리', '1-2': '한국지리탐구', '1-3': '독서와 작문', '1-4': '미적분Ⅰ', '1-5': '영어Ⅱ', '1-6': '언어생활탐구',
+    '2-1': '언어생활탐구', '2-2': '영어Ⅱ', '2-3': '심화일본어', '2-4': '독서와 작문', '2-5': '미적분Ⅰ', '2-6': '동아시아역사기행', '2-7': '영어Ⅱ',
+    '3-1': '현대사회와 윤리', '3-2': '한국지리탐구', '3-3': '미적분Ⅰ', '3-4': '스포츠 과학', '3-5': '음악/미술', '3-6': '심화일본어',
+    '4-1': '음악/미술', '4-2': '언어생활탐구', '4-3': '영어Ⅱ', '4-4': '독서와 작문', '4-5': '동아시아역사기행', '4-6': '독서와 작문', '4-7': '심화일본어',
+    '5-1': '현대사회와 윤리', '5-2': '한국지리탐구', '5-3': '스포츠 과학', '5-4': '동아시아역사기행', '5-5': '미적분Ⅰ', '5-6': '창체', '5-7': '창체',
+  },
+};
+// 시간표가 비어 있으면 내 시간표로 채운다 (한 번만, 직접 고친 건 덮어쓰지 않는다)
+if (!S.ttLoaded && !Object.keys(S.tt.cells).length) { S.tt = { periods: MY_TT.periods.slice(), cells: { ...MY_TT.cells } }; S.ttLoaded = 1; save(); }
+const endOf = t => { const [h, m] = t.split(':').map(Number), x = h * 60 + m + 50; return `${pad(Math.floor(x / 60))}:${pad(x % 60)}`; };
 if (!S.exams) S.exams = [];                                           // [{id, subject, date, range}]
 if (!S.study) S.study = { wStart: '19:00', eStart: '10:00', wdN: 2, weN: 3, len: 50 };
 if (!S.sdone) S.sdone = {};                                           // '날짜|과목|순서' -> 분
@@ -136,6 +150,7 @@ function renderTT(b) {
   g.appendChild(el('span', 'th', ''));
   ['월', '화', '수', '목', '금'].forEach(d => g.appendChild(el('span', 'th', d)));
   S.tt.periods.forEach((p, i) => {
+    if (i === 4) g.appendChild(el('span', 'tt-lunch', '점심')); // 4교시 뒤 점심 1시간
     g.appendChild(el('span', 'tp', `${i + 1}<small>${p}</small>`));
     for (let wd = 1; wd <= 5; wd++) {
       const k = `${wd}-${i + 1}`, v = S.tt.cells[k] || '';
@@ -146,7 +161,10 @@ function renderTT(b) {
     }
   });
   b.appendChild(g);
-  b.appendChild(el('p', 'hint', '칸을 누르고 아래에 과목을 쓰면 돼요. 수업은 인사와 대화에 쓰이고, 과목 이름은 시험 넣을 때 고를 수 있어요.'));
+  b.appendChild(el('p', 'hint', `수업 50분, 쉬는 시간 10분, 4교시 뒤 점심 1시간 (${endOf(S.tt.periods[3])}~${S.tt.periods[4]}). 금요일 창체는 없는 날도 있어요. 칸을 누르고 아래에 과목을 쓰면 고칠 수 있어요.`));
+  const reload = el('button', 'btn ghost sm', '학교 시간표로 되돌리기');
+  reload.onclick = () => { if (confirm('직접 고친 칸을 지우고 학교 시간표로 되돌릴까요?')) { S.tt = { periods: MY_TT.periods.slice(), cells: { ...MY_TT.cells } }; S.ttLoaded = 1; save(); SHEETS.study.render(); toast('학교 시간표로 되돌렸어요'); } };
+  b.appendChild(reload);
   const f = foot();
   if (ttSel) {
     const [wd, p] = ttSel.split('-').map(Number);

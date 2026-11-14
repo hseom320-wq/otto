@@ -24,7 +24,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); 
 body { font-family: Pretendard, -apple-system, system-ui, sans-serif; overscroll-behavior: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; border: 0; background: none; }
-#app { position: fixed; inset: 0; overflow: hidden; }
+#app { position: fixed; inset: 0; overflow: hidden; overflow: clip; } /* clip: 입력칸에 커서가 가도 앱 화면이 옆으로 밀리지 않게 */
 .screen { position: absolute; inset: 0; display: none; }
 .screen.on { display: block; }
 
@@ -285,7 +285,7 @@ button { cursor: pointer; border: 0; background: none; }
 .item .tm.dd { font-size: 16px; }
 .set-row .lab { flex: none; font-size: 12.5px; color: var(--mute); }
 .dt-in { flex: none; width: 150px; color-scheme: dark; }
-.tt { display: grid; grid-template-columns: 40px repeat(5, 1fr); gap: 3px; }
+.tt { display: grid; grid-template-columns: 34px repeat(5, minmax(0, 1fr)); gap: 3px; }
 .tt .th { text-align: center; font-size: 12px; color: var(--mute); padding: 2px 0 4px; }
 .tt .tp { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--f-num); font-size: 16px; color: var(--backlit); line-height: 1; }
 .tt .tp small { font-size: 10px; color: var(--mute); margin-top: 2px; }
@@ -442,3 +442,6 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .wsub b { color: #eef2f6; font-weight: 600; margin-right: 5px; }
 .fsub { margin-top: 12px; }
 .fsub-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.tt .tt-lunch { grid-column: 1 / -1; text-align: center; font-size: 11.5px; color: var(--mute); padding: 3px 0; border-top: 1px dashed rgba(255,255,255,.12); border-bottom: 1px dashed rgba(255,255,255,.12); margin: 2px 0; }
+
+.tc { min-width: 0; overflow-wrap: anywhere; padding: 2px; font-size: 12px; }
