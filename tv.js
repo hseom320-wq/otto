@@ -12,11 +12,12 @@
 const NS = { w: 669, h: 900 };
 const POSE = {
   wide: { x: 1380, y: 380, h: 760, box: [0, -190, 1990, 1080] },
+  low: { x: 1380, y: 380, h: 760, box: [0, -185, 1990, 840] },   // 폰 가로: 높이가 낮아서 TV장 아래는 잘라 TV를 크게
   tall: { x: 1000, y: 735, h: 700, box: [0, -190, 1526, 1360] },
 };
 const SC = { w: 1526, h: 1048, screen: [110, 19, 1415, 730], cat: [1180, 8], top: 7 };
 function pose() {
-  const o = POSE[innerWidth > innerHeight ? 'wide' : 'tall'];
+  const o = POSE[innerWidth > innerHeight ? (innerHeight < 560 ? 'low' : 'wide') : 'tall'];
   return { box: o.box, ns: { x: o.x, y: o.y, w: NS.w * o.h / NS.h, h: o.h } };
 }
 const SITES = {
@@ -79,21 +80,40 @@ function layout() {
   const [a, b, c, d] = SC.screen;
   const ch = Math.max(40, Math.min(110, (c - a) * K * .14)), cat = q('.tv-cat');
   Object.assign(cat.style, { left: SC.cat[0] * K - ch * .55 + 'px', top: SC.cat[1] * K - ch + 3 + 'px', height: ch + 'px' });
-  placeScreen();
+  head = { x: L + (O.ns.x + O.ns.w * .62) * K, y: T + (O.ns.y + O.ns.h * .02) * K };
+  placeScreen(); placeSay();
 }
-// TV 화면 자리: 보통은 TV 안, 크게 보기면 창 전체(아래 버튼 줄만 빼고)
+// 가로 화면: 대사는 칸을 따로 두지 않고 수현 머리 위 말풍선으로 띄운다 (TV 자리를 뺏지 않게)
+let head = null;
+const wideSay = () => innerWidth > innerHeight;
+function placeSay() {
+  const el = q('.tv-say');
+  if (!wideSay() || !head) { el.removeAttribute('style'); return; }
+  const br = q('.tv-stagebox').getBoundingClientRect(), vr = v.getBoundingClientRect();
+  const hy = br.top - vr.top + head.y;
+  // TV 화면 오른쪽 빈 곳에만 띄운다 (화면을 가리지 않게)
+  const sr = q('.tv-screen').getBoundingClientRect(), from = sr.right - vr.left + 10;
+  const w = Math.max(170, Math.min(320, vr.width - 10 - from));
+  Object.assign(el.style, { right: '10px', bottom: Math.max(8, vr.height - hy + 8) + 'px', left: 'auto', top: 'auto', maxWidth: w + 'px' });
+}
+// TV 화면 자리: 보통은 TV 안, 크게 보기면 창 전체(아래 버튼 줄만 빼고, 버튼이 옆에 세로로 있으면 창 전체)
 function placeScreen() {
   const scr = q('.tv-screen'), [a, b, c, d] = SC.screen;
   if (!full) { Object.assign(scr.style, { left: a * K + 'px', top: b * K + 'px', width: (c - a) * K + 'px', height: (d - b) * K + 'px' }); return; }
-  const r = q('.tv-scene').getBoundingClientRect(), vr = v.getBoundingClientRect(), bar = q('.tv-bar').offsetHeight;
+  const r = q('.tv-scene').getBoundingClientRect(), vr = v.getBoundingClientRect();
+  const bar = getComputedStyle(q('.tv-bar')).flexDirection === 'column' ? 0 : q('.tv-bar').offsetHeight;
   Object.assign(scr.style, { left: vr.left - r.left + 'px', top: vr.top - r.top + 'px', width: vr.width + 'px', height: vr.height - bar + 'px' });
 }
 addEventListener('resize', () => { if (!v.hidden) requestAnimationFrame(layout); });
 
 // ---------- 수현 한마디 ----------
+let sayT = 0;
 function say(t) {
-  const p = q('.tv-say p'); p.textContent = '';
+  const box = q('.tv-say'), p = box.querySelector('p'); p.textContent = '';
+  box.classList.remove('quiet'); clearTimeout(sayT);
   if (window.typeInto) typeInto(p, t, 'tv'); else p.textContent = t;
+  // 가로 화면의 말풍선은 다 읽을 시간이 지나면 사라진다
+  if (wideSay()) sayT = setTimeout(() => box.classList.add('quiet'), 5000 + t.length * 90);
 }
 const dur = m => (m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 ? ` ${m % 60}분` : ''}` : `${m}분`);
 const fillT = (t, o) => t.replace(/\{(\w+)\}/g, (x, k) => (o[k] != null ? o[k] : x));
