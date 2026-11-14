@@ -1,0 +1,21 @@
+{
+ "character": "ns",
+ "scene": "morning",
+ "expression": "angry",
+ "source": "NovelAI Director Tools (emotion)",
+ "emotion": "irritated",
+ "defry": 2,
+ "based_on": "assets/ns/scene/morning.webp",
+ "crop": [
+  120,
+  200,
+  704,
+  704
+ ],
+ "patch": {
+  "x": 203,
+  "y": 343,
+  "w": 453,
+  "h": 363
+ }
+}

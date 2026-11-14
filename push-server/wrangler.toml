@@ -1,0 +1,11 @@
+# 한울아파트 알림 서버 (Cloudflare Workers 무료 요금제로 충분)
+name = "hanul-push"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[[kv_namespaces]]
+binding = "PUSH"
+id = "여기에 KV 아이디"
+
+[triggers]
+crons = ["* * * * *"]   # 1분마다 보낼 알림 확인

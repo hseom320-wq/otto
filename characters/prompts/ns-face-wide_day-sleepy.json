@@ -1,0 +1,21 @@
+{
+ "character": "ns",
+ "scene": "wide_day",
+ "expression": "sleepy",
+ "source": "NovelAI Director Tools (emotion)",
+ "emotion": "neutral",
+ "defry": 2,
+ "based_on": "assets/ns/scene-wide/day.webp",
+ "crop": [
+  1188,
+  168,
+  704,
+  704
+ ],
+ "patch": {
+  "x": 1188,
+  "y": 345,
+  "w": 388,
+  "h": 287
+ }
+}

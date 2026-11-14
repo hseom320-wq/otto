@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>기말 작전 일지</title>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Saira+Stencil+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 작전지도 한 장: 모눈 깔린 회녹색 종이에 먹색 글씨. 인주색 도장은 시험일과 완료 표시에만 쓴다. 날짜가 왼쪽 단, 할 일이 오른쪽 단인 일지 구조. */
+  --paper:#E6EAE0;
+  --sheet:#F2F5EC;
+  --ink:#1B2521;
+  --ink-soft:#56645C;
+  --line:#C2CABC;
+  --field:#3A6A4D;
+  --steel:#2C5878;
+  --brass:#8A6510;
+  --seal:#BC3024;
+  --grid:rgba(27,37,33,.055);
+  --font-display:"Hahmlet","Noto Serif KR","Apple SD Gothic Neo",serif;
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-data:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --font-stencil:"Saira Stencil One","Impact","Arial Narrow",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101714;
+    --sheet:#18211D;
+    --ink:#E2E8DC;
+    --ink-soft:#97A59B;
+    --line:#2D3933;
+    --field:#7DB08D;
+    --steel:#86B2D4;
+    --brass:#D6AB4E;
+    --seal:#E65B4D;
+    --grid:rgba(226,232,220,.04);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101714;
+  --sheet:#18211D;
+  --ink:#E2E8DC;
+  --ink-soft:#97A59B;
+  --line:#2D3933;
+  --field:#7DB08D;
+  --steel:#86B2D4;
+  --brass:#D6AB4E;
+  --seal:#E65B4D;
+  --grid:rgba(226,232,220,.04);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  color:var(--ink);
+  font:400 15px/1.6 var(--font-body);
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+main{max-width:760px;margin:0 auto;padding:28px 18px 72px;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+h1,h2,h3{text-wrap:balance}
+button,input{font:inherit;color:inherit}
+.num{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+
+/* ── 머리 ── */
+.mast{display:flex;flex-direction:column;gap:18px}
+.eyebrow{font:500 12px/1.4 var(--font-data);letter-spacing:.04em;color:var(--ink-soft)}
+.mast h1{font:900 clamp(30px,8.4vw,46px)/1.12 var(--font-display);letter-spacing:-.02em}
+.mast-goal{font-size:14px;color:var(--ink-soft)}
+.mast-goal b{color:var(--ink);font-family:var(--font-data);font-weight:600}
+.dday{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;border-top:2px solid var(--ink);padding-top:10px}
+.dday-num{font:400 clamp(84px,27vw,156px)/.86 var(--font-stencil);letter-spacing:.01em;color:var(--seal)}
+.dday-cap{display:flex;flex-direction:column;gap:2px;padding-bottom:8px}
+.dday-cap strong{font:700 17px/1.3 var(--font-display)}
+.dday-cap span{font-size:13px;color:var(--ink-soft)}
+
+.strip{display:flex;gap:3px}
+.c{flex:1 1 0;min-width:0;height:26px;border:1px solid var(--line);border-radius:2px}
+.c.done{background:var(--field);border-color:var(--field)}
+.c.late{background:var(--brass);border-color:var(--brass)}
+.c.exam{background:var(--seal);border-color:var(--seal)}
+.c.today{outline:2px solid var(--ink);outline-offset:2px}
+.strip-ends{display:flex;justify-content:space-between;font:500 11px/1 var(--font-data);color:var(--ink-soft);margin-top:-8px}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink-soft);margin-top:-6px}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{width:11px;height:11px;border-radius:2px;border:1px solid var(--line);display:inline-block}
+.key .k-done{background:var(--field);border-color:var(--field)}
+.key .k-late{background:var(--brass);border-color:var(--brass)}
+.key .k-exam{background:var(--seal);border-color:var(--seal)}
+.key .k-today{outline:2px solid var(--ink);outline-offset:1px}
+
+/* ── 구역 제목 ── */
+.sec{display:flex;flex-direction:column;gap:16px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:6px}
+.sec-head h2{font:700 21px/1.25 var(--font-display);letter-spacing:-.01em}
+.sec-head .aside{font:500 12px/1.3 var(--font-data);color:var(--ink-soft);text-align:right}
+
+/* ── 할 일 한 줄 ── */
+.tasks{display:flex;flex-direction:column}
+.task{position:relative;display:grid;grid-template-columns:26px 38px 1fr;gap:10px;align-items:start;padding:9px 0;cursor:pointer}
+.task input{position:absolute;left:0;top:9px;width:26px;height:26px;margin:0;opacity:0;cursor:pointer}
+.box{width:24px;height:24px;border:1.5px solid var(--ink-soft);border-radius:3px;position:relative;margin-top:1px;background:var(--sheet)}
+.task input:focus-visible + .box{outline:2px solid var(--steel);outline-offset:3px}
+.task input:checked + .box{border-color:transparent;background:transparent}
+.task input:checked + .box::after{
+  content:"完";position:absolute;inset:-4px;display:grid;place-items:center;
+  border:2px solid var(--seal);border-radius:50%;color:var(--seal);
+  font:700 14px/1 var(--font-display);transform:rotate(-10deg);
+}
+.task.just input:checked + .box::after{animation:stamp .26s cubic-bezier(.2,1.5,.4,1)}
+@keyframes stamp{from{transform:rotate(-10deg) scale(1.9);opacity:0}to{transform:rotate(-10deg) scale(1);opacity:1}}
+.tag{font:600 11px/1 var(--font-data);border:1px solid currentColor;border-radius:2px;padding:5px 0;text-align:center;margin-top:2px}
+.k-m{color:var(--field)}
+.k-e{color:var(--steel)}
+.k-x{color:var(--ink-soft)}
+.txt{min-width:0}
+.task.done .txt{color:var(--ink-soft);text-decoration:line-through;text-decoration-thickness:1px}
+
+/* ── 오늘 ── */
+.today-card{background:var(--sheet);border:1.5px solid var(--ink);border-radius:4px;padding:16px 16px 12px;box-shadow:5px 5px 0 var(--ink);display:flex;flex-direction:column;gap:6px}
+.today-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.today-top strong{font:700 18px/1.3 var(--font-display)}
+.today-top span{font-size:13px;color:var(--ink-soft)}
+.today-card .task + .task,.today-card li + li{border-top:1px dashed var(--line)}
+.today-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;border-top:1px solid var(--line);padding-top:10px;margin-top:2px;font-size:13px;color:var(--ink-soft)}
+.linkbtn{background:none;border:0;border-bottom:1.5px solid var(--brass);padding:2px 0;color:var(--brass);font-weight:600;cursor:pointer}
+.linkbtn:focus-visible{outline:2px solid var(--steel);outline-offset:3px}
+.today-msg{padding:6px 0 8px}
+
+/* ── 목표 ── */
+.gpa{display:grid;grid-template-columns:1fr;gap:14px;background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:18px 16px}
+.gpa-main{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.gpa-label{font:700 14px/1.2 var(--font-display);width:100%}
+.gpa-num{font:600 clamp(52px,15vw,72px)/1 var(--font-data);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.gpa-delta{font-size:14px;font-weight:600}
+.gpa-delta.good{color:var(--field)}
+.gpa-delta.bad{color:var(--seal)}
+.gpa-delta.same{color:var(--ink-soft)}
+.gpa-sub{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.gpa-sub div{display:flex;flex-direction:column;gap:2px}
+.gpa-sub span{font-size:12px;color:var(--ink-soft)}
+.gpa-sub b{font:600 20px/1.1 var(--font-data);font-variant-numeric:tabular-nums}
+
+.ladder{display:flex;flex-direction:column}
+.rung{display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:center;padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px}
+.rung .rv{font:600 15px/1 var(--font-data);font-variant-numeric:tabular-nums}
+.rung .rs{font:500 12px/1.2 var(--font-data);white-space:nowrap}
+.rung.pass .rs{color:var(--field)}
+.rung.tie .rs{color:var(--brass)}
+.rung.short .rs{color:var(--ink-soft)}
+.rung.now{color:var(--ink-soft)}
+.rung.me{background:var(--ink);color:var(--paper);border-radius:3px;border-bottom-color:transparent;font-weight:600}
+.rung.me .rs{color:var(--paper)}
+.fine{font-size:12px;line-height:1.55;color:var(--ink-soft);max-width:62ch}
+
+.subjects{display:flex;flex-direction:column}
+.subj{display:grid;grid-template-columns:1fr auto;gap:8px 14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.subj:first-child{border-top:1px solid var(--line)}
+.subj h3{font:700 16px/1.3 var(--font-display)}
+.subj-meta{font:500 12px/1.5 var(--font-data);color:var(--ink-soft)}
+.subj-mid{font-size:13px;color:var(--ink-soft)}
+.subj-ctl{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.stepper{display:inline-flex;align-items:stretch;border:1.5px solid var(--ink);border-radius:3px;background:var(--sheet)}
+.stepper button{width:40px;height:40px;border:0;background:transparent;font:600 20px/1 var(--font-data);cursor:pointer}
+.stepper button:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+.stepper button:disabled{opacity:.28;cursor:default}
+.stepper button:focus-visible{outline:2px solid var(--steel);outline-offset:2px}
+.stepper output{min-width:62px;display:grid;place-items:center;font:600 15px/1 var(--font-data);border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink);padding:0 6px}
+.score{display:inline-flex;align-items:baseline;gap:6px;font-size:13px;color:var(--ink-soft)}
+.score input{width:3.3em;background:transparent;border:0;border-bottom:1.5px solid var(--ink-soft);border-radius:0;padding:2px 2px;text-align:right;font:600 15px/1.2 var(--font-data);color:var(--ink);-moz-appearance:textfield;appearance:textfield}
+.score input::-webkit-outer-spin-button,.score input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.score input:focus-visible{outline:2px solid var(--steel);outline-offset:3px}
+.excluded{font:500 12px/1.3 var(--font-data);color:var(--ink-soft);border:1px dashed var(--ink-soft);border-radius:3px;padding:6px 8px}
+
+/* ── 진도 ── */
+.meters{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.meter{display:flex;flex-direction:column;gap:6px}
+.meter-top{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600}
+.meter-top .num{font-size:12px;font-weight:500;color:var(--ink-soft)}
+.bar{height:8px;border:1px solid currentColor;border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:currentColor;width:0;transition:width .25s ease}
+
+/* ── 일지 ── */
+.phase{display:flex;flex-direction:column}
+.phase + .phase{margin-top:26px}
+.phase-head{display:flex;flex-direction:column;gap:2px;padding:0 0 10px}
+.phase-head h3{font:700 17px/1.3 var(--font-display);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.phase-head h3 span{font:500 12px/1 var(--font-data);color:var(--ink-soft)}
+.phase-head p{font-size:13px;color:var(--ink-soft);max-width:62ch}
+.day{display:grid;grid-template-columns:60px 1fr;gap:12px;padding:13px 0 11px;border-top:1px solid var(--line);scroll-margin-top:12px}
+.day-date{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.day-date .d{font:600 17px/1 var(--font-data);font-variant-numeric:tabular-nums}
+.day-date .w{font-size:13px;color:var(--ink-soft)}
+.day-date .dd{font:500 11px/1 var(--font-data);color:var(--ink-soft)}
+.chip{font:600 11px/1 var(--font-data);border-radius:2px;padding:4px 5px;display:none}
+.chip-today{background:var(--ink);color:var(--paper)}
+.chip-late{border:1px solid var(--brass);color:var(--brass)}
+.chip-done{border:2px solid var(--seal);color:var(--seal);font:700 12px/1 var(--font-display);transform:rotate(-7deg);margin-top:3px}
+.day.is-today .chip-today,.day.has-late .chip-late,.day.is-complete .chip-done{display:inline-block}
+.day.is-today{background:var(--sheet);margin:0 -10px;padding-left:10px;padding-right:10px;box-shadow:inset 4px 0 0 var(--ink)}
+.day.is-past:not(.has-late) .day-body{opacity:.62}
+.day.is-exam .day-date .d{color:var(--seal)}
+.day-body{min-width:0;display:flex;flex-direction:column;gap:2px}
+.slot{font-size:12px;color:var(--ink-soft)}
+.exam{display:grid;grid-template-columns:1fr;gap:1px;border-left:4px solid var(--seal);padding:6px 0 6px 10px;margin:5px 0}
+.exam .et{font:500 12px/1.4 var(--font-data);color:var(--seal)}
+.exam strong{font:700 16px/1.3 var(--font-display)}
+.exam .eg{font-size:12px;color:var(--ink-soft)}
+
+/* ── 발 ── */
+.foot{display:flex;flex-direction:column;gap:10px;border-top:2px solid var(--ink);padding-top:14px}
+.save{font:500 12px/1.4 var(--font-data);color:var(--ink-soft)}
+.save::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ink-soft);margin-right:7px}
+.save.on::before{background:var(--field)}
+
+@media (min-width:620px){
+  body{font-size:16px}
+  .gpa{grid-template-columns:1.1fr 1fr;align-items:end}
+  .gpa-sub{border-top:0;padding-top:0;border-left:1px solid var(--line);padding-left:16px}
+  .day{grid-template-columns:84px 1fr}
+  .subj-ctl{flex-direction:row;align-items:center;gap:16px}
+}
+@media (max-width:380px){
+  .rung{grid-template-columns:44px 1fr;row-gap:2px}
+  .rung .rs{grid-column:2}
+  .meters{gap:8px}
+}
+@media (prefers-reduced-motion: reduce){
+  .task.just input:checked + .box::after{animation:none}
+  .bar i{transition:none}
+}
+</style>
+</head>
+<body>
+<main>
+
+<header class="mast">
+  <p class="eyebrow">2026학년도 2학기 기말고사 · 12.3 – 12.9</p>
+  <h1>기말 작전 일지</h1>
+  <p class="mast-goal">목표는 전체 평균 <b id="mastNow">2.36</b>에서 <b id="mastGoal">2.24</b>. 미적분Ⅰ과 영어Ⅱ가 승부처.</p>
+  <div class="dday">
+    <div class="dday-num" id="ddayNum">D-22</div>
+    <div class="dday-cap"><strong id="ddayCap">첫 시험 미적분Ⅰ까지</strong><span id="todayStr">11월 11일 수요일</span></div>
+  </div>
+  <div class="strip" id="strip" role="img" aria-label="11월 11일부터 12월 9일까지 하루 한 칸"></div>
+  <div class="strip-ends"><span>11.11</span><span>12.9</span></div>
+  <div class="key">
+    <span><i class="k-done"></i>다 한 날</span>
+    <span><i class="k-late"></i>밀린 날</span>
+    <span><i class="k-today"></i>오늘</span>
+    <span><i class="k-exam"></i>시험일</span>
+  </div>
+</header>
+
+<section class="sec" aria-labelledby="h-today">
+  <div class="sec-head"><h2 id="h-today">오늘 할 일</h2><span class="aside" id="todayCount"></span></div>
+  <div class="today-card" id="todayCard"></div>
+</section>
+
+<section class="sec" aria-labelledby="h-goal">
+  <div class="sec-head"><h2 id="h-goal">목표와 시험 시간표</h2><span class="aside">등급 조절 가능</span></div>
+  <div class="gpa" aria-live="polite">
+    <div class="gpa-main">
+      <span class="gpa-label">목표대로 받았을 때 전체 평균</span>
+      <span class="gpa-num" id="gAll">2.24</span>
+      <span class="gpa-delta good" id="gDelta"></span>
+    </div>
+    <div class="gpa-sub">
+      <div><span>2학기</span><b id="gSem">1.46</b></div>
+      <div><span>2026학년도</span><b id="gYear">1.83</b></div>
+      <div><span>2025학년도</span><b id="gPrev">2.65</b></div>
+    </div>
+  </div>
+  <ol class="ladder" id="ladder" aria-label="학종 70% 컷과 내 평균 비교"></ol>
+  <p class="fine">컷은 2026학년도 학종 최종등록자 70% 컷(9등급)을 5등급제로 바꾼 추정값이다. 사학과는 한 해 3~6명만 뽑아서 해마다 크게 바뀌니, 정확한 선이 아니라 어느 구간에 있는지만 보면 된다.</p>
+  <div class="subjects" id="subjects"></div>
+  <p class="fine">평균은 성적표와 같은 방식으로 계산한다. 국·영·수·사·과·한국사만 넣고, 단위수를 반영하고, 2025학년도와 2026학년도를 50:50으로 합친다. 한국지리탐구는 3단위로 가정했다.</p>
+</section>
+
+<section class="sec" aria-labelledby="h-plan">
+  <div class="sec-head"><h2 id="h-plan">일지</h2><span class="aside" id="planCount"></span></div>
+  <div class="meters" id="meters"></div>
+  <div id="plan"></div>
+</section>
+
+<footer class="foot">
+  <p class="save" id="saveState">저장 상태 확인 중</p>
+  <p class="fine">하교나 학원이 끝난 뒤 1시간 30분은 쉬는 시간으로 빼고 짰다. 시험 범위가 나오면 본문 개수와 단원 이름으로 바꿔 적으면 된다.</p>
+</footer>
+
+</main>
+
+<script type="application/json" id="plan-data">{"meta":{"title":"기말 작전 일지","term":"2026학년도 2학기 기말고사","start":"2026-11-11","end":"2026-12-09","firstExam":"2026-12-03","timezone":"Asia/Seoul","updated":"2026-11-11","restAfterSchoolMinutes":90},"gpa":{"now":2.36,"nowAsOf":"2026-10-19","method":"국·영·수·사·과·한국사만 반영. 단위수 가중 평균. 2025학년도와 2026학년도를 50:50으로 합침. 등급은 5등급제이고 숫자가 낮을수록 좋음.","year2025":{"units":46,"points":122},"semester1_2026":{"units":24,"points":53},"formula":"2학기 = Σ(단위×등급)/Σ단위 · 2026학년도 = (53 + Σ(단위×등급)) / (24 + Σ단위) · 전체 = (122/46 + 2026학년도) / 2"},"cuts":[{"value":2.4,"name":"명지대 미술사·역사학 서류형"},{"value":2.24,"name":"가톨릭대 국사학 면접형"},{"value":2.15,"name":"명지대 미술사·역사학 면접형"},{"value":2.06,"name":"가톨릭대 국사학 서류형"}],"cutsNote":"2026학년도 학종 최종등록자 70% 컷(9등급)을 5등급제로 바꾼 추정값. 모집 인원이 3~6명이라 해마다 크게 바뀜.","kinds":{"m":{"label":"미적","subject":"mi"},"e":{"label":"영어","subject":"eng"},"x":{"label":"기타","subject":null}},"subjects":[{"id":"mi","name":"미적분Ⅰ","units":4,"countedInGpa":true,"exam":{"date":"2026-12-03","period":1,"start":"08:30","end":"09:20","minutes":50},"midterm":{"score":38.7,"grade":3},"note":"중간 38.7점 · 3등급","targetGrade":2,"targetScore":75},{"id":"hanji","name":"한국지리탐구","units":3,"countedInGpa":true,"exam":{"date":"2026-12-03","period":2,"start":"09:45","end":"10:25","minutes":40},"midterm":null,"note":"중간 없음 · 기말 하나로 결정","targetGrade":1,"targetScore":95,"unitsAssumed":true},{"id":"yun","name":"현대사회와 윤리","units":3,"countedInGpa":true,"exam":{"date":"2026-12-04","period":1,"start":"08:30","end":"09:10","minutes":40},"midterm":{"score":85.8,"grade":2},"note":"중간 85.8점 · 2등급","targetGrade":2,"targetScore":95},{"id":"il","name":"심화일본어","units":null,"countedInGpa":false,"exam":{"date":"2026-12-07","period":1,"start":"08:40","end":"09:10","minutes":30},"midterm":null,"note":"10분 대기 · 1반은 8반에서 시험","targetGrade":null,"targetScore":85,"scoreLabel":"목표 총점"},{"id":"dong","name":"동아시아역사기행","units":3,"countedInGpa":true,"exam":{"date":"2026-12-07","period":3,"start":"10:40","end":"11:10","minutes":30},"midterm":{"score":null,"grade":1},"note":"중간 1문항 틀림 · 1등급","targetGrade":1,"targetScore":100},{"id":"eng","name":"영어Ⅱ","units":4,"countedInGpa":true,"exam":{"date":"2026-12-08","period":1,"start":"08:30","end":"09:20","minutes":50},"midterm":{"score":56.4,"grade":3},"note":"중간 56.4점 · 3등급","targetGrade":2,"targetScore":80},{"id":"dok","name":"독서와 작문","units":4,"countedInGpa":true,"exam":{"date":"2026-12-09","period":1,"start":"08:30","end":"09:20","minutes":50},"midterm":{"score":96.4,"grade":1},"note":"중간 96.4점 · 1등급","targetGrade":1,"targetScore":95},{"id":"eon","name":"언어생활탐구","units":3,"countedInGpa":true,"exam":null,"midterm":{"score":100,"grade":1},"note":"중간 100점 · 1등급","targetGrade":1,"targetScore":null}],"phases":[{"name":"개념과 1회독","start":"2026-11-11","end":"2026-11-22","aim":"미적은 개념과 유형 문제, 영어는 본문을 하나씩 분석해서 11.20까지 한 바퀴. 한지와 현사윤 1회독을 시작한다.","days":[{"date":"2026-11-11","dow":"수","dday":"D-22","slot":"영어 학원 · 저녁 약 2시간","exams":[],"tasks":[{"id":"1111m","kind":"m","label":"미적","subject":"mi","text":"중간 틀린 문제 다시 풀기 + 기말 범위 확인"},{"id":"1111e","kind":"e","label":"영어","subject":"eng","text":"기말 범위 본문 목록 만들기"},{"id":"1111x","kind":"x","label":"기타","subject":null,"text":"한지 지역 탐구 보고서 수행 마무리 (이번 주)"}]},{"date":"2026-11-12","dow":"목","dday":"D-21","slot":"미적·국어 학원 · 약 30분","exams":[],"tasks":[{"id":"1112m","kind":"m","label":"미적","subject":"mi","text":"학원 숙제"},{"id":"1112e","kind":"e","label":"영어","subject":"eng","text":"단어 30분 (이동 시간)"}]},{"date":"2026-11-13","dow":"금","dday":"D-20","slot":"영어 학원 · 약 3시간","exams":[],"tasks":[{"id":"1113m","kind":"m","label":"미적","subject":"mi","text":"개념 1단원 + 예제"},{"id":"1113e","kind":"e","label":"영어","subject":"eng","text":"본문 1개 분석 (구조·어법 표시)"},{"id":"1113x","kind":"x","label":"기타","subject":null,"text":"한지 보고서 수행"}]},{"date":"2026-11-14","dow":"토","dday":"D-19","slot":"국어·미적·영어 학원 · 저녁 약 3시간","exams":[],"tasks":[{"id":"1114m","kind":"m","label":"미적","subject":"mi","text":"학원 숙제"},{"id":"1114e","kind":"e","label":"영어","subject":"eng","text":"학원 숙제 + 본문 1개 분석"},{"id":"1114x","kind":"x","label":"기타","subject":null,"text":"일본어 네컷만화 수행 준비"}]},{"date":"2026-11-15","dow":"일","dday":"D-18","slot":"오전 약 3시간 + 저녁 1시간 30분","exams":[],"tasks":[{"id":"1115m","kind":"m","label":"미적","subject":"mi","text":"개념 1단원 + 유형 문제 (오전)"},{"id":"1115e","kind":"e","label":"영어","subject":"eng","text":"본문 1개 분석 (저녁)"},{"id":"1115x","kind":"x","label":"기타","subject":null,"text":"역사 스터디 (1시부터)"}]},{"date":"2026-11-16","dow":"월","dday":"D-17","slot":"약 5시간","exams":[],"tasks":[{"id":"1116m","kind":"m","label":"미적","subject":"mi","text":"유형 문제 2시간 + 오답 정리"},{"id":"1116e","kind":"e","label":"영어","subject":"eng","text":"본문 2개 분석"},{"id":"1116x","kind":"x","label":"기타","subject":null,"text":"한지 개념 1회독 시작"}]},{"date":"2026-11-17","dow":"화","dday":"D-16","slot":"미적 학원 · 약 3시간 30분","exams":[],"tasks":[{"id":"1117m","kind":"m","label":"미적","subject":"mi","text":"학원 숙제 + 오답 정리"},{"id":"1117e","kind":"e","label":"영어","subject":"eng","text":"본문 1개 분석"}]},{"date":"2026-11-18","dow":"수","dday":"D-15","slot":"영어 학원 · 약 3시간","exams":[],"tasks":[{"id":"1118m","kind":"m","label":"미적","subject":"mi","text":"오답 30분"},{"id":"1118e","kind":"e","label":"영어","subject":"eng","text":"학원 숙제 + 본문 1개 분석"},{"id":"1118x","kind":"x","label":"기타","subject":null,"text":"현사윤 개념 1회독 시작"}]},{"date":"2026-11-19","dow":"목","dday":"D-14","slot":"미적·국어 학원 · 약 30분","exams":[],"tasks":[{"id":"1119m","kind":"m","label":"미적","subject":"mi","text":"학원 숙제"},{"id":"1119e","kind":"e","label":"영어","subject":"eng","text":"단어 30분 (이동 시간)"}]},{"date":"2026-11-20","dow":"금","dday":"D-13","slot":"영어 학원 · 약 3시간","exams":[],"tasks":[{"id":"1120m","kind":"m","label":"미적","subject":"mi","text":"유형 문제 + 오답 정리"},{"id":"1120e","kind":"e","label":"영어","subject":"eng","text":"본문 1개 분석, 본문 1회독 끝내기"},{"id":"1120x","kind":"x","label":"기타","subject":null,"text":"한지 개념 1회독"}]},{"date":"2026-11-21","dow":"토","dday":"D-12","slot":"국어·미적·영어 학원 · 저녁 약 3시간","exams":[],"tasks":[{"id":"1121m","kind":"m","label":"미적","subject":"mi","text":"학원 숙제"},{"id":"1121e","kind":"e","label":"영어","subject":"eng","text":"학원 숙제 + 본문 빈칸 암기 시작"},{"id":"1121x","kind":"x","label":"기타","subject":null,"text":"현사윤 개념 1회독"}]},{"date":"2026-11-22","dow":"일","dday":"D-11","slot":"오전 약 3시간 + 저녁 1시간 30분","exams":[],"tasks":[{"id":"1122m","kind":"m","label":"미적","subject":"mi","text":"단원별 어려운 유형 다시 풀기 (오전)"},{"id":"1122e","kind":"e","label":"영어","subject":"eng","text":"본문 빈칸 암기 (저녁)"},{"id":"1122x","kind":"x","label":"기타","subject":null,"text":"역사 스터디 · 일본어 단어 30분"}]}]},{"name":"기출과 암기","start":"2026-11-23","end":"2026-11-29","aim":"미적은 50분 타이머를 맞추고 기출을 푼다. 영어는 빈칸 암기, 변형 문제, 서술형으로 넘어간다.","days":[{"date":"2026-11-23","dow":"월","dday":"D-10","slot":"약 5시간","exams":[],"tasks":[{"id":"1123m","kind":"m","label":"미적","subject":"mi","text":"기출 1회 (50분 타이머) + 오답"},{"id":"1123e","kind":"e","label":"영어","subject":"eng","text":"본문 빈칸·순서 문제"},{"id":"1123x","kind":"x","label":"기타","subject":null,"text":"한지 자료·그래프 문제"}]},{"date":"2026-11-24","dow":"화","dday":"D-9","slot":"미적 학원 · 약 3시간 30분","exams":[],"tasks":[{"id":"1124m","kind":"m","label":"미적","subject":"mi","text":"학원 숙제 + 기출 오답"},{"id":"1124e","kind":"e","label":"영어","subject":"eng","text":"본문 2개 변형 문제"},{"id":"1124x","kind":"x","label":"기타","subject":null,"text":"현사윤 1회독 끝내기"}]},{"date":"2026-11-25","dow":"수","dday":"D-8","slot":"영어 학원 · 약 3시간","exams":[],"tasks":[{"id":"1125m","kind":"m","label":"미적","subject":"mi","text":"오답 30분"},{"id":"1125e","kind":"e","label":"영어","subject":"eng","text":"학원 숙제 + 변형 문제"},{"id":"1125x","kind":"x","label":"기타","subject":null,"text":"한지 2회독"}]},{"date":"2026-11-26","dow":"목","dday":"D-7","slot":"미적·국어 학원 · 약 30분","exams":[],"tasks":[{"id":"1126m","kind":"m","label":"미적","subject":"mi","text":"학원 숙제"},{"id":"1126e","kind":"e","label":"영어","subject":"eng","text":"단어 30분 (이동 시간)"}]},{"date":"2026-11-27","dow":"금","dday":"D-6","slot":"영어 학원 · 약 3시간","exams":[],"tasks":[{"id":"1127m","kind":"m","label":"미적","subject":"mi","text":"기출 1회 (50분 타이머) + 오답"},{"id":"1127e","kind":"e","label":"영어","subject":"eng","text":"본문 전체 훑기"},{"id":"1127x","kind":"x","label":"기타","subject":null,"text":"현사윤 문제 풀이"}]},{"date":"2026-11-28","dow":"토","dday":"D-5","slot":"국어·미적·영어 학원 · 저녁 약 3시간","exams":[],"tasks":[{"id":"1128m","kind":"m","label":"미적","subject":"mi","text":"학원 숙제"},{"id":"1128e","kind":"e","label":"영어","subject":"eng","text":"서술형 대비 (어법·영작)"},{"id":"1128x","kind":"x","label":"기타","subject":null,"text":"한지 2회독 끝내기"}]},{"date":"2026-11-29","dow":"일","dday":"D-4","slot":"오전 약 3시간 + 저녁 1시간 30분","exams":[],"tasks":[{"id":"1129m","kind":"m","label":"미적","subject":"mi","text":"기출 1회 + 오답 (오전)"},{"id":"1129e","kind":"e","label":"영어","subject":"eng","text":"본문 빈칸 최종"},{"id":"1129x","kind":"x","label":"기타","subject":null,"text":"역사 스터디 · 동역기 가볍게 1회독"}]}]},{"name":"직전 3일","start":"2026-11-30","end":"2026-12-02","aim":"첫날에 미적과 한지가 같이 있다. 이 둘만 붙잡고, 현사윤은 2회독까지 끝내 둔다.","days":[{"date":"2026-11-30","dow":"월","dday":"D-3","slot":"약 5시간","exams":[],"tasks":[{"id":"1130m","kind":"m","label":"미적","subject":"mi","text":"오답 노트 전체 다시 풀기"},{"id":"1130e","kind":"e","label":"영어","subject":"eng","text":"본문 소리 내 읽기"},{"id":"1130x","kind":"x","label":"기타","subject":null,"text":"한지 3회독 + 현사윤 2회독"}]},{"date":"2026-12-01","dow":"화","dday":"D-2","slot":"미적 학원 · 약 3시간 30분","exams":[],"tasks":[{"id":"1201m","kind":"m","label":"미적","subject":"mi","text":"학원 직전 수업 + 실수 유형 정리"},{"id":"1201x","kind":"x","label":"기타","subject":null,"text":"한지 자료 문제 최종 · 현사윤 2회독"}]},{"date":"2026-12-02","dow":"수","dday":"D-1","slot":"12시 전에 자기","exams":[],"tasks":[{"id":"1202m","kind":"m","label":"미적","subject":"mi","text":"공식·실수 노트 + 쉬운 문제로 감 유지"},{"id":"1202x","kind":"x","label":"기타","subject":null,"text":"한지 최종 정리"}]}]},{"name":"시험 주간","start":"2026-12-03","end":"2026-12-09","aim":"일본어와 동역기는 짧게 챙기고, 남는 시간은 12.8 영어에 쓴다.","days":[{"date":"2026-12-03","dow":"목","dday":"D-DAY","slot":"1일차","exams":[{"subject":"mi","name":"미적분Ⅰ","period":1,"start":"08:30","end":"09:20","minutes":50},{"subject":"hanji","name":"한국지리탐구","period":2,"start":"09:45","end":"10:25","minutes":40}],"tasks":[{"id":"1203x","kind":"x","label":"기타","subject":null,"text":"오후에 현사윤 최종 정리"}]},{"date":"2026-12-04","dow":"금","dday":null,"slot":"2일차","exams":[{"subject":"yun","name":"현대사회와 윤리","period":1,"start":"08:30","end":"09:10","minutes":40}],"tasks":[{"id":"1204e","kind":"e","label":"영어","subject":"eng","text":"본문 전체 1회독"},{"id":"1204x","kind":"x","label":"기타","subject":null,"text":"오후에 심화일본어 시작"}]},{"date":"2026-12-05","dow":"토","dday":null,"slot":"주말","exams":[],"tasks":[{"id":"1205e","kind":"e","label":"영어","subject":"eng","text":"본문 빈칸·변형 문제"},{"id":"1205x","kind":"x","label":"기타","subject":null,"text":"심화일본어 + 동역기"}]},{"date":"2026-12-06","dow":"일","dday":null,"slot":"주말","exams":[],"tasks":[{"id":"1206e","kind":"e","label":"영어","subject":"eng","text":"서술형·어법 최종"},{"id":"1206x","kind":"x","label":"기타","subject":null,"text":"심화일본어·동역기 최종"}]},{"date":"2026-12-07","dow":"월","dday":null,"slot":"3일차","exams":[{"subject":"il","name":"심화일본어","period":1,"start":"08:40","end":"09:10","minutes":30},{"subject":"dong","name":"동아시아역사기행","period":3,"start":"10:40","end":"11:10","minutes":30}],"tasks":[{"id":"1207e","kind":"e","label":"영어","subject":"eng","text":"오후에 본문 소리 내 읽기 + 실수 노트"}]},{"date":"2026-12-08","dow":"화","dday":null,"slot":"4일차","exams":[{"subject":"eng","name":"영어Ⅱ","period":1,"start":"08:30","end":"09:20","minutes":50}],"tasks":[{"id":"1208x","kind":"x","label":"기타","subject":null,"text":"오후에 독작 정리"}]},{"date":"2026-12-09","dow":"수","dday":null,"slot":"5일차","exams":[{"subject":"dok","name":"독서와 작문","period":1,"start":"08:30","end":"09:20","minutes":50}],"tasks":[]}]}],"state":{"storageKey":"final-plan-2026-2","where":"localStorage","shape":{"v":1,"done":{"\u003c할 일 id>":true},"grade":{"\u003c과목 id>":2},"score":{"\u003c과목 id>":75}},"note":"done 에는 끝낸 할 일의 id만 true 로 들어간다. grade·score 는 사용자가 화면에서 바꾼 목표값이고, 없으면 subjects 의 targetGrade·targetScore 를 쓴다."}}</script>
+<script>
+(function(){
+'use strict';
+
+/*
+ * 기말 작전 일지 (비서 앱용)
+ * - 계획 데이터: 같은 폴더의 plan.json 을 읽는다. 못 읽으면 이 파일 안에 들어 있는 사본(#plan-data)을 쓴다.
+ * - 체크·목표 저장: localStorage 의 plan.json → state.storageKey (기본 "final-plan-2026-2").
+ *   저장 모양: { v:1, done:{ "<할 일 id>":true }, grade:{ "<과목 id>":등급 }, score:{ "<과목 id>":점수 } }
+ * - 앱의 다른 화면(비서)이 같은 키를 고치면 이 화면도 바로 따라 바뀐다(storage 이벤트).
+ */
+
+var DOW=['일','월','화','수','목','금','토'];
+var KIND={m:['미적','k-m'],e:['영어','k-e'],x:['기타','k-x']};
+var TZ,LS_KEY,FIRST,NOW_GPA,Y25,S1,SUBS,SUB,CUTS,PLAN,DAYS,TASKS,TASK_IDS,TODAY,DEFAULTS;
+var state=null,localOK=false;
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+/* ── 날짜 ── */
+function toUTC(iso){var p=iso.split('-');return Date.UTC(+p[0],+p[1]-1,+p[2]);}
+function diff(a,b){return Math.round((toUTC(b)-toUTC(a))/864e5);}
+function todayISO(){
+  try{return new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+  catch(e){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
+}
+function dowOf(iso){return DOW[new Date(toUTC(iso)).getUTCDay()];}
+function shortDate(iso){var p=iso.split('-');return (+p[1])+'.'+(+p[2]);}
+
+/* ── plan.json → 화면용 자료 ── */
+function load(j){
+  TZ=(j.meta&&j.meta.timezone)||'Asia/Seoul';
+  LS_KEY=(j.state&&j.state.storageKey)||'final-plan-2026-2';
+  FIRST=j.meta.firstExam;
+  NOW_GPA=j.gpa.now;
+  Y25=j.gpa.year2025.points/j.gpa.year2025.units;
+  S1={u:j.gpa.semester1_2026.units,p:j.gpa.semester1_2026.points};
+  CUTS=j.cuts.map(function(c){return {v:c.value,n:c.name};});
+  DEFAULTS={v:1,done:{},grade:{},score:{}};
+  SUBS=j.subjects.map(function(s){
+    var when='기말 없음';
+    if(s.exam)when=shortDate(s.exam.date)+' '+dowOf(s.exam.date)+' '+s.exam.period+'교시 '+s.exam.start;
+    if(s.countedInGpa)DEFAULTS.grade[s.id]=s.targetGrade;
+    if(s.targetScore!=null)DEFAULTS.score[s.id]=s.targetScore;
+    return {id:s.id,name:s.name,unit:s.countedInGpa?s.units:0,when:when,mid:s.note||'',
+      noGrade:!s.countedInGpa,noScore:s.targetScore==null,scoreLabel:s.scoreLabel};
+  });
+  SUB={};SUBS.forEach(function(s){SUB[s.id]=s;});
+  DAYS=[];TASKS=[];TASK_IDS={};
+  PLAN=j.phases.map(function(ph){
+    return {ph:ph.name,range:shortDate(ph.start)+' – '+shortDate(ph.end),aim:ph.aim,days:ph.days.map(function(d){
+      var day={iso:d.date,key:d.date.slice(5).replace('-',''),s:d.slot||'',
+        ex:(d.exams&&d.exams.length)?d.exams.map(function(x){
+          return {id:x.subject,t:x.period+'교시 '+x.start+'–'+x.end+' · '+x.minutes+'분'};
+        }):null,
+        tasks:(d.tasks||[]).map(function(t){return {id:t.id,kind:KIND[t.kind]?t.kind:'x',text:t.text,iso:d.date};})};
+      day.tasks.forEach(function(t){TASKS.push(t);TASK_IDS[t.id]=true;});
+      DAYS.push(day);
+      return day;
+    })};
+  });
+  TODAY=todayISO();
+}
+
+/* ── 상태 ── */
+function normalize(d){
+  var s={v:1,done:{},grade:{},score:{}},k;
+  d=d&&typeof d==='object'?d:{};
+  if(d.done&&typeof d.done==='object'){for(k in d.done){if(TASK_IDS[k]&&d.done[k])s.done[k]=true;}}
+  for(k in DEFAULTS.grade){var g=d.grade&&+d.grade[k];s.grade[k]=(g>=1&&g<=5)?Math.round(g):DEFAULTS.grade[k];}
+  for(k in DEFAULTS.score){var n=d.score&&d.score[k];n=(n===''||n==null)?NaN:+n;s.score[k]=(n>=0&&n<=100)?Math.round(n):DEFAULTS.score[k];}
+  return s;
+}
+function readStore(){
+  try{var raw=localStorage.getItem(LS_KEY);localOK=true;return raw?JSON.parse(raw):null;}catch(e){return null;}
+}
+function setSave(){
+  var el=document.getElementById('saveState');
+  if(localOK){el.textContent='체크와 목표가 이 기기에 저장됨';el.className='save on';}
+  else{el.textContent='저장할 곳을 찾지 못함. 새로 고치면 체크가 지워질 수 있음';el.className='save';}
+}
+function save(){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(state));localOK=true;}catch(e){localOK=false;}
+  setSave();
+  try{window.dispatchEvent(new CustomEvent('finalplan:change',{detail:JSON.parse(JSON.stringify(state))}));}catch(e){}
+}
+
+/* ── 계산 ── */
+function calc(){
+  var u=0,p=0;
+  SUBS.forEach(function(s){if(s.unit&&!s.noGrade){u+=s.unit;p+=s.unit*state.grade[s.id];}});
+  var year=(S1.p+p)/(S1.u+u);
+  return {sem:u?p/u:0,year:year,all:(Y25+year)/2};
+}
+function r2(n){return Math.round(n*100)/100;}
+
+/* ── 그리기 (처음 한 번) ── */
+function taskHTML(t,prefix){
+  return '<li><label class="task"><input type="checkbox" id="'+prefix+'-'+esc(t.id)+'" data-task="'+esc(t.id)+'">'+
+    '<span class="box" aria-hidden="true"></span><span class="tag '+KIND[t.kind][1]+'">'+KIND[t.kind][0]+'</span>'+
+    '<span class="txt">'+esc(t.text)+'</span></label></li>';
+}
+function examHTML(x){
+  var s=SUB[x.id];
+  return '<div class="exam"><span class="et">'+esc(x.t)+'</span><strong>'+esc(s?s.name:x.id)+'</strong><span class="eg" data-goal="'+esc(x.id)+'"></span></div>';
+}
+function buildStrip(){
+  document.getElementById('strip').innerHTML=DAYS.map(function(d){return '<div class="c" data-cell="'+d.key+'"></div>';}).join('');
+}
+function buildMast(){
+  var examDays=DAYS.filter(function(d){return d.ex;});
+  var next=null,i;
+  for(i=0;i<examDays.length;i++){if(examDays[i].iso>=TODAY){next=examDays[i];break;}}
+  var num=document.getElementById('ddayNum'),cap=document.getElementById('ddayCap');
+  if(!next){num.textContent='END';cap.textContent='기말 끝. 수고했어.';}
+  else{
+    var names=next.ex.map(function(x){return SUB[x.id]?SUB[x.id].name:x.id;});
+    var k=diff(TODAY,next.iso);
+    if(k===0){num.textContent='DAY '+(examDays.indexOf(next)+1);cap.textContent='오늘 시험: '+names.join(' · ');}
+    else{num.textContent='D-'+k;cap.textContent=(next.iso===FIRST?'첫 시험 ':'다음 시험 ')+names[0]+'까지';}
+  }
+  var p=TODAY.split('-');
+  document.getElementById('todayStr').textContent='오늘은 '+(+p[1])+'월 '+(+p[2])+'일 '+dowOf(TODAY)+'요일';
+}
+function buildToday(){
+  var el=document.getElementById('todayCard'),d=null;
+  DAYS.forEach(function(x){if(x.iso===TODAY)d=x;});
+  var body;
+  if(!d){
+    body='<p class="today-msg">'+(TODAY<DAYS[0].iso?'계획은 '+shortDate(DAYS[0].iso)+'부터 시작한다.':'기말이 끝났다. 수고했어.')+'</p>';
+  }else{
+    body='<div class="today-top"><strong>'+shortDate(d.iso)+' '+dowOf(d.iso)+'요일</strong><span>'+esc(d.s)+'</span></div>'+
+      (d.ex?d.ex.map(examHTML).join(''):'')+
+      (d.tasks.length?'<ul class="tasks">'+d.tasks.map(function(t){return taskHTML(t,'now');}).join('')+'</ul>':'');
+  }
+  el.innerHTML=body+'<div class="today-foot"><span id="lateMsg"></span><button type="button" class="linkbtn" id="lateBtn" hidden>밀린 날로 가기</button></div>';
+}
+function buildSubjects(){
+  document.getElementById('subjects').innerHTML=SUBS.map(function(s){
+    var ctl='',id=esc(s.id),name=esc(s.name);
+    if(s.noGrade)ctl+='<span class="excluded">평균 계산에서 빠짐</span>';
+    else ctl+='<div class="stepper"><button type="button" data-step="-1" data-subj="'+id+'" aria-label="'+name+' 목표 등급 숫자 내리기">−</button>'+
+      '<output id="grade-'+id+'" aria-live="polite"></output>'+
+      '<button type="button" data-step="1" data-subj="'+id+'" aria-label="'+name+' 목표 등급 숫자 올리기">+</button></div>';
+    if(!s.noScore)ctl+='<label class="score" for="score-'+id+'">'+esc(s.scoreLabel||'목표 점수')+
+      ' <input type="number" id="score-'+id+'" data-score="'+id+'" min="0" max="100" step="1" inputmode="numeric"> 점</label>';
+    return '<div class="subj"><div><h3>'+name+'</h3><p class="subj-meta">'+(s.unit?s.unit+'단위 · ':'')+esc(s.when)+'</p>'+
+      '<p class="subj-mid">'+esc(s.mid)+'</p></div><div class="subj-ctl">'+ctl+'</div></div>';
+  }).join('');
+}
+function buildMeters(){
+  document.getElementById('meters').innerHTML=['m','e','x'].map(function(k){
+    return '<div class="meter '+KIND[k][1]+'"><div class="meter-top"><span>'+KIND[k][0]+'</span><span class="num" id="mt-'+k+'"></span></div>'+
+      '<div class="bar"><i id="mb-'+k+'"></i></div></div>';
+  }).join('');
+}
+function buildPlan(){
+  document.getElementById('plan').innerHTML=PLAN.map(function(ph){
+    return '<div class="phase"><div class="phase-head"><h3>'+esc(ph.ph)+'<span>'+esc(ph.range)+'</span></h3><p>'+esc(ph.aim)+'</p></div>'+
+      ph.days.map(function(d){
+        var k=diff(d.iso,FIRST);
+        var dd=k>0?'D-'+k:(k===0?'D-DAY':'');
+        var cls='day'+(d.iso===TODAY?' is-today':'')+(d.iso<TODAY?' is-past':'')+(d.ex?' is-exam':'');
+        return '<article class="'+cls+'" id="day-'+d.key+'" data-day="'+d.key+'">'+
+          '<div class="day-date"><span class="d">'+shortDate(d.iso)+'</span><span class="w">'+dowOf(d.iso)+'요일</span>'+
+          (dd?'<span class="dd">'+dd+'</span>':'')+
+          '<span class="chip chip-today">오늘</span><span class="chip chip-late"></span><span class="chip chip-done">완료</span></div>'+
+          '<div class="day-body"><span class="slot">'+esc(d.s)+'</span>'+
+          (d.ex?d.ex.map(examHTML).join(''):'')+
+          (d.tasks.length?'<ul class="tasks">'+d.tasks.map(function(t){return taskHTML(t,'log');}).join('')+'</ul>':'')+
+          '</div></article>';
+      }).join('')+'</div>';
+  }).join('');
+}
+
+/* ── 상태 반영 ── */
+function refreshChecks(){
+  var boxes=document.querySelectorAll('input[data-task]'),i;
+  for(i=0;i<boxes.length;i++){
+    var on=!!state.done[boxes[i].getAttribute('data-task')];
+    boxes[i].checked=on;
+    boxes[i].parentNode.classList.toggle('done',on);
+  }
+  var cnt={m:[0,0],e:[0,0],x:[0,0]},late=0,firstLate=null,doneAll=0;
+  DAYS.forEach(function(d){
+    var n=0;
+    d.tasks.forEach(function(t){cnt[t.kind][1]++;if(state.done[t.id]){cnt[t.kind][0]++;n++;doneAll++;}});
+    var left=d.tasks.length-n;
+    var complete=d.tasks.length>0&&left===0;
+    var isLate=d.iso<TODAY&&left>0;
+    if(isLate){late+=left;if(!firstLate)firstLate=d;}
+    var row=document.getElementById('day-'+d.key);
+    row.classList.toggle('is-complete',complete);
+    row.classList.toggle('has-late',isLate);
+    row.querySelector('.chip-late').textContent=isLate?'밀림 '+left:'';
+    var cell=document.querySelector('[data-cell="'+d.key+'"]');
+    cell.className='c'+(d.ex?' exam':(complete?' done':(isLate?' late':'')))+(d.iso===TODAY?' today':'');
+  });
+  ['m','e','x'].forEach(function(k){
+    document.getElementById('mt-'+k).textContent=cnt[k][0]+'/'+cnt[k][1];
+    document.getElementById('mb-'+k).style.width=(cnt[k][1]?cnt[k][0]/cnt[k][1]*100:0)+'%';
+  });
+  document.getElementById('planCount').textContent='전체 '+doneAll+'/'+TASKS.length;
+  var td=null;DAYS.forEach(function(x){if(x.iso===TODAY)td=x;});
+  var tc=document.getElementById('todayCount');
+  if(td&&td.tasks.length){var dn=td.tasks.filter(function(t){return state.done[t.id];}).length;tc.textContent=dn+'/'+td.tasks.length+' 완료';}
+  else tc.textContent='';
+  var msg=document.getElementById('lateMsg'),btn=document.getElementById('lateBtn');
+  if(late){msg.textContent='밀린 일 '+late+'개';btn.hidden=false;btn.setAttribute('data-go',firstLate.key);}
+  else{msg.textContent='밀린 일 없음';btn.hidden=true;}
+}
+function goalText(id){
+  var s=SUB[id];
+  if(!s)return '';
+  if(s.noGrade)return (s.scoreLabel||'목표 점수')+' '+state.score[id]+'점';
+  if(s.noScore)return '목표 '+state.grade[id]+'등급';
+  return '목표 '+state.score[id]+'점 · '+state.grade[id]+'등급';
+}
+function refreshGoals(force){
+  SUBS.forEach(function(s){
+    if(!s.noGrade){
+      document.getElementById('grade-'+s.id).textContent=state.grade[s.id]+'등급';
+      var b=document.querySelectorAll('[data-subj="'+s.id+'"]');
+      b[0].disabled=state.grade[s.id]<=1;b[1].disabled=state.grade[s.id]>=5;
+    }
+    if(!s.noScore){
+      var inp=document.getElementById('score-'+s.id);
+      if(force||document.activeElement!==inp)inp.value=state.score[s.id];
+    }
+  });
+  var g=calc(),me=r2(g.all);
+  document.getElementById('gAll').textContent=me.toFixed(2);
+  document.getElementById('gSem').textContent=g.sem.toFixed(2);
+  document.getElementById('gYear').textContent=g.year.toFixed(2);
+  document.getElementById('gPrev').textContent=Y25.toFixed(2);
+  document.getElementById('mastNow').textContent=NOW_GPA.toFixed(2);
+  document.getElementById('mastGoal').textContent=me.toFixed(2);
+  var dl=Math.round((me-NOW_GPA)*100)/100,de=document.getElementById('gDelta'),now=NOW_GPA.toFixed(2);
+  if(dl<0){de.textContent='지금 '+now+'보다 '+Math.abs(dl).toFixed(2)+' 좋아짐';de.className='gpa-delta good';}
+  else if(dl>0){de.textContent='지금 '+now+'보다 '+dl.toFixed(2)+' 나빠짐';de.className='gpa-delta bad';}
+  else{de.textContent='지금과 같음';de.className='gpa-delta same';}
+  var rows=CUTS.map(function(c){
+    var d=Math.round((me-c.v)*100);
+    return {v:c.v,n:c.n,o:0,cls:d<0?'pass':(d===0?'tie':'short'),
+      st:d<0?(Math.abs(d)/100).toFixed(2)+' 여유':(d===0?'컷과 같음':(d/100).toFixed(2)+' 부족')};
+  });
+  rows.push({v:me,n:'목표대로 받으면',o:1,cls:'me',st:'내 평균'});
+  rows.push({v:NOW_GPA,n:'지금 (10.19 성적표)',o:2,cls:'now',st:''});
+  rows.sort(function(a,b){return b.v-a.v||a.o-b.o;});
+  document.getElementById('ladder').innerHTML=rows.map(function(r){
+    return '<li class="rung '+r.cls+'"><span class="rv">'+r.v.toFixed(2)+'</span><span class="rn">'+esc(r.n)+'</span><span class="rs">'+r.st+'</span></li>';
+  }).join('');
+  var gs=document.querySelectorAll('[data-goal]'),i;
+  for(i=0;i<gs.length;i++)gs[i].textContent=goalText(gs[i].getAttribute('data-goal'));
+}
+function refreshAll(force){refreshChecks();refreshGoals(force);}
+
+/* ── 조작 ── */
+document.addEventListener('change',function(ev){
+  var t=ev.target;
+  if(!state||!t.matches)return;
+  if(t.matches('input[data-task]')){
+    var id=t.getAttribute('data-task');
+    if(t.checked)state.done[id]=true;else delete state.done[id];
+    var old=document.querySelectorAll('.task.just'),i;
+    for(i=0;i<old.length;i++)old[i].classList.remove('just');
+    t.parentNode.classList.add('just');
+    refreshChecks();save();
+  }else if(t.matches('input[data-score]')){
+    var sid=t.getAttribute('data-score'),n=Math.round(+t.value);
+    if(t.value===''||isNaN(n))n=state.score[sid];
+    n=Math.max(0,Math.min(100,n));
+    state.score[sid]=n;t.value=n;
+    refreshGoals(false);save();
+  }
+});
+document.addEventListener('click',function(ev){
+  if(!state||!ev.target.closest)return;
+  var b=ev.target.closest('[data-step]');
+  if(b){
+    var id=b.getAttribute('data-subj');
+    state.grade[id]=Math.max(1,Math.min(5,state.grade[id]+(+b.getAttribute('data-step'))));
+    refreshGoals(false);save();
+    return;
+  }
+  var go=ev.target.closest('#lateBtn');
+  if(go){
+    var row=document.getElementById('day-'+go.getAttribute('data-go'));
+    var calm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(row)row.scrollIntoView({behavior:calm?'auto':'smooth',block:'start'});
+  }
+});
+/* 앱의 다른 화면(비서)이 같은 키를 고치면 따라간다 */
+window.addEventListener('storage',function(ev){
+  if(!state||ev.key!==LS_KEY)return;
+  state=normalize(readStore());
+  refreshAll(true);
+});
+
+/* ── 시작 ── */
+function boot(j){
+  load(j);
+  state=normalize(readStore());
+  buildStrip();buildMast();buildToday();buildSubjects();buildMeters();buildPlan();
+  refreshAll(true);
+  setSave();
+}
+var embedded=JSON.parse(document.getElementById('plan-data').textContent);
+var started=false;
+function go(j){
+  if(started)return;
+  started=true;
+  try{boot(j);}
+  catch(e){if(j!==embedded){started=false;state=null;go(embedded);}}
+}
+if(location.protocol==='file:'||typeof fetch!=='function'){go(embedded);}
+else{
+  var wait=setTimeout(function(){go(embedded);},1500);
+  fetch('plan.json',{cache:'no-store'})
+    .then(function(r){if(!r.ok)throw new Error('plan.json');return r.json();})
+    .then(function(j){clearTimeout(wait);go(j);})
+    .catch(function(){clearTimeout(wait);go(embedded);});
+}
+})();
+</script>
+</body>
+</html>
