@@ -42,7 +42,9 @@ const MY_REPS = [
   { key: 'eng', text: '영어 학원 (보통 7시쯤 끝)', days: [3, 5], time: '16:00', end: '19:00' },
   { key: 'eng', text: '영어 학원', days: [6], time: '16:00', end: '18:00' },
 ];
+const MY_REPS2 = [{ key: 'history', text: '역사 특강', days: [0], time: '13:00', end: '19:00' }]; // 일요일, 내가 하는 특강
 if (!S.repsLoaded) { MY_REPS.forEach(r => S.reps.push({ id: uid(), ...r })); S.repsLoaded = 1; save(); }
+if (S.repsLoaded < 2) { MY_REPS2.forEach(r => { if (!S.reps.some(x => x.key === r.key)) S.reps.push({ id: uid(), ...r }); }); S.repsLoaded = 2; save(); }
 const endOf = t => { const [h, m] = t.split(':').map(Number), x = h * 60 + m + 50; return `${pad(Math.floor(x / 60))}:${pad(x % 60)}`; };
 if (!S.exams) S.exams = [];                                           // [{id, subject, date, range}]
 if (!S.study) S.study = { wStart: '19:00', eStart: '10:00', wdN: 2, weN: 3, len: 50 };
