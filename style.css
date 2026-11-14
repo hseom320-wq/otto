@@ -445,3 +445,51 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .tt .tt-lunch { grid-column: 1 / -1; text-align: center; font-size: 11.5px; color: var(--mute); padding: 3px 0; border-top: 1px dashed rgba(255,255,255,.12); border-bottom: 1px dashed rgba(255,255,255,.12); margin: 2px 0; }
 
 .tc { min-width: 0; overflow-wrap: anywhere; padding: 2px; font-size: 12px; }
+
+/* ---------- 시청실 (tv.js) ---------- */
+.dock { grid-template-columns: repeat(8, 1fr); }
+.dock button { font-size: 10.5px; letter-spacing: -.02em; }
+.tvroom { position: absolute; inset: 0; z-index: 27; overflow: hidden; overflow: clip; background: #0b0d14; } /* clip: 확대 연출 중 눌린 버튼 때문에 방이 스크롤되지 않게 */
+.tvroom[hidden] { display: none; }
+.tv-blur { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(22px) brightness(.55); }
+.tv-cam { position: absolute; inset: 0; transition: transform .65s cubic-bezier(.5,0,.3,1), opacity .65s; }
+.tv-room { position: absolute; max-width: none; }
+.tvroom.enter .tv-cam { animation: tvIn .7s cubic-bezier(.2,.7,.2,1); }
+@keyframes tvIn { from { transform: scale(1.18); opacity: 0; filter: blur(6px); } to { transform: none; opacity: 1; filter: none; } }
+.tvroom.leave { animation: tvOut .45s ease forwards; }
+@keyframes tvOut { to { opacity: 0; } }
+.tvroom.dive .tv-cam { transform: scale(var(--zoom, 3)); }
+.tvroom.dive .tv-screen { background: #000; }
+#home.to-tv .stage { transition: transform .7s cubic-bezier(.5,0,.3,1); transform: scale(1.12); }
+.tv-screen { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4%; padding: 3%; border-radius: 4px; background: radial-gradient(ellipse at 50% 40%, rgba(60,80,140,.35), rgba(5,7,14,.85)); box-shadow: inset 0 0 30px rgba(120,160,255,.15); transition: background .4s; }
+.tv-title { margin: 0; font-size: clamp(13px, 2.6vmin, 22px); color: rgba(225,235,255,.85); letter-spacing: .02em; }
+.tv-btns { display: flex; gap: 4%; width: 100%; justify-content: center; }
+.tv-btns button { flex: 1; max-width: 190px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px 9px; border-radius: 12px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); color: #f2f4f8; font-size: clamp(11px, 2.2vmin, 17px); font-weight: 600; transition: transform .15s, background .15s; }
+.tv-btns button:active, .tv-btns button:focus-visible { background: rgba(255,255,255,.16); transform: scale(.96); outline: 2px solid var(--c); outline-offset: 2px; }
+.tv-btns svg { width: clamp(30px, 8vmin, 72px); height: auto; }
+.tv-today { margin: 0; font-size: clamp(10.5px, 2vmin, 16px); color: rgba(200,212,235,.7); text-align: center; }
+.tv-spark { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; pointer-events: none; background: radial-gradient(circle, #fff 0 18%, rgba(190,220,255,.8) 30%, transparent 62%); clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); animation: twinkle 2.6s ease-in-out infinite; }
+.tv-spark + .tv-spark { animation-delay: 1.3s; }
+@keyframes twinkle { 0%, 70%, 100% { opacity: 0; transform: scale(.3) rotate(0); } 82% { opacity: 1; transform: scale(1) rotate(25deg); } }
+.tv-cat { position: absolute; padding: 0; background: none; transform-origin: 50% 100%; animation: breatheCat 3.8s ease-in-out infinite; }
+.tv-cat img { height: 100%; width: auto; display: block; pointer-events: none; }
+.tv-cat.purr { animation: purr .5s ease; }
+@keyframes breatheCat { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.03); } }
+@keyframes purr { 30% { transform: scale(1.08, .92); } 60% { transform: scale(.96, 1.05); } }
+.tv-top { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between; padding: calc(var(--st) + 10px) max(14px, env(safe-area-inset-right, 0px)) 10px max(12px, env(safe-area-inset-left, 0px)); background: linear-gradient(rgba(0,0,0,.55), transparent); }
+.tv-top b { font-size: 15px; color: rgba(238,242,246,.85); }
+.tv-back { height: 38px; padding: 0 14px 0 10px; border-radius: 10px; background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.14); color: #fff; font-size: 14.5px; font-weight: 600; }
+.tv-say { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px max(22px, env(safe-area-inset-right, 0px)) calc(var(--sb) + 22px) max(22px, env(safe-area-inset-left, 0px)); background: linear-gradient(transparent, rgba(3,4,6,.85) 45%); pointer-events: none; }
+.tv-say b { font-size: 13px; color: #9fb6ff; }
+.tv-say p { margin: 4px 0 0; min-height: 1.7em; font-family: var(--f-voice); font-size: 16.5px; line-height: 1.7; color: #f4f2ee; }
+.tv-ask { position: absolute; left: 50%; bottom: calc(var(--sb) + 104px); transform: translateX(-50%); width: min(420px, calc(100% - 28px)); padding: 16px; border-radius: 16px; background: rgba(16,19,26,.96); border: 1px solid rgba(255,255,255,.12); box-shadow: 0 10px 40px rgba(0,0,0,.5); z-index: 2; }
+.tv-ask[hidden] { display: none; }
+.tv-ask p { margin: 0 0 8px; font-size: 15px; }
+.tv-ask p.sub { margin: 12px 0 6px; font-size: 12.5px; color: var(--mute); }
+.tv-ask .adj { display: flex; align-items: center; gap: 10px; }
+.tv-ask .adj button { height: 34px; padding: 0 12px; border-radius: 9px; background: rgba(255,255,255,.08); color: #fff; font-family: var(--f-num); }
+.tv-ask .adj span { min-width: 6em; text-align: center; font-weight: 700; }
+.tv-ask .subs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tv-ask .subs button { height: 34px; padding: 0 11px; border-radius: 17px; background: rgba(111,140,255,.16); border: 1px solid rgba(111,140,255,.35); color: #dfe6ff; font-size: 13px; }
+.tv-ask .play { width: 100%; height: 42px; margin-top: 12px; border-radius: 11px; background: rgba(255,120,100,.15); border: 1px solid rgba(255,120,100,.35); color: #ffd6cf; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .tvroom.enter .tv-cam, .tvroom.leave, .tv-spark, .tv-cat { animation: none; } .tv-cam { transition: none; } }

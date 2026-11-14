@@ -365,6 +365,8 @@ $('focusStop').onclick = () => {
   logMins(F.x.subject, done); save();
   closeFocus(); toast(done > 0 ? `${done}분 공부했어요` : '타이머를 껐어요');
 };
+// 시청실(tv.js)이 본 시간을 공부 시간에 더할 수 있게
+window.addStudy = (subject, mins) => { logMins(subject, mins); save(); };
 window.focusState = () => (F ? { subject: F.x.subject, end: F.end, paused: F.paused, len: F.len } : null);
 
 // 다른 앱에 다녀오면 어디 갔다 왔냐고 묻는다
