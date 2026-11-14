@@ -18,7 +18,7 @@ const DEF_PERIODS = ['08:40', '09:40', '10:40', '11:40', '13:30', '14:30', '15:3
 if (!S.tt) S.tt = { periods: DEF_PERIODS.slice(), cells: {} };      // cells['요일(1~5)-교시'] = 과목
 // 내 학교 시간표 (2학년 2학기, 2026). 수업 50분·쉬는 시간 10분, 4교시 뒤 점심 1시간. 금요일 6·7교시 창체는 없는 날도 있다(2시 또는 4시 끝)
 const MY_TT = {
-  periods: ['08:40', '09:40', '10:40', '11:40', '13:30', '14:30', '15:30'],
+  periods: ['08:20', '09:20', '10:20', '11:20', '13:10', '14:10', '15:10'],  // 8시~8시 10분 등교, 8시 20분 1교시
   cells: {
     '1-1': '현대사회와 윤리', '1-2': '한국지리탐구', '1-3': '독서와 작문', '1-4': '미적분Ⅰ', '1-5': '영어Ⅱ', '1-6': '언어생활탐구',
     '2-1': '언어생활탐구', '2-2': '영어Ⅱ', '2-3': '심화일본어', '2-4': '독서와 작문', '2-5': '미적분Ⅰ', '2-6': '동아시아역사기행', '2-7': '영어Ⅱ',
@@ -29,6 +29,20 @@ const MY_TT = {
 };
 // 시간표가 비어 있으면 내 시간표로 채운다 (한 번만, 직접 고친 건 덮어쓰지 않는다)
 if (!S.ttLoaded && !Object.keys(S.tt.cells).length) { S.tt = { periods: MY_TT.periods.slice(), cells: { ...MY_TT.cells } }; S.ttLoaded = 1; save(); }
+// 1교시가 8시 40분이던 예전 판을 받은 경우: 교시 시각만 8시 20분 기준으로 고친다
+if (S.ttLoaded === 1 && S.tt.periods[0] === '08:40') { S.tt.periods = MY_TT.periods.slice(); S.ttLoaded = 2; save(); }
+// 매주 일정: 등교·학원 (한 번만 넣는다. 끝 시각 end 가 있으면 공부 계획이 그 시간을 피한다)
+const MY_REPS = [
+  { key: 'school', text: '등교 (8:10까지 도착)', days: [1, 2, 3, 4, 5], time: '08:00', end: '08:10' },
+  { key: 'math', text: '수학 학원', days: [2, 4], time: '16:00', end: '18:00' },
+  { key: 'math', text: '수학 학원', days: [5], time: '20:00', end: '22:00' },
+  { key: 'math', text: '수학 학원', days: [6], time: '14:00', end: '16:00' },
+  { key: 'kor', text: '국어 학원', days: [4], time: '19:00', end: '22:00' },
+  { key: 'kor', text: '국어 학원', days: [6], time: '10:00', end: '13:00' },
+  { key: 'eng', text: '영어 학원 (보통 7시쯤 끝)', days: [3, 5], time: '16:00', end: '19:00' },
+  { key: 'eng', text: '영어 학원', days: [6], time: '16:00', end: '18:00' },
+];
+if (!S.repsLoaded) { MY_REPS.forEach(r => S.reps.push({ id: uid(), ...r })); S.repsLoaded = 1; save(); }
 const endOf = t => { const [h, m] = t.split(':').map(Number), x = h * 60 + m + 50; return `${pad(Math.floor(x / 60))}:${pad(x % 60)}`; };
 if (!S.exams) S.exams = [];                                           // [{id, subject, date, range}]
 if (!S.study) S.study = { wStart: '19:00', eStart: '10:00', wdN: 2, weN: 3, len: 50 };
@@ -49,7 +63,7 @@ function studyBlocks(day) {
   const subs = []; let i = 0;
   while (subs.length < n && i < n * 3) { const e = up[i % up.length]; subs.push(e); i++; }
   // 시간: 매주 일정(학원 등)과 겹치는 자리는 건너뛴다
-  const busy = S.reps.filter(r => r.days.includes(wd)).map(r => [toMin(r.time), toMin(r.time) + 60]);
+  const busy = S.reps.filter(r => r.days.includes(wd)).map(r => [toMin(r.time), r.end ? toMin(r.end) + 30 : toMin(r.time) + 60]); // 학원 끝나고 30분은 이동·식사
   let t = toMin(weekend ? S.study.eStart : S.study.wStart);
   const out = [];
   subs.forEach((e, k) => {

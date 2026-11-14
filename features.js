@@ -26,7 +26,7 @@ function seeded(str) { let h = 2166136261; for (const ch of str) { h ^= ch.charC
 function itemsOn(day) {
   const wd = new Date(day + 'T12:00').getDay();
   const a = S.todos.filter(t => t.due && t.due.slice(0, 10) === day).map(t => ({ kind: 'todo', id: t.id, time: t.due.slice(11, 16), text: t.text, done: t.done }));
-  const r = S.reps.filter(x => x.days.includes(wd)).map(x => ({ kind: 'rep', id: x.id, time: x.time, text: x.text }));
+  const r = S.reps.filter(x => x.days.includes(wd)).map(x => ({ kind: 'rep', id: x.id, time: x.time, text: x.end ? `${x.text} (~${x.end})` : x.text }));
   const st2 = window.extraItems ? extraItems(day) : []; // 공부 계획 (study.js)
   return [...a, ...r, ...st2].sort((x, y) => (x.time || '').localeCompare(y.time || ''));
 }
@@ -130,7 +130,7 @@ function renderWeek(b) {
   if (!S.reps.length) b.appendChild(el('div', 'empty', '아직 없어요.'));
   [...S.reps].sort((x, y) => x.time.localeCompare(y.time)).forEach(x => {
     const r = el('div', 'item');
-    r.innerHTML = `<span class="ck ghost"></span><span class="tm">${x.time}</span><span class="tx">${esc(x.text)}<small>${x.days.map(d => WD[d]).join(' ')}</small></span>`;
+    r.innerHTML = `<span class="ck ghost"></span><span class="tm">${x.time}</span><span class="tx">${esc(x.text)}<small>${x.days.map(d => WD[d]).join(' ')}${x.end ? ` · ${x.time}~${x.end}` : ''}</small></span>`;
     const del = el('button', 'del', '✕'); del.setAttribute('aria-label', '지우기');
     del.onclick = () => { S.reps = S.reps.filter(y => y.id !== x.id); save(); refresh(); }; r.appendChild(del);
     b.appendChild(r);
