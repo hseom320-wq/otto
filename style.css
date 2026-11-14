@@ -468,10 +468,9 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .tv-scene { position: absolute; }
 .tv-scene::before { content: ""; position: absolute; left: -8%; right: -8%; bottom: -6%; height: 30%; background: radial-gradient(ellipse at 50% 40%, rgba(120,110,160,.16), transparent 70%); pointer-events: none; }
 .tv-ns, .tv-set { position: absolute; max-width: none; pointer-events: none; user-select: none; }
-.tv-ns { -webkit-mask-image: var(--fade); mask-image: var(--fade); filter: brightness(.95); transition: filter .6s, opacity .4s; }
-.tvroom.on .tv-ns { filter: brightness(1.03) drop-shadow(0 0 18px rgba(140,170,255,.18)); }
-.tv-spark { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; pointer-events: none; background: radial-gradient(circle, #fff 0 18%, rgba(190,220,255,.8) 30%, transparent 62%); clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); animation: twinkle 2.6s ease-in-out infinite; }
-.tv-spark + .tv-spark { animation-delay: 1.3s; }
+.tv-ns { z-index: 4; -webkit-mask-image: var(--fade); mask-image: var(--fade); filter: brightness(.9); transition: filter .6s, opacity .4s; }
+.tvroom.full .tv-ns { opacity: 0; }
+.tvroom.on .tv-ns { filter: brightness(1.02) drop-shadow(-6px -4px 22px rgba(140,170,255,.22)); }
 @keyframes twinkle { 0%, 70%, 100% { opacity: 0; transform: scale(.3) rotate(0); } 82% { opacity: 1; transform: scale(1) rotate(25deg); } }
 .tv-cat { position: absolute; padding: 0; background: none; transform-origin: 50% 100%; animation: breatheCat 3.8s ease-in-out infinite; transition: opacity .4s; }
 .tv-cat img { height: 100%; width: auto; display: block; pointer-events: none; }
@@ -556,4 +555,4 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   .tv-stagebox { flex: 1 1 auto; height: auto; min-height: 0; margin: 0 12px; }
   .tv-say { margin-bottom: 0; padding-top: 4px; }
 }
-@media (prefers-reduced-motion: reduce) { .tvroom.enter, .tvroom.enter .tv-cam, .tvroom.leave, .tv-spark, .tv-cat { animation: none; } .tv-screen { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .tvroom.enter, .tvroom.enter .tv-cam, .tvroom.leave, .tv-cat { animation: none; } .tv-screen { transition: none; } }

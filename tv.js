@@ -1,5 +1,5 @@
 // 한울아파트 — 시청실
-// 까만 방에 큰 TV가 있고, 수현이 TV 뒤에 서서 상반신만 TV 위로 내밀고, 한울냥이 TV 위에서 식빵을 굽는다.
+// 까만 방에 큰 TV가 있고, 수현이 TV 앞에 앉아 같이 TV를 보고(뒷모습), 한울냥이 TV 위에서 식빵을 굽는다.
 // 모든 건 TV 화면 안에서 한다: 채널(유튜브·밴드·브레이브) 고르기, 유튜브 검색·목록 스크롤, 영상 보기.
 //  - 유튜브 검색은 구글 키(YouTube Data API v3)가 있어야 된다. 키가 없어도 링크 붙여넣기·최근 영상·유튜브 앱의 "공유 → 한울아파트"는 된다.
 //  - 밴드는 TV에 띄워 보고 안 되면 앱으로 연다. 브레이브는 다른 앱 안에 못 띄우게 막혀 있어서 브레이브로 넘어갔다가 돌아온다.
@@ -7,17 +7,17 @@
 // 영상을 끄거나 나가거나 다녀오면 본 시간을 보여 주고 "공부였어? 놀았어?"를 묻는다.
 'use strict';
 (() => {
-// 장면 좌표 (TV 그림 원본 1526×1048 기준). 수현 그림(584×1400): 머리 가운데 x≈240, 눈 (205,200)·(278,170).
-// 수현은 TV 뒤에 있어서 TV 윗변(y≈7) 위로 나온 곳만 보인다. 세로 화면은 위쪽 자리가 넉넉해서 가슴까지, 가로 화면은 얼굴까지.
+// 장면 좌표 (TV 그림 원본 1526×1048 기준). 수현은 TV 앞에 앉아 같이 TV를 보는 뒷모습(그림 669×900, 얼굴은 왼쪽을 본다).
+// 세로 화면: TV 아래 오른쪽 앞에 (머리가 화면 아래 끝에 오게) / 가로 화면: TV장 오른쪽 옆에. 화면은 가리지 않는다.
+const NS = { w: 669, h: 900 };
 const POSE = {
-  wide: { k: 1.1, hx: 330, chin: 300, box: [0, -335, 1526, 960] },
-  tall: { k: 1.25, hx: 330, chin: 420, box: [0, -515, 1526, 1048] },
+  wide: { x: 1380, y: 380, h: 760, box: [0, -190, 1990, 1080] },
+  tall: { x: 1000, y: 735, h: 700, box: [0, -190, 1526, 1360] },
 };
 const SC = { w: 1526, h: 1048, screen: [110, 19, 1415, 730], cat: [1180, 8], top: 7 };
 function pose() {
   const o = POSE[innerWidth > innerHeight ? 'wide' : 'tall'];
-  const x = o.hx - 240 * o.k, y = SC.top - o.chin * o.k;
-  return { box: o.box, ns: { x, y, w: 584 * o.k, h: 1400 * o.k }, eyes: [[x + 205 * o.k, y + 200 * o.k], [x + 278 * o.k, y + 170 * o.k]] };
+  return { box: o.box, ns: { x: o.x, y: o.y, w: NS.w * o.h / NS.h, h: o.h } };
 }
 const SITES = {
   youtube: { name: '유튜브', url: 'https://m.youtube.com/', color: '#ff2b2b',
@@ -29,7 +29,7 @@ const SITES = {
 };
 const SCOLD = ['그니까, {t}이나 봤냐. …재밌었으면 됐고, 이제 하나만 해.', '{t}. 나랑 게임한 것도 아니면서.', '야, {t} 동안 뭐 봤는데. 나중에 나도 보여 줘. 대신 지금은 공부.'];
 const PRAISE = ['오, 공부한 거였어? {t}, 기록해 뒀다.', '{t}이면 꽤 했네. 그니까, 이 기세로 하나 더.'];
-const IDLE = ['뭐 볼 건데. 골라.', '…같이 볼래?', '나 TV 뒤에 숨은 거 아니다. 그냥 서 있는 거야.', '고양이 깨우지 마. 방금 잠들었어.'];
+const IDLE = ['뭐 볼 건데. 골라.', '…같이 볼래? 옆에 앉아.', '리모컨은 너 줄게. 대신 이상한 거 틀지 마.', '고양이 깨우지 마. 방금 잠들었어.'];
 const PLAYING = ['오, 이거 보는구나.', '…나도 좀 보자.', '소리 너무 크게 하지 마.'];
 const ICON = {
   back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
@@ -45,11 +45,10 @@ v.setAttribute('role', 'dialog'); v.setAttribute('aria-modal', 'true'); v.setAtt
 v.innerHTML = `
   <div class="tv-top"><button class="tv-back">‹ 나가기</button><b>시청실</b></div>
   <div class="tv-stagebox"><div class="tv-cam"><div class="tv-scene">
-    <img class="tv-ns" src="assets/tv/ns.webp" alt="">
-    <i class="tv-spark" aria-hidden="true"></i><i class="tv-spark" aria-hidden="true"></i>
     <img class="tv-set" src="assets/tv/tv.webp" alt="">
     <button class="tv-cat" aria-label="한울냥 쓰다듬기"><img alt=""></button>
     <div class="tv-screen"><div class="tv-view"></div></div>
+    <img class="tv-ns" src="assets/tv/ns-back.webp" alt="">
   </div></div></div>
   <div class="tv-say"><b>남수현</b><p></p></div>
   <div class="tv-bar">
@@ -73,11 +72,10 @@ function layout() {
   Object.assign(sc.style, { width: SC.w * K + 'px', height: SC.h * K + 'px', left: L + 'px', top: T + 'px' });
   const P = (el, x, y, w, h) => Object.assign(el.style, { left: x * K + 'px', top: y * K + 'px', ...(w ? { width: w * K + 'px' } : {}), ...(h ? { height: h * K + 'px' } : {}) });
   P(q('.tv-ns'), O.ns.x, O.ns.y, O.ns.w, O.ns.h);
-  // TV 뒤에 가려지는 몸은 아예 지운다 (TV와 TV장 사이 틈으로 비치지 않게)
-  const f0 = ((SC.top + 330 - O.ns.y) / O.ns.h * 100).toFixed(1), f1 = ((SC.top + 400 - O.ns.y) / O.ns.h * 100).toFixed(1);
-  q('.tv-ns').style.setProperty('--fade', `linear-gradient(to bottom, #000 ${f0}%, transparent ${f1}%)`);
+  // 몸 아래쪽은 장면 아래 끝에서 까맣게 사라지게
+  const f1 = Math.min(100, (y1 - O.ns.y) / O.ns.h * 100), f0 = f1 - 28;
+  q('.tv-ns').style.setProperty('--fade', `linear-gradient(to bottom, #000 ${f0.toFixed(1)}%, transparent ${f1.toFixed(1)}%)`);
   P(q('.tv-set'), 0, 0, SC.w, SC.h);
-  v.querySelectorAll('.tv-spark').forEach((e, i) => P(e, ...O.eyes[i]));
   const [a, b, c, d] = SC.screen;
   const ch = Math.max(40, Math.min(110, (c - a) * K * .14)), cat = q('.tv-cat');
   Object.assign(cat.style, { left: SC.cat[0] * K - ch * .55 + 'px', top: SC.cat[1] * K - ch + 3 + 'px', height: ch + 'px' });
