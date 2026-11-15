@@ -132,6 +132,7 @@ function renderPlan(b) {
   // 자유 타이머 + 설정
   const free = el('button', 'btn ghost wide', '계획 없이 50분 공부하기'); free.onclick = () => startFocus({ id: null, subject: '자습', text: '자습', range: '' });
   b.appendChild(free);
+  if (window.miniButton) b.appendChild(miniButton()); // 열품타 같은 다른 앱을 켜 둔 채 한울냥 작은 창 (mini.js)
   const fb = finalButtons(); if (fb) b.appendChild(fb);
   b.appendChild(weekBox());
   const f = foot();
@@ -372,6 +373,7 @@ window.focusState = () => (F ? { subject: F.x.subject, end: F.end, paused: F.pau
 // 다른 앱에 다녀오면 어디 갔다 왔냐고 묻는다
 document.addEventListener('visibilitychange', () => {
   if (!F) return;
+  if (window.miniOn && miniOn()) { F.awayAt = 0; return; } // 작은 창을 띄우고 다른 앱(열품타 등)으로 간 건 딴짓이 아니다
   if (document.hidden) { if (!F.paused) { F.awayAt = Date.now(); saveF(); focusNote(); } return; }
   if (F.awayAt) {
     const gone = Date.now() - F.awayAt; F.awayAt = 0;
