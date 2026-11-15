@@ -39,8 +39,15 @@ const supported = () => !!(document.pictureInPictureEnabled && HTMLVideoElement.
 
 function rr(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 function wrap(text, maxW) {
+  // 띄어쓰기 단위로 줄을 나눈다 (한 낱말이 너무 길면 글자 단위로)
   const out = []; let line = '';
-  for (const ch of text) { if (g.measureText(line + ch).width > maxW && line) { out.push(line); line = ch; } else line += ch; }
+  for (const w of text.split(' ')) {
+    const t = line ? line + ' ' + w : w;
+    if (g.measureText(t).width <= maxW) { line = t; continue; }
+    if (line) out.push(line);
+    line = '';
+    for (const ch of w) { if (g.measureText(line + ch).width > maxW && line) { out.push(line); line = ch; } else line += ch; }
+  }
   if (line) out.push(line);
   return out.slice(0, 2);
 }
@@ -97,10 +104,13 @@ function draw() {
     label = `${f.subject}${f.paused ? ' · 멈춤' : ''}`; small = '한울 타이머 남은 시간';
   } else {
     big = mins >= 60 ? `${Math.floor(mins / 60)}시간 ${mins % 60}분` : `${mins}분째`;
-    label = '열품타랑 같이 공부'; small = `${new Date(M.start).toTimeString().slice(0, 5)} 시작`;
+    label = '같이 공부 중'; small = `${new Date(M.start).toTimeString().slice(0, 5)} 시작`;
   }
   g.fillText(label.length > 9 ? label.slice(0, 9) + '…' : label, 180, 62);
-  g.fillStyle = '#ffffff'; g.font = `800 ${big.length > 6 ? 46 : 60}px system-ui, sans-serif`; g.fillText(big, 178, 128);
+  // 큰 글씨는 오른쪽 끝에 닿지 않게 줄인다
+  let fs = 60; g.font = `800 ${fs}px system-ui, sans-serif`;
+  while (fs > 30 && g.measureText(big).width > W - 192) { fs -= 2; g.font = `800 ${fs}px system-ui, sans-serif`; }
+  g.fillStyle = '#ffffff'; g.fillText(big, 178, 128);
   g.fillStyle = 'rgba(220,226,240,.6)'; g.font = '500 20px system-ui, sans-serif'; g.fillText(small, 180, 160);
   // 말풍선
   if (M.line) {
