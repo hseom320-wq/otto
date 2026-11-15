@@ -6,7 +6,8 @@
 //   - "한 번 더 전화해" → 5분 뒤에 다시 건다
 // 거절하면 5분 뒤에 다시 건다.
 // 벨소리: 기본은 앱이 만든 벨소리, 설정에서 내 기기에 있는 음악 파일(예: 컬러링으로 쓰는 노래)을 골라 쓸 수 있다.
-// 웹앱이라 앱이 완전히 꺼져 있으면 못 건다. 앱이 뒤에 있으면 폰 알림으로 울리고, 시간 10분 전부터 화면이 꺼지지 않게 잡아 둔다.
+// 웹앱이라 앱을 완전히 닫으면 못 건다. 앱을 내려 둔(백그라운드) 상태면 울린다: 폰이 앱을 재우지 않게 아주 작은 소리를 틀어 두고,
+// 울릴 때는 벨소리와 폰 알림으로 알린다. 앱이 앞에 있으면 시간 10분 전부터 화면이 꺼지지 않게 잡아 둔다.
 // 전화 상태(오늘 받았는지, 다음 전화 시각)는 기기마다 따로 둔다.
 'use strict';
 (() => {
@@ -108,7 +109,7 @@ async function closeNote() { try { const reg = await navigator.serviceWorker.get
 function ring() {
   if (ringing || talking) return;
   const c = NS(); if (!c) return;
-  ringing = true;
+  ringing = true; stopKeep();
   const img = (c.scenes.morning && c.scenes.morning.img) || 'assets/ns/scene/morning.webp';
   q('.nc-bg').src = img; q('.nc-ava img').src = img;
   q('.nc-state').textContent = '전화 왔어요'; q('.nc-state').classList.add('ring');
@@ -175,7 +176,46 @@ function check() {
   if (!soon && wake && !ringing && !talking) { try { wake.release(); } catch (e) {} wake = null; }
 }
 setInterval(check, 5000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { check(); if (ringing) closeNote(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { stopKeep(); check(); if (ringing) closeNote(); } else startKeep(); });
+// 안드로이드는 내려 둔 웹앱을 5분쯤 지나면 재운다(타이머가 멈춘다). 소리를 내고 있는 앱은 재우지 않아서,
+// 앱을 내려 둘 때 다음 전화가 14시간 안에 있으면 사람 귀에는 거의 안 들리는 아주 작은 소리를 계속 틀어 깨어 있게 한다.
+// 이때 폰 알림 창에 "남수현 전화 기다리는 중"이 뜬다. 설정에서 끌 수 있다(끄면 내려 둔 지 몇 분 뒤부터는 못 울릴 수 있다).
+let keep = null, keepUrl = '';
+function nextCall() {
+  if (!S.ncall || !S.ncall.on) return 0;
+  const at = dueAt(), now = Date.now();
+  if (at && (at > now || readSt().nextAt)) return at;
+  const [h, m] = (S.ncall.time || '11:30').split(':').map(Number), t = new Date(); t.setDate(t.getDate() + 1); t.setHours(h, m, 0, 0);
+  return t.getTime();
+}
+function hum() { // 아주 작은 잡음 1초짜리 소리 파일을 만든다 (16비트, 8000Hz)
+  const n = 8000, buf = new ArrayBuffer(44 + n * 2), d = new DataView(buf);
+  const w = (o, t) => [...t].forEach((c, i) => d.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); d.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
+  d.setUint32(24, 8000, true); d.setUint32(28, 16000, true); d.setUint16(32, 2, true); d.setUint16(34, 16, true); w(36, 'data'); d.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) d.setInt16(44 + i * 2, Math.round((Math.random() * 2 - 1) * 60), true); // 약 -55dB
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+function startKeep() {
+  if (keep || ringing || talking || S.ncall.bg === false) return;
+  const at = nextCall(); if (!at || at - Date.now() > 14 * 3600e3) return;
+  keepUrl = keepUrl || hum();
+  keep = new Audio(keepUrl); keep.loop = true;
+  keep.play().then(() => {
+    try {
+      const t = new Date(at);
+      navigator.mediaSession.metadata = new MediaMetadata({ title: '남수현 전화 기다리는 중', artist: `${timeWord(`${pad(t.getHours())}:${pad(t.getMinutes())}`)}에 전화가 와요`, album: '한울아파트', artwork: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }] });
+      navigator.mediaSession.setActionHandler('pause', () => { stopKeep(); S.ncall.bg = false; save(); }); // 알림에서 멈추면 이 기능을 끈 걸로
+    } catch (e) {}
+  }).catch(() => { keep = null; });
+}
+function stopKeep() {
+  if (!keep) return;
+  try { keep.pause(); } catch (e) {} keep = null;
+  try { navigator.mediaSession.metadata = null; } catch (e) {}
+}
+// 그래도 재워졌다가 깨어나면 바로 확인
+document.addEventListener('resume', check);
 setTimeout(check, 3000);
 window.ncallTest = () => { writeSt({ day: dayKey(), done: false, nextAt: Date.now() }); check(); };
 
@@ -206,9 +246,13 @@ SHEETS.set.render = function () {
   test.onclick = async () => { if (playing) { stopTone(); playing = false; test.textContent = '들어 보기'; return; } await startTone(); playing = true; test.textContent = '멈추기'; setTimeout(() => { if (playing) { stopTone(); playing = false; test.textContent = '들어 보기'; } }, 8000); };
   back.onclick = () => { delTone(); S.ncall.tone = ''; save(); name.textContent = '벨소리: 기본'; };
   tone.append(name, pickB, test, back, file);
+  const bg = el('input'); bg.type = 'checkbox'; bg.checked = S.ncall.bg !== false;
+  const bgLab = el('label', 'sw', '앱을 내려 둬도 울리기'); bgLab.prepend(bg);
+  bg.onchange = () => { S.ncall.bg = bg.checked; save(); };
   const now = el('button', 'btn ghost wide', '지금 전화 받아 보기');
   now.onclick = () => { closeSheet(); setTimeout(window.ncallTest, 400); };
-  f.append(row, tone, now, el('p', 'hint', '앱이 켜져 있는 기기에서만 울려요(앱을 완전히 닫으면 못 걸어요). 받을 때까지 울리고, 거절하면 5분 뒤에 다시 걸어요. 앱이 뒤에 있으면 폰 알림으로 울려요(알림을 켜 둔 경우). 벨소리 파일은 이 기기에만 저장돼요.'));
+  f.append(row, tone, bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
+    el('p', 'hint', '받을 때까지 울리고, 거절하면 5분 뒤에 다시 걸어요. 앱이 내려가 있을 때는 폰 알림으로도 울려요(알림을 켜 둔 경우). 벨소리 파일은 이 기기에만 저장돼요.'));
   b.insertBefore(f, reset);
 };
 })();
