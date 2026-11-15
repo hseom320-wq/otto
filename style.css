@@ -596,3 +596,8 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .sync-ask { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 60; width: min(400px, calc(100% - 28px)); padding: 18px; border-radius: 16px; background: rgba(16,19,26,.98); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 10px 40px rgba(0,0,0,.6); }
 .sync-ask p { margin: 0 0 12px; font-size: 14.5px; line-height: 1.6; word-break: keep-all; }
 .sync-ask .btn { margin-top: 8px; }
+
+.sync-step { display: flex; align-items: center; justify-content: center; margin-top: 8px; text-decoration: none; }
+.sync-qr { margin-top: 10px; padding: 12px; border-radius: 14px; background: #fff; color: #222; text-align: center; }
+.sync-qr svg { width: min(240px, 70vw); height: auto; display: block; margin: 0 auto; }
+.sync-qr p { margin: 8px 0 0; font-size: 12.5px; line-height: 1.55; color: #333; word-break: keep-all; }

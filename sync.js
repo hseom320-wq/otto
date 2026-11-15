@@ -13,6 +13,8 @@ const FILE = 'data.json';
 const LOCAL_ONLY = ['key', 'ytKey', 'gModel', 'gModelKey', 'notify', 'wx', 'fired', 'tv', 'focus', 'mini'];
 const COUNTER = /^app\.(slog|slogSub)(\.|$)|\.aff$/; // 두 기기에서 늘어난 만큼 더하는 숫자
 const API = 'https://api.github.com';
+const REPO_NAME = 'hanul-data';
+const OWNER = (location.hostname.match(/^([\w-]+)\.github\.io$/) || [])[1] || 'hseom320-wq'; // 앱 주소에서 GitHub 아이디
 
 const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
@@ -215,24 +217,63 @@ SHEETS.set.render = function () {
     now.onclick = async () => { now.disabled = true; const ok = await sync({ loud: true }); now.disabled = false; if (ok) toast('맞췄어요'); };
     off.onclick = () => { disconnect(); refresh(); };
     row.append(now, off); f.appendChild(row);
+    // 다른 기기는 QR 하나로 연결
+    const qrBtn = el('button', 'btn ghost wide', '다른 기기 연결하기 (QR)');
+    qrBtn.onclick = () => showQR(f, qrBtn);
+    f.appendChild(qrBtn);
   } else {
-    const repo = el('input', 'in'); repo.placeholder = '아이디/저장소이름 (예: myname/hanul-data)'; repo.autocomplete = 'off'; repo.setAttribute('aria-label', '저장소');
-    const tok = el('input', 'in'); tok.type = 'password'; tok.placeholder = '토큰 (github_pat_…)'; tok.autocomplete = 'off'; tok.setAttribute('aria-label', '토큰');
+    // 1·2단계: GitHub 화면을 미리 채워서 연다. 3단계: 토큰만 붙여 넣으면 끝
+    f.appendChild(el('p', 'hint', '처음 한 기기에서만 아래 3단계를 해요. 두 번째 기기는 첫 기기의 "다른 기기 연결하기 (QR)"를 카메라로 찍으면 끝이에요.'));
+    const s1 = el('a', 'btn ghost wide sync-step', '① GitHub에 비공개 저장소 만들기');
+    s1.href = `https://github.com/new?name=${REPO_NAME}&visibility=private&description=${encodeURIComponent('한울아파트 기록 보관 (비공개)')}`; s1.target = '_blank'; s1.rel = 'noopener';
+    const s2 = el('a', 'btn ghost wide sync-step', '② 토큰 만들기');
+    s2.href = `https://github.com/settings/personal-access-tokens/new?name=hanul-sync&description=${encodeURIComponent('한울아파트 기기 연동 (hanul-data 저장소 하나만)')}&target_name=${OWNER}&expires_in=366&contents=write`; s2.target = '_blank'; s2.rel = 'noopener';
+    const tip = el('p', 'hint', '②에서는 <b>Repository access → Only select repositories → hanul-data</b>만 고르고, 맨 아래 <b>Generate token</b>을 누른 뒤 나온 토큰을 복사해요.');
+    const tok = el('input', 'in'); tok.type = 'password'; tok.placeholder = '③ 복사한 토큰 붙여 넣기 (github_pat_…)'; tok.autocomplete = 'off'; tok.setAttribute('aria-label', '토큰');
+    const more = el('details', 'sync-help', '<summary>저장소 이름을 바꿨으면</summary>');
+    const repo = el('input', 'in'); repo.value = `${OWNER}/${REPO_NAME}`; repo.autocomplete = 'off'; repo.setAttribute('aria-label', '저장소');
+    more.appendChild(repo);
     const go = el('button', 'btn wide', '연결하기');
     go.onclick = async () => { go.disabled = true; go.textContent = '확인 중…'; const ok = await connect(repo.value, tok.value); go.disabled = false; go.textContent = '연결하기'; if (ok) refresh(); };
-    f.append(repo, tok, go);
-    f.appendChild(el('details', 'sync-help', `<summary>처음 한 번 준비하기</summary><ol>
-      <li>GitHub에서 <b>새 저장소</b>를 만들어요. 이름은 아무거나(예: hanul-data), 꼭 <b>Private(비공개)</b>로.</li>
-      <li>GitHub → Settings → Developer settings → <b>Fine-grained tokens → Generate new token</b>.</li>
-      <li>Repository access: <b>Only select repositories</b> → 방금 만든 저장소 하나만 고르기.</li>
-      <li>Permissions → Repository permissions → <b>Contents: Read and write</b>. 나머지는 그대로.</li>
-      <li>만든 토큰을 복사해서 위 칸에 저장소 이름과 같이 넣고 "연결하기". <b>폰과 태블릿 둘 다</b> 같은 걸 넣어요.</li></ol>
-      <p>토큰은 이 기기에만 저장되고, 그 저장소 하나만 읽고 쓸 수 있어요. 남한테 보여 주지 마세요. 기간이 끝나면 새로 만들어 다시 넣으면 돼요.</p>`));
+    f.append(s1, s2, tip, tok, more, go,
+      el('p', 'hint', '토큰은 이 기기에만 저장되고, 그 저장소 하나만 읽고 쓸 수 있어요. 남한테 보여 주지 마세요.'));
   }
   b.insertBefore(f, reset);
   status();
 };
 window.syncNow = () => sync({ loud: true });
+
+// ---------- 다른 기기 연결: QR ----------
+// QR에는 앱 주소 + #연결정보(저장소·토큰)가 들어간다. # 뒤는 인터넷으로 보내지지 않고 그 기기 안에서만 읽힌다.
+// 화면에 띄운 QR을 다른 기기 카메라로 찍기만 하면 되고, 메신저로 보내지 않는다.
+function loadQR() {
+  if (window.qrcode) return Promise.resolve();
+  return new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'assets/vendor/qrcode.min.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+}
+async function showQR(f, btn) {
+  const old = f.querySelector('.sync-qr'); if (old) { old.remove(); btn.textContent = '다른 기기 연결하기 (QR)'; return; }
+  try { await loadQR(); } catch (e) { toast('QR을 만들지 못했어요. 인터넷을 확인해 주세요'); return; }
+  const link = location.origin + location.pathname + '#sync=' + encodeURIComponent(b64e(JSON.stringify({ r: cfg.repo, t: cfg.token })));
+  const qr = qrcode(0, 'M'); qr.addData(link); qr.make();
+  const box = el('div', 'sync-qr');
+  box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 3, scalable: true }) +
+    '<p>다른 기기(태블릿)의 <b>카메라</b>로 이 QR을 찍고, 뜨는 링크를 열어요. 한울아파트가 열리면서 "연결할까요?"가 나와요.<br>이 QR에는 토큰이 들어 있어요. 캡처해서 남에게 보내지 마세요. 1분 뒤에 저절로 사라져요.</p>';
+  f.insertBefore(box, btn.nextSibling); btn.textContent = 'QR 숨기기';
+  setTimeout(() => { if (box.isConnected) { box.remove(); btn.textContent = '다른 기기 연결하기 (QR)'; } }, 60e3);
+}
+// QR로 열렸을 때
+(function fromLink() {
+  const m = location.hash.match(/#sync=([^&]+)/);
+  if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search); // 주소에서 바로 지운다
+  let d = null; try { d = JSON.parse(b64d(decodeURIComponent(m[1]))); } catch (e) {}
+  if (!d || !d.r || !d.t) { setTimeout(() => toast('연결 QR이 올바르지 않아요'), 1500); return; }
+  setTimeout(async () => {
+    if (cfg && cfg.repo === d.r && cfg.token === d.t) { toast('이미 연결돼 있어요'); return; }
+    if (!confirm(`${d.r} 저장소에 연결할까요?\n연결하면 폰·태블릿이 같은 기록을 써요.`)) return;
+    await connect(d.r, d.t);
+  }, 1800);
+})();
 // 설정 제목 아래 글도 연동 여부에 맞게
 const baseSub = SHEETS.set.sub;
 SHEETS.set.sub = () => (cfg ? `${cfg.repo.split('/')[1]} 저장소와 맞춰져요` : (baseSub ? baseSub() : ''));
