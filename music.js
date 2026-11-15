@@ -262,4 +262,33 @@ finishLogin().then(back => { if (linked()) loadNow(); if (back && linked()) setT
 let tickN = 0;
 setInterval(() => { if (document.hidden || !linked() || busy) return; tickN++; if (sheetOpen === 'music' || tickN % 4 === 0) loadNow().then(refreshMusic); }, 5000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && linked()) loadNow().then(refreshMusic); });
+// ---------- 수현 전화 벨소리로 쓰기 (call.js) ----------
+// 전화가 오면 스포티파이 앱에서 그 곡을 한 곡 반복으로 틀고, 받으면 멈추고 원래 듣던 걸 되돌린다.
+let ringPrev = null;
+window.spotifyRing = {
+  linked: () => linked(),
+  async start(uri) {
+    if (!linked()) return false;
+    try {
+      const st = await api('GET', '/me/player');
+      ringPrev = st && st.item ? { playing: !!st.is_playing, context: st.context && st.context.uri, uri: st.item.uri, pos: st.progress_ms || 0, repeat: st.repeat_state || 'off', device: st.device && st.device.id } : null;
+      const d = await pickDevice();
+      await api('PUT', `/me/player/play?device_id=${encodeURIComponent(d.id)}`, { uris: [uri] });
+      try { await api('PUT', `/me/player/repeat?state=track&device_id=${encodeURIComponent(d.id)}`); } catch (e) {}
+      return true;
+    } catch (e) { return false; }
+  },
+  async stop() {
+    if (!linked()) return;
+    const p = ringPrev; ringPrev = null;
+    try {
+      await api('PUT', '/me/player/pause');
+      if (p) {
+        try { await api('PUT', `/me/player/repeat?state=${p.repeat}`); } catch (e) {}
+        // 전화 오기 전에 듣던 노래가 있었으면 그 자리부터 다시
+        if (p.playing) await api('PUT', `/me/player/play${p.device ? `?device_id=${encodeURIComponent(p.device)}` : ''}`, p.context ? { context_uri: p.context, offset: { uri: p.uri }, position_ms: p.pos } : { uris: [p.uri], position_ms: p.pos });
+      } else { try { await api('PUT', '/me/player/repeat?state=off'); } catch (e) {} }
+    } catch (e) {}
+  },
+};
 })();

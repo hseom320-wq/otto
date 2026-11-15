@@ -648,3 +648,5 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .ncall.talk .nc-ytbox { display: none; }
 .nc-ytrow { margin-top: 8px; gap: 6px; }
 .nc-ytrow .in { flex: 1; min-width: 0; }
+
+.nc-preset { margin-top: 8px; border-color: rgba(30,215,96,.45) !important; color: #b9f5cf !important; }
