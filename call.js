@@ -80,6 +80,8 @@ function synthOnce() {
   } catch (e) {}
 }
 // 유튜브 링크 컬러링: 전화 화면에 유튜브 플레이어를 작게 띄워 그 소리로 울린다 (유튜브 규칙상 플레이어는 보이게 둔다)
+// 쿠키를 안 남기는 유튜브 주소 (맞춤 광고가 줄어든다. 광고 자체를 없애거나 건너뛰는 건 유튜브 규칙상 못 한다)
+const YT_HOST = 'https://www.youtube-nocookie.com';
 let ytFrame = null, ytOk = false, ytFallT = 0;
 function ytParse(text) {
   const s = String(text || ''), m = s.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#\s]*&)?v=|embed\/|shorts\/|live\/|v\/))([\w-]{11})/);
@@ -88,16 +90,16 @@ function ytParse(text) {
   const start = t ? (+(t[1] || 0)) * 3600 + (+(t[2] || 0)) * 60 + (+(t[3] || 0)) : 0;
   return { id: m[1], start };
 }
-function ytCmd(func, args) { try { ytFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), 'https://www.youtube.com'); } catch (e) {} }
+function ytCmd(func, args) { try { ytFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), YT_HOST); } catch (e) {} }
 function startYT(y) {
   const box = q('.nc-yt'); box.innerHTML = '';
   const p = new URLSearchParams({ autoplay: '1', playsinline: '1', controls: '0', rel: '0', enablejsapi: '1', origin: location.origin, start: String(y.start || 0) });
   ytFrame = document.createElement('iframe');
   ytFrame.allow = 'autoplay; encrypted-media'; ytFrame.title = '컬러링';
   ytFrame.referrerPolicy = 'strict-origin-when-cross-origin';
-  ytFrame.src = `https://www.youtube.com/embed/${y.id}?${p}`;
+  ytFrame.src = `${YT_HOST}/embed/${y.id}?${p}`;
   box.appendChild(ytFrame); q('.nc-ytbox').hidden = false; ytOk = false;
-  ytFrame.addEventListener('load', () => { let n = 0; const ping = () => { if (!ytFrame || ytOk || n++ > 10) return; try { ytFrame.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), 'https://www.youtube.com'); } catch (e) {} setTimeout(ping, 500); }; ping(); });
+  ytFrame.addEventListener('load', () => { let n = 0; const ping = () => { if (!ytFrame || ytOk || n++ > 10) return; try { ytFrame.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), YT_HOST); } catch (e) {} setTimeout(ping, 500); }; ping(); });
   // 5초 안에 재생이 안 되면(자동 재생 막힘 등) 기본 벨소리도 같이 울린다
   clearTimeout(ytFallT); ytFallT = setTimeout(() => { if (ytFrame && !ytOk && !synthT) { synthOnce(); synthT = setInterval(synthOnce, 2000); } }, 5000);
 }
