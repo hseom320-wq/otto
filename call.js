@@ -44,6 +44,7 @@ v.innerHTML = `
     <small class="nc-sub">휴대전화 · 11층 마주 보는 집</small>
     <span class="nc-state">전화 왔어요</span>
   </div>
+  <div class="nc-ytbox" hidden><small>컬러링</small><div class="nc-yt"></div></div>
   <p class="nc-line" aria-live="polite"></p>
   <div class="nc-choices" hidden>
     <button data-c="wake">지금 일어날게</button>
@@ -78,8 +79,39 @@ function synthOnce() {
     });
   } catch (e) {}
 }
+// 유튜브 링크 컬러링: 전화 화면에 유튜브 플레이어를 작게 띄워 그 소리로 울린다 (유튜브 규칙상 플레이어는 보이게 둔다)
+let ytFrame = null, ytOk = false, ytFallT = 0;
+function ytParse(text) {
+  const s = String(text || ''), m = s.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#\s]*&)?v=|embed\/|shorts\/|live\/|v\/))([\w-]{11})/);
+  if (!m) return null;
+  const t = s.match(/[?&#](?:t|start)=(?:(\d+)h)?(?:(\d+)m)?(\d+)s?/);
+  const start = t ? (+(t[1] || 0)) * 3600 + (+(t[2] || 0)) * 60 + (+(t[3] || 0)) : 0;
+  return { id: m[1], start };
+}
+function ytCmd(func, args) { try { ytFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), 'https://www.youtube.com'); } catch (e) {} }
+function startYT(y) {
+  const box = q('.nc-yt'); box.innerHTML = '';
+  const p = new URLSearchParams({ autoplay: '1', playsinline: '1', controls: '0', rel: '0', enablejsapi: '1', origin: location.origin, start: String(y.start || 0) });
+  ytFrame = document.createElement('iframe');
+  ytFrame.allow = 'autoplay; encrypted-media'; ytFrame.title = '컬러링';
+  ytFrame.referrerPolicy = 'strict-origin-when-cross-origin';
+  ytFrame.src = `https://www.youtube.com/embed/${y.id}?${p}`;
+  box.appendChild(ytFrame); q('.nc-ytbox').hidden = false; ytOk = false;
+  ytFrame.addEventListener('load', () => { let n = 0; const ping = () => { if (!ytFrame || ytOk || n++ > 10) return; try { ytFrame.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), 'https://www.youtube.com'); } catch (e) {} setTimeout(ping, 500); }; ping(); });
+  // 5초 안에 재생이 안 되면(자동 재생 막힘 등) 기본 벨소리도 같이 울린다
+  clearTimeout(ytFallT); ytFallT = setTimeout(() => { if (ytFrame && !ytOk && !synthT) { synthOnce(); synthT = setInterval(synthOnce, 2000); } }, 5000);
+}
+addEventListener('message', e => {
+  if (!ytFrame || e.source !== ytFrame.contentWindow) return;
+  let d; try { d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (err) { return; }
+  const i = d && d.info; if (!i) return;
+  if (i.playerState === 1 && !ytOk) { ytOk = true; clearInterval(synthT); synthT = 0; }
+  if (i.playerState === 0) { ytCmd('seekTo', [(S.ncall.yt && S.ncall.yt.start) || 0, true]); ytCmd('playVideo'); } // 끝나면 처음(정한 곳)부터 다시
+  if (i.videoData && i.videoData.title && S.ncall.yt && !S.ncall.yt.title) { S.ncall.yt.title = i.videoData.title; save(); }
+});
 async function startTone() {
   stopTone();
+  if (S.ncall.yt && S.ncall.yt.id) { startYT(S.ncall.yt); return; }
   const f = S.ncall.tone ? await getTone() : null;
   if (f) {
     toneUrl = URL.createObjectURL(f); audio = new Audio(toneUrl); audio.loop = true;
@@ -88,7 +120,8 @@ async function startTone() {
   synthOnce(); synthT = setInterval(synthOnce, 2000);
 }
 function stopTone() {
-  clearInterval(synthT); synthT = 0;
+  clearInterval(synthT); synthT = 0; clearTimeout(ytFallT);
+  if (ytFrame) { ytFrame.remove(); ytFrame = null; q('.nc-ytbox').hidden = true; }
   if (audio) { try { audio.pause(); } catch (e) {} audio = null; }
   if (toneUrl) { URL.revokeObjectURL(toneUrl); toneUrl = ''; }
 }
@@ -237,25 +270,37 @@ SHEETS.set.render = function () {
   tm.onchange = () => { if (!tm.value) return; S.ncall.time = tm.value; save(); const st = readSt(); if (st.day === dayKey() && !st.done) writeSt({}); toast(`매일 ${timeWord(tm.value)}에 전화해요`); };
   // 벨소리
   const tone = el('div', 'row nc-tone');
-  const name = el('span', 'nc-tone-name', S.ncall.tone ? `벨소리: ${esc(S.ncall.tone)}` : '벨소리: 기본');
+  const toneName = () => S.ncall.yt && S.ncall.yt.id ? `벨소리: 유튜브 · ${S.ncall.yt.title || S.ncall.yt.id}${S.ncall.yt.start ? ` (${Math.floor(S.ncall.yt.start / 60)}:${pad(S.ncall.yt.start % 60)}부터)` : ''}` : S.ncall.tone ? `벨소리: ${S.ncall.tone}` : '벨소리: 기본';
+  const name = el('span', 'nc-tone-name'); name.textContent = toneName();
   const pickB = el('button', 'btn ghost sm', '파일 고르기'), test = el('button', 'btn ghost sm', '들어 보기'), back = el('button', 'btn ghost sm', '기본으로');
   const file = el('input'); file.type = 'file'; file.accept = 'audio/*'; file.hidden = true;
   pickB.onclick = () => file.click();
   file.onchange = async () => {
     const x = file.files[0]; file.value = ''; if (!x) return;
     if (x.size > 30e6) { toast('파일이 너무 커요 (30MB까지)'); return; }
-    try { await setTone(x); S.ncall.tone = x.name; save(); name.textContent = `벨소리: ${x.name}`; toast('벨소리를 바꿨어요'); } catch (e) { toast('저장하지 못했어요'); }
+    try { await setTone(x); S.ncall.tone = x.name; S.ncall.yt = null; save(); name.textContent = toneName(); toast('벨소리를 바꿨어요'); } catch (e) { toast('저장하지 못했어요'); }
   };
   let playing = false;
-  test.onclick = async () => { if (playing) { stopTone(); playing = false; test.textContent = '들어 보기'; return; } await startTone(); playing = true; test.textContent = '멈추기'; setTimeout(() => { if (playing) { stopTone(); playing = false; test.textContent = '들어 보기'; } }, 8000); };
-  back.onclick = () => { delTone(); S.ncall.tone = ''; save(); name.textContent = '벨소리: 기본'; };
+  test.onclick = async () => { if (S.ncall.yt && S.ncall.yt.id) { closeSheet(); setTimeout(window.ncallTest, 400); return; } if (playing) { stopTone(); playing = false; test.textContent = '들어 보기'; return; } await startTone(); playing = true; test.textContent = '멈추기'; setTimeout(() => { if (playing) { stopTone(); playing = false; test.textContent = '들어 보기'; } }, 8000); };
+  back.onclick = () => { delTone(); S.ncall.tone = ''; S.ncall.yt = null; save(); name.textContent = toneName(); };
   tone.append(name, pickB, test, back, file);
+  // 유튜브 링크로 컬러링
+  const ytRow = el('div', 'row nc-ytrow');
+  const ytIn = el('input', 'in'); ytIn.placeholder = '유튜브 링크 붙여 넣기 (예: youtu.be/…?t=30)'; ytIn.setAttribute('aria-label', '유튜브 링크');
+  const ytSave = el('button', 'btn sm', '컬러링으로');
+  ytSave.onclick = () => {
+    const y = ytParse(ytIn.value);
+    if (!y) { toast('유튜브 링크가 아니에요'); return; }
+    S.ncall.yt = { id: y.id, start: y.start, title: '' }; save(); ytIn.value = ''; name.textContent = toneName();
+    toast(y.start ? `${Math.floor(y.start / 60)}분 ${y.start % 60}초부터 울려요` : '컬러링을 바꿨어요');
+  };
+  ytRow.append(ytIn, ytSave);
   const bg = el('input'); bg.type = 'checkbox'; bg.checked = S.ncall.bg !== false;
   const bgLab = el('label', 'sw', '앱을 내려 둬도 울리기'); bgLab.prepend(bg);
   bg.onchange = () => { S.ncall.bg = bg.checked; save(); };
   const now = el('button', 'btn ghost wide', '지금 전화 받아 보기');
   now.onclick = () => { closeSheet(); setTimeout(window.ncallTest, 400); };
-  f.append(row, tone, bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
+  f.append(row, tone, ytRow, el('p', 'hint', '유튜브 링크에 시간(?t=30 같은 것)이 있으면 그 부분부터 울려요. 유튜브 영상은 전화 화면에 작게 보이면서 울려요. 앱을 내려 둔 상태에서는 유튜브가 소리를 막을 수 있어서, 그때는 기본 벨소리도 같이 울려요.'), bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
     el('p', 'hint', '받을 때까지 울리고, 거절하면 5분 뒤에 다시 걸어요. 앱이 내려가 있을 때는 폰 알림으로도 울려요(알림을 켜 둔 경우). 벨소리 파일은 이 기기에만 저장돼요.'));
   b.insertBefore(f, reset);
 };
