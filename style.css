@@ -583,3 +583,16 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .mini-ask .subs { display: flex; flex-wrap: wrap; gap: 6px; }
 .mini-ask .subs button { height: 34px; padding: 0 11px; border-radius: 17px; background: rgba(111,140,255,.16); border: 1px solid rgba(111,140,255,.35); color: #dfe6ff; font-size: 13px; }
 .mini-ask .no { display: block; margin: 12px auto 0; height: 32px; padding: 0 12px; background: none; color: var(--mute); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- 계정 연동 (sync.js) ---------- */
+.sync-field .in { width: 100%; margin-top: 8px; }
+.sync-field .btn.wide { margin-top: 8px; }
+.sync-status { margin: 6px 0 4px; font-size: 13px; color: #9fd7b5; }
+.sync-status.bad { color: #ffb3a6; }
+.sync-help { margin-top: 10px; font-size: 13px; color: var(--mute); line-height: 1.6; }
+.sync-help summary { cursor: pointer; color: #cfd6e4; }
+.sync-help ol { margin: 8px 0; padding-left: 20px; }
+.sync-help b { color: #e9edf3; }
+.sync-ask { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 60; width: min(400px, calc(100% - 28px)); padding: 18px; border-radius: 16px; background: rgba(16,19,26,.98); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+.sync-ask p { margin: 0 0 12px; font-size: 14.5px; line-height: 1.6; word-break: keep-all; }
+.sync-ask .btn { margin-top: 8px; }
