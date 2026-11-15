@@ -1,5 +1,5 @@
 // 한울아파트 — 남수현 전화
-// 매일 정한 시각(기본 11:30)에 앱이 켜져 있는 기기에서 남수현이 전화를 건다. 받을 때까지 울린다.
+// 매일 정한 시각(기본 밤 11:30)에 앱이 켜져 있는 기기에서 남수현이 전화를 건다. 받을 때까지 울린다.
 // 받으면 수현이 세 가지를 묻는다:
 //   - "지금 일어날게"  → 오늘은 더 안 건다
 //   - "공부할게"       → 전화를 끊고 바로 집중 타이머(공부 화면)를 띄운다
@@ -16,7 +16,9 @@ const DB = 'hanul-files', STORE = 'f';  // 벨소리 파일
 const NS = () => DATA && DATA.characters.find(c => c.code === 'ns');
 const readSt = () => { try { return JSON.parse(localStorage.getItem(ST_KEY)) || {}; } catch (e) { return {}; } };
 const writeSt = o => { try { localStorage.setItem(ST_KEY, JSON.stringify(o)); } catch (e) {} };
-if (!S.ncall) S.ncall = { on: true, time: '11:30', tone: '' };
+if (!S.ncall) S.ncall = { on: true, time: '23:30', tone: '', v: 2 };
+// 처음에 오전 11:30으로 잘못 넣었던 것을 밤 11:30으로 고친다 (직접 바꾼 시각은 그대로)
+if (S.ncall.v !== 2) { if (S.ncall.time === '11:30') S.ncall.time = '23:30'; S.ncall.v = 2; save(); }
 
 // 수현 대사 ({me}: 내 이름)
 const L = {
@@ -28,7 +30,7 @@ const L = {
   decline: '…안 받냐. 5분 뒤에 또 건다.',
 };
 const line = (k, o) => { const t = Array.isArray(L[k]) ? pick(L[k]) : L[k]; return t.replace(/\{(\w+)\}/g, (x, key) => (o && o[key] != null ? o[key] : x)); };
-const timeWord = hm => { const [h, m] = hm.split(':').map(Number); const ap = h < 12 ? '오전' : '오후', hh = h % 12 || 12; return `${ap} ${hh}시${m ? ` ${m === 30 ? '반' : m + '분'}` : ''}`; };
+const timeWord = hm => { const [h, m] = hm.split(':').map(Number); const ap = h < 6 ? '새벽' : h < 12 ? '오전' : h < 18 ? '오후' : '밤', hh = h % 12 || 12; return `${ap} ${hh}시${m ? ` ${m === 30 ? '반' : m + '분'}` : ''}`; };
 
 // ---------- 화면 ----------
 const v = document.createElement('section');
@@ -154,22 +156,25 @@ v.querySelectorAll('.nc-choices button').forEach(b => b.onclick = () => {
 
 // ---------- 언제 거나 ----------
 const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
-function finish() { writeSt({ day: dayKey(), done: true, nextAt: 0 }); }
-function later() { writeSt({ day: dayKey(), done: false, nextAt: Date.now() + 5 * 60e3 }); }
+// 전화의 "날"은 걸기로 한 날로 둔다 (밤 11:30에 시작한 전화를 자정 넘어 받아도 그날 것으로)
+let callDay = '';
+function finish() { writeSt({ day: callDay || dayKey(), done: true, nextAt: 0 }); }
+function later() { writeSt({ day: callDay || dayKey(), done: false, nextAt: Date.now() + 5 * 60e3 }); }
+const recallAt = st => (st.nextAt && !st.done && Date.now() - st.nextAt < 3 * 3600e3 ? st.nextAt : 0); // 다시 걸 전화 (자정을 넘어도)
+function todayAt() { const [h, m] = (S.ncall.time || '23:30').split(':').map(Number), t = new Date(); t.setHours(h, m, 0, 0); return t.getTime(); }
 function dueAt() {
-  const st = readSt(), day = dayKey();
-  if (st.day === day && st.done) return 0;
-  if (st.day === day && st.nextAt) return st.nextAt;
-  const [h, m] = (S.ncall.time || '11:30').split(':').map(Number), t = new Date(); t.setHours(h, m, 0, 0);
-  return t.getTime();
+  const st = readSt(), r = recallAt(st);
+  if (r) return r;
+  if (st.day === dayKey() && st.done) return 0;
+  return todayAt();
 }
 let wake = null;
 function check() {
   if (!S.ncall || !S.ncall.on || !DATA) return;
-  const at = dueAt(), now = Date.now(); if (!at) return;
-  const st = readSt(), recall = st.day === dayKey() && st.nextAt;
-  // 처음 전화는 정한 시각부터 20분 안에 앱이 켜져 있을 때만, 다시 거는 전화는 오늘 안에는 언제든
-  if (now >= at && (recall || now - at < 20 * 60e3)) { ring(); if (!recall) writeSt({ day: dayKey(), done: false, nextAt: at }); }
+  const st = readSt(), r = recallAt(st), now = Date.now();
+  const at = r || (st.day === dayKey() && st.done ? 0 : todayAt()); if (!at) return;
+  // 처음 전화는 정한 시각부터 20분 안에 앱이 켜져 있을 때만, 다시 거는 전화는 3시간 안에는 언제든
+  if (now >= at && (r || now - at < 20 * 60e3)) { callDay = r ? st.day : dayKey(); ring(); if (!r) writeSt({ day: callDay, done: false, nextAt: at }); }
   // 10분 전부터 화면이 꺼지지 않게 (앱이 앞에 있을 때만 된다)
   const soon = at - now > 0 && at - now < 10 * 60e3;
   if (soon && !wake && !document.hidden && navigator.wakeLock) navigator.wakeLock.request('screen').then(w => { wake = w; w.addEventListener('release', () => { wake = null; }); }).catch(() => {});
@@ -184,9 +189,8 @@ let keep = null, keepUrl = '';
 function nextCall() {
   if (!S.ncall || !S.ncall.on) return 0;
   const at = dueAt(), now = Date.now();
-  if (at && (at > now || readSt().nextAt)) return at;
-  const [h, m] = (S.ncall.time || '11:30').split(':').map(Number), t = new Date(); t.setDate(t.getDate() + 1); t.setHours(h, m, 0, 0);
-  return t.getTime();
+  if (at && (at > now || recallAt(readSt()))) return at;
+  return todayAt() + 24 * 3600e3;
 }
 function hum() { // 아주 작은 잡음 1초짜리 소리 파일을 만든다 (16비트, 8000Hz)
   const n = 8000, buf = new ArrayBuffer(44 + n * 2), d = new DataView(buf);
