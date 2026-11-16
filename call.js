@@ -95,6 +95,20 @@ function idb() { return new Promise((res, rej) => { const r = indexedDB.open(DB,
 async function getTone() { try { const db = await idb(); return await new Promise(res => { const t = db.transaction(STORE).objectStore(STORE).get('ringtone'); t.onsuccess = () => res(t.result || null); t.onerror = () => res(null); }); } catch (e) { return null; } }
 async function setTone(file) { const db = await idb(); return new Promise((res, rej) => { const t = db.transaction(STORE, 'readwrite'); t.objectStore(STORE).put(file, 'ringtone'); t.oncomplete = res; t.onerror = () => rej(t.error); }); }
 async function delTone() { try { const db = await idb(); db.transaction(STORE, 'readwrite').objectStore(STORE).delete('ringtone'); } catch (e) {} }
+// 최대 소리: 폰 전체 음량은 웹앱이 못 바꾸지만, 앱이 내는 소리는 소리 키우기(증폭)+찌그러짐 막기(압축)를 거쳐
+// 지금 미디어 음량에서 낼 수 있는 가장 큰 소리로 낸다. 스포티파이는 음량 100%, 유튜브도 100%로 올린다.
+let master = null;
+const loud = () => S.ncall.loud !== false;
+function out() {
+  AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+  if (!master) {
+    const g = AC.createGain(), comp = AC.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.knee.value = 6; comp.ratio.value = 12; comp.attack.value = .003; comp.release.value = .2;
+    g.connect(comp); comp.connect(AC.destination); master = g;
+  }
+  master.gain.value = loud() ? 3.2 : 1;
+  return master;
+}
 // 기본 벨소리: 마림바 같은 짧은 가락을 되풀이 (앱이 직접 만든 소리)
 function synthOnce() {
   try {
@@ -103,7 +117,7 @@ function synthOnce() {
     const notes = [[784, 0], [988, .16], [1175, .32], [988, .48], [1319, .72], [1175, .88], [988, 1.04]];
     notes.forEach(([f, t]) => {
       const o = AC.createOscillator(), g = AC.createGain(), at = AC.currentTime + t;
-      o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(AC.destination);
+      o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(out());
       g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.25, at + .01); g.gain.exponentialRampToValueAtTime(.001, at + .35);
       o.start(at); o.stop(at + .4);
     });
@@ -137,7 +151,7 @@ addEventListener('message', e => {
   if (!ytFrame || e.source !== ytFrame.contentWindow) return;
   let d; try { d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (err) { return; }
   const i = d && d.info; if (!i) return;
-  if (i.playerState === 1 && !ytOk) { ytOk = true; clearInterval(synthT); synthT = 0; }
+  if (i.playerState === 1 && !ytOk) { ytOk = true; clearInterval(synthT); synthT = 0; if (loud()) { ytCmd('unMute'); ytCmd('setVolume', [100]); } }
   if (i.playerState === 0) { ytCmd('seekTo', [(S.ncall.yt && S.ncall.yt.start) || 0, true]); ytCmd('playVideo'); } // 끝나면 처음(정한 곳)부터 다시
   if (i.videoData && i.videoData.title && S.ncall.yt && !S.ncall.yt.title) { S.ncall.yt.title = i.videoData.title; save(); }
 });
@@ -160,14 +174,16 @@ async function startTone() {
   if (wantSp) spRetryT = setInterval(async () => { if (!ringing) { clearInterval(spRetryT); return; } if (await trySp()) { stopBackup(); clearInterval(spRetryT); } }, 15e3);
 }
 async function trySp() {
-  if (!(await spotifyRing.start(S.ncall.sp.uri))) return false;
+  if (!(await spotifyRing.start(S.ncall.sp.uri, loud()))) return false;
   if (!ringing) { spotifyRing.stop(); return true; } // 그 사이 받았으면 바로 멈춤
   spOn = true; return true;
 }
 async function startBackup() {
   const f = S.ncall.tone ? await getTone() : null;
   if (f) {
-    toneUrl = URL.createObjectURL(f); audio = new Audio(toneUrl); audio.loop = true;
+    toneUrl = URL.createObjectURL(f); audio = new Audio(toneUrl); audio.loop = true; audio.volume = 1;
+    // 파일 소리도 키워서 낸다 (소리 장치가 깨어 있을 때만. 잠들어 있으면 그대로 틀어야 소리가 난다)
+    try { const o = out(); if (AC.state === 'running') AC.createMediaElementSource(audio).connect(o); } catch (e) {}
     try { await audio.play(); return; } catch (e) { stopBackup(); } // 못 틀면 다음 순서로
   }
   if (S.ncall.yt && S.ncall.yt.id) { startYT(S.ncall.yt); return; }
@@ -403,12 +419,15 @@ SHEETS.set.render = function () {
   const preset = el('button', 'btn ghost sm nc-preset', `${SP_PRESET.name}으로 하기`);
   preset.onclick = () => setSp(SP_PRESET.uri, SP_PRESET.name);
   spRow.append(spIn, spSave);
+  const ld = el('input'); ld.type = 'checkbox'; ld.checked = S.ncall.loud !== false;
+  const ldLab = el('label', 'sw', '최대 소리로 울리기'); ldLab.prepend(ld);
+  ld.onchange = () => { S.ncall.loud = ld.checked; save(); };
   const bg = el('input'); bg.type = 'checkbox'; bg.checked = S.ncall.bg !== false;
   const bgLab = el('label', 'sw', '앱을 내려 둬도 울리기'); bgLab.prepend(bg);
   bg.onchange = () => { S.ncall.bg = bg.checked; save(); };
   const now = el('button', 'btn ghost wide', '지금 전화 받아 보기');
   now.onclick = () => { closeSheet(); setTimeout(window.ncallTest, 400); };
-  f.append(row, xrow, el('p', 'hint', '밤 전화에서는 오늘 공부한 시간(과목별)과 내일 시험·D-day를 먼저 말해 줘요. 시험 날 아침 전화는 오늘 시험 과목·교시와 준비물을 알려 줘요.'), xtest, tone, preset, spRow, el('p', 'hint', '스포티파이 곡은 폰의 스포티파이 앱에서 울려서 광고가 없어요(프리미엄 필요). 받으면 멈추고, 원래 듣던 노래가 있었으면 그 자리부터 다시 틀어요. 자는 동안 폰이 스포티파이 앱을 꺼서 못 찾으면, 순서대로 음악 파일 → 유튜브 → 기본 벨소리로 울리면서 15초마다 스포티파이를 다시 찾아요. 같은 노래 mp3 파일을 "음악 파일 고르기"로 넣어 두면 그때도 그 노래로 울려요. 폰 설정 → 애플리케이션 → Spotify → 배터리 → "제한 없음"으로 두면 스포티파이가 덜 꺼져요.'), ytRow, el('p', 'hint', '유튜브 링크에 시간(?t=30 같은 것)이 있으면 그 부분부터 울려요. 유튜브 영상은 전화 화면에 작게 보이면서 울려요. 앱을 내려 둔 상태에서는 유튜브가 소리를 막을 수 있어서, 그때는 기본 벨소리도 같이 울려요.'), bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
+  f.append(row, ldLab, el('p', 'hint', '앱이 낼 수 있는 가장 큰 소리로 울리고, 스포티파이·유튜브는 음량 100%로 올려요(끊으면 원래대로). 폰 전체 미디어 음량은 앱이 못 바꿔서, 미디어 음량이 0이면 안 들려요. 갤럭시 "모드 및 루틴"으로 밤 11:29에 미디어 음량을 최대로 바꾸게 해 두면 확실해요.'), xrow, el('p', 'hint', '밤 전화에서는 오늘 공부한 시간(과목별)과 내일 시험·D-day를 먼저 말해 줘요. 시험 날 아침 전화는 오늘 시험 과목·교시와 준비물을 알려 줘요.'), xtest, tone, preset, spRow, el('p', 'hint', '스포티파이 곡은 폰의 스포티파이 앱에서 울려서 광고가 없어요(프리미엄 필요). 받으면 멈추고, 원래 듣던 노래가 있었으면 그 자리부터 다시 틀어요. 자는 동안 폰이 스포티파이 앱을 꺼서 못 찾으면, 순서대로 음악 파일 → 유튜브 → 기본 벨소리로 울리면서 15초마다 스포티파이를 다시 찾아요. 같은 노래 mp3 파일을 "음악 파일 고르기"로 넣어 두면 그때도 그 노래로 울려요. 폰 설정 → 애플리케이션 → Spotify → 배터리 → "제한 없음"으로 두면 스포티파이가 덜 꺼져요.'), ytRow, el('p', 'hint', '유튜브 링크에 시간(?t=30 같은 것)이 있으면 그 부분부터 울려요. 유튜브 영상은 전화 화면에 작게 보이면서 울려요. 앱을 내려 둔 상태에서는 유튜브가 소리를 막을 수 있어서, 그때는 기본 벨소리도 같이 울려요.'), bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
     el('p', 'hint', '받을 때까지 울리고, 거절하면 5분 뒤에 다시 걸어요. 앱이 내려가 있을 때는 폰 알림으로도 울려요(알림을 켜 둔 경우). 벨소리 파일은 이 기기에만 저장돼요.'));
   b.insertBefore(f, reset);
 };
