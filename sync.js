@@ -242,6 +242,23 @@ SHEETS.set.render = function () {
   status();
 };
 window.syncNow = () => sync({ loud: true });
+// 다른 기능(꺼져 있어도 전화 오기, pushcall.js)이 같은 저장소에 파일을 읽고 쓸 수 있게
+window.hanulRepo = {
+  linked: () => !!(cfg && cfg.token),
+  name: () => (cfg ? cfg.repo : ''),
+  async get(path) { // {text, sha} 또는 없으면 null
+    const r = await gh(`/repos/${cfg.repo}/contents/${path}`);
+    if (r.status === 404) return null;
+    if (!r.ok) throw httpErr(r);
+    const j = await r.json(); return { text: j.content ? b64d(j.content) : '', sha: j.sha };
+  },
+  async put(path, text, sha, message) {
+    const body = { message: message || `${path} 바꿈`, content: b64e(text) }; if (sha) body.sha = sha;
+    const r = await gh(`/repos/${cfg.repo}/contents/${path}`, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+    if (!r.ok) throw httpErr(r);
+    return (await r.json()).content.sha;
+  },
+};
 
 // ---------- 다른 기기 연결: QR ----------
 // QR에는 앱 주소 + #연결정보(저장소·토큰)가 들어간다. # 뒤는 인터넷으로 보내지지 않고 그 기기 안에서만 읽힌다.

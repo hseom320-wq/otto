@@ -692,3 +692,8 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .qz-res b { font-family: var(--f-num); font-size: 48px; }
 .qz-res small { color: var(--mute); font-size: 15px; }
 @media (prefers-reduced-motion: reduce) { .qz-wait i { animation: none; } }
+
+.pc-box { margin-top: 14px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); }
+.pc-box > b { font-size: 14px; }
+.pc-stat { margin: 4px 0 8px; font-size: 13px; color: #9fd7b5; }
+.pc-stat.bad { color: #ffb3a6; }

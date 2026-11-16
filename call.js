@@ -300,7 +300,7 @@ const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.
 let callDay = '';
 // 받아 보기(테스트)로 온 전화는 실제 예약에 영향을 주지 않는다 (예전엔 테스트에서 "일어날게"를 누르면 그날 밤 전화가 안 왔다)
 let testing = false;
-function finish() { if (testing) return; writeSt({ day: callDay || dayKey(), done: true, nextAt: 0 }); logEv('끝 (오늘은 더 안 걸기)'); }
+function finish() { if (testing) return; writeSt({ day: callDay || dayKey(), done: true, nextAt: 0 }); logEv('끝 (오늘은 더 안 걸기)'); if (window.pushCallState) pushCallState(kind, { day: callDay || dayKey(), done: true }); }
 function later() { if (testing) { toast('받아 보기 전화라 다시 걸지는 않아요'); return; } writeSt({ day: callDay || dayKey(), done: false, nextAt: Date.now() + 5 * 60e3 }); logEv('5분 뒤에 다시'); }
 const recallAt = st => (st.nextAt && !st.done && Date.now() - st.nextAt < 3 * 3600e3 ? st.nextAt : 0); // 다시 걸 전화 (자정을 넘어도)
 const timeOf = k => (k === 'exam' ? (S.ncall.examTime || '06:40') : k === 'morning' ? (S.ncall.mTime || '05:30') : (S.ncall.time || '23:30'));
@@ -382,6 +382,13 @@ function stopKeep() {
 document.addEventListener('resume', () => { logEv('앱이 자다가 깨어남'); check(); });
 addEventListener('freeze', () => logEv('폰이 앱을 재움'));
 setTimeout(check, 3000);
+// 푸시 알림을 눌러 열렸을 때 (pushcall.js): 그 전화를 오늘 아직 안 끝냈으면 바로 울린다
+window.ncallFromPush = k => {
+  if (!KEYS[k] || ringing || talking) return;
+  const st = readSt(k); if (st.day === dayKey() && st.done) return;
+  callDay = st.day && st.nextAt && !st.done ? st.day : dayKey(); kind = k; testing = false;
+  logEv('알림을 눌러 열림'); ring(k);
+};
 window.ncallTest = k => { if (ringing || talking) return; callDay = dayKey(); testing = true; ring(typeof k === 'string' ? k : 'night'); };
 
 // ---------- 설정 ----------

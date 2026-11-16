@@ -1,6 +1,6 @@
 // 한울아파트 — 서비스 워커. 앱 파일을 바꿔서 올릴 때마다 V를 1 올린다.
-const V = 'hanul-v57';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'features.js', 'study.js', 'plan.js', 'music.js', 'device.js', 'idle.js', 'voice.js', 'motion.js', 'neko.js', 'push.js', 'tv.js', 'mini.js', 'sync.js', 'call.js', 'quiz.js', 'assets/ui/neko2/sprites.json', 'plan.html', 'plan.json', 'data/characters.json', 'manifest.json', 'icon-192.png', 'icon-512.png', 'assets/ui/elevator.webp', 'assets/ui/elevator-wide.webp'];
+const V = 'hanul-v59';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'features.js', 'study.js', 'plan.js', 'music.js', 'device.js', 'idle.js', 'voice.js', 'motion.js', 'neko.js', 'push.js', 'tv.js', 'mini.js', 'sync.js', 'call.js', 'quiz.js', 'pushcall.js', 'assets/ui/neko2/sprites.json', 'plan.html', 'plan.json', 'data/characters.json', 'manifest.json', 'icon-192.png', 'icon-512.png', 'assets/ui/elevator.webp', 'assets/ui/elevator-wide.webp'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
@@ -20,6 +20,12 @@ self.addEventListener('fetch', e => {
 // ---------- 앱이 꺼져 있을 때 알림 (push.js · push-server) ----------
 // 알림 서버가 내용 없는 푸시로 깨우면, 보낼 알림을 받아 와서 띄운다
 self.addEventListener('push', e => {
+  // 수현 전화 (pushcall.js · 저장소의 GitHub 예약 작업이 보냄): 받을 때까지 눈에 띄게, 누르면 전화가 울리게
+  let d = null; try { d = e.data && e.data.json(); } catch (err) {}
+  if (d && d.kind === 'ncall') {
+    e.waitUntil(self.registration.showNotification(d.title || '📞 남수현', { body: d.body || '전화 왔어요', tag: 'hanul-ncall', renotify: true, requireInteraction: true, vibrate: [800, 400, 800, 400, 800, 400, 800], icon: 'icon-192.png', badge: 'icon-192.png', data: { url: './?call=' + (d.call || 'night'), call: d.call || 'night' } }));
+    return;
+  }
   e.waitUntil((async () => {
     let items = [];
     try {
@@ -37,7 +43,8 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil((async () => {
     const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const w = all.find(c => c.url.startsWith(self.registration.scope));
-    if (w) return w.focus();
+    const call = e.notification.data && e.notification.data.call;
+    if (w) { if (call) w.postMessage({ call }); return w.focus(); }
     return self.clients.openWindow((e.notification.data && e.notification.data.url) || './');
   })());
 });
