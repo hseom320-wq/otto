@@ -118,25 +118,41 @@ function spParse(text) {
   const m = String(text || '').match(/(?:open\.spotify\.com\/(?:intl-[\w-]+\/)?track\/|spotify:track:)([A-Za-z0-9]{22})/);
   return m ? `spotify:track:${m[1]}` : null;
 }
+// 울리는 순서: 스포티파이 곡 → (스포티파이를 못 쓰면) 내 음악 파일 → 유튜브 → 기본 벨소리.
+// 자는 동안 폰이 스포티파이 앱을 꺼 버려서 스포티파이를 못 찾으면, 대신 울리면서 15초마다 스포티파이를 다시 찾아본다.
+// 찾으면 대신 울리던 소리를 끄고 스포티파이 곡으로 바꾼다.
+let spRetryT = 0;
 async function startTone() {
   stopTone();
-  if (S.ncall.sp && S.ncall.sp.uri && window.spotifyRing && spotifyRing.linked()) {
-    if (await spotifyRing.start(S.ncall.sp.uri)) { if (!ringing) { spotifyRing.stop(); return; } spOn = true; return; } // 그 사이 받았으면 바로 멈춤
-  }
-  if (S.ncall.yt && S.ncall.yt.id) { startYT(S.ncall.yt); return; }
+  const wantSp = S.ncall.sp && S.ncall.sp.uri && window.spotifyRing && spotifyRing.linked();
+  if (wantSp && await trySp()) return;
+  await startBackup();
+  if (wantSp) spRetryT = setInterval(async () => { if (!ringing) { clearInterval(spRetryT); return; } if (await trySp()) { stopBackup(); clearInterval(spRetryT); } }, 15e3);
+}
+async function trySp() {
+  if (!(await spotifyRing.start(S.ncall.sp.uri))) return false;
+  if (!ringing) { spotifyRing.stop(); return true; } // 그 사이 받았으면 바로 멈춤
+  spOn = true; return true;
+}
+async function startBackup() {
   const f = S.ncall.tone ? await getTone() : null;
   if (f) {
     toneUrl = URL.createObjectURL(f); audio = new Audio(toneUrl); audio.loop = true;
-    try { await audio.play(); return; } catch (e) { stopTone(); } // 못 틀면 기본 벨소리로
+    try { await audio.play(); return; } catch (e) { stopBackup(); } // 못 틀면 다음 순서로
   }
+  if (S.ncall.yt && S.ncall.yt.id) { startYT(S.ncall.yt); return; }
   synthOnce(); synthT = setInterval(synthOnce, 2000);
 }
-function stopTone() {
+function stopBackup() {
   clearInterval(synthT); synthT = 0; clearTimeout(ytFallT);
-  if (spOn) { spOn = false; if (window.spotifyRing) spotifyRing.stop(); }
   if (ytFrame) { ytFrame.remove(); ytFrame = null; q('.nc-ytbox').hidden = true; }
   if (audio) { try { audio.pause(); } catch (e) {} audio = null; }
   if (toneUrl) { URL.revokeObjectURL(toneUrl); toneUrl = ''; }
+}
+function stopTone() {
+  clearInterval(spRetryT); spRetryT = 0;
+  if (spOn) { spOn = false; if (window.spotifyRing) spotifyRing.stop(); }
+  stopBackup();
 }
 // 처음 화면을 만질 때 소리를 미리 깨워 둔다 (브라우저는 사람이 한 번 만져야 소리를 내게 해 준다)
 addEventListener('pointerdown', function unlock() {
@@ -283,15 +299,22 @@ SHEETS.set.render = function () {
   tm.onchange = () => { if (!tm.value) return; S.ncall.time = tm.value; save(); const st = readSt(); if (st.day === dayKey() && !st.done) writeSt({}); toast(`매일 ${timeWord(tm.value)}에 전화해요`); };
   // 벨소리
   const tone = el('div', 'row nc-tone');
-  const toneName = () => S.ncall.sp && S.ncall.sp.uri ? `벨소리: 스포티파이 · ${S.ncall.sp.name || '고른 곡'}` : S.ncall.yt && S.ncall.yt.id ? `벨소리: 유튜브 · ${S.ncall.yt.title || S.ncall.yt.id}${S.ncall.yt.start ? ` (${Math.floor(S.ncall.yt.start / 60)}:${pad(S.ncall.yt.start % 60)}부터)` : ''}` : S.ncall.tone ? `벨소리: ${S.ncall.tone}` : '벨소리: 기본';
+  const toneName = () => {
+    const l = [];
+    if (S.ncall.sp && S.ncall.sp.uri) l.push(`스포티파이 · ${S.ncall.sp.name || '고른 곡'}`);
+    if (S.ncall.tone) l.push(`파일 · ${S.ncall.tone}`);
+    if (S.ncall.yt && S.ncall.yt.id) l.push(`유튜브 · ${S.ncall.yt.title || S.ncall.yt.id}${S.ncall.yt.start ? ` (${Math.floor(S.ncall.yt.start / 60)}:${pad(S.ncall.yt.start % 60)}부터)` : ''}`);
+    l.push('기본 벨소리');
+    return '벨소리 순서: ' + l.join(' → ');
+  };
   const name = el('span', 'nc-tone-name'); name.textContent = toneName();
-  const pickB = el('button', 'btn ghost sm', '파일 고르기'), test = el('button', 'btn ghost sm', '들어 보기'), back = el('button', 'btn ghost sm', '기본으로');
+  const pickB = el('button', 'btn ghost sm', '음악 파일 고르기'), test = el('button', 'btn ghost sm', '들어 보기'), back = el('button', 'btn ghost sm', '모두 지우기');
   const file = el('input'); file.type = 'file'; file.accept = 'audio/*'; file.hidden = true;
   pickB.onclick = () => file.click();
   file.onchange = async () => {
     const x = file.files[0]; file.value = ''; if (!x) return;
     if (x.size > 30e6) { toast('파일이 너무 커요 (30MB까지)'); return; }
-    try { await setTone(x); S.ncall.tone = x.name; S.ncall.yt = null; S.ncall.sp = null; save(); name.textContent = toneName(); toast('벨소리를 바꿨어요'); } catch (e) { toast('저장하지 못했어요'); }
+    try { await setTone(x); S.ncall.tone = x.name; save(); name.textContent = toneName(); toast('벨소리를 바꿨어요'); } catch (e) { toast('저장하지 못했어요'); }
   };
   let playing = false;
   test.onclick = async () => { if ((S.ncall.yt && S.ncall.yt.id) || (S.ncall.sp && S.ncall.sp.uri)) { closeSheet(); setTimeout(window.ncallTest, 400); return; } if (playing) { stopTone(); playing = false; test.textContent = '들어 보기'; return; } await startTone(); playing = true; test.textContent = '멈추기'; setTimeout(() => { if (playing) { stopTone(); playing = false; test.textContent = '들어 보기'; } }, 8000); };
@@ -304,7 +327,7 @@ SHEETS.set.render = function () {
   ytSave.onclick = () => {
     const y = ytParse(ytIn.value);
     if (!y) { toast('유튜브 링크가 아니에요'); return; }
-    S.ncall.yt = { id: y.id, start: y.start, title: '' }; S.ncall.sp = null; save(); ytIn.value = ''; name.textContent = toneName();
+    S.ncall.yt = { id: y.id, start: y.start, title: '' }; save(); ytIn.value = ''; name.textContent = toneName();
     toast(y.start ? `${Math.floor(y.start / 60)}분 ${y.start % 60}초부터 울려요` : '컬러링을 바꿨어요');
   };
   ytRow.append(ytIn, ytSave);
@@ -314,7 +337,7 @@ SHEETS.set.render = function () {
   const spSave = el('button', 'btn sm', '컬러링으로');
   const setSp = (uri, nm) => {
     if (!window.spotifyRing || !spotifyRing.linked()) { toast('먼저 음악 메뉴에서 스포티파이를 연결해 주세요'); return; }
-    S.ncall.sp = { uri, name: nm || '' }; S.ncall.yt = null; save(); spIn.value = ''; name.textContent = toneName(); toast('스포티파이 곡으로 울려요');
+    S.ncall.sp = { uri, name: nm || '' }; save(); spIn.value = ''; name.textContent = toneName(); toast('스포티파이 곡으로 울려요');
   };
   spSave.onclick = () => { const u = spParse(spIn.value); if (!u) { toast('스포티파이 곡 링크가 아니에요'); return; } setSp(u, '고른 곡'); };
   const preset = el('button', 'btn ghost sm nc-preset', `${SP_PRESET.name}으로 하기`);
@@ -325,7 +348,7 @@ SHEETS.set.render = function () {
   bg.onchange = () => { S.ncall.bg = bg.checked; save(); };
   const now = el('button', 'btn ghost wide', '지금 전화 받아 보기');
   now.onclick = () => { closeSheet(); setTimeout(window.ncallTest, 400); };
-  f.append(row, tone, preset, spRow, el('p', 'hint', '스포티파이 곡은 폰의 스포티파이 앱에서 울려서 광고가 없어요(프리미엄 필요). 받으면 멈추고, 원래 듣던 노래가 있었으면 그 자리부터 다시 틀어요. 스포티파이 앱을 오래 안 켜서 기기를 못 찾으면 아래 유튜브·기본 벨소리로 울려요.'), ytRow, el('p', 'hint', '유튜브 링크에 시간(?t=30 같은 것)이 있으면 그 부분부터 울려요. 유튜브 영상은 전화 화면에 작게 보이면서 울려요. 앱을 내려 둔 상태에서는 유튜브가 소리를 막을 수 있어서, 그때는 기본 벨소리도 같이 울려요.'), bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
+  f.append(row, tone, preset, spRow, el('p', 'hint', '스포티파이 곡은 폰의 스포티파이 앱에서 울려서 광고가 없어요(프리미엄 필요). 받으면 멈추고, 원래 듣던 노래가 있었으면 그 자리부터 다시 틀어요. 자는 동안 폰이 스포티파이 앱을 꺼서 못 찾으면, 순서대로 음악 파일 → 유튜브 → 기본 벨소리로 울리면서 15초마다 스포티파이를 다시 찾아요. 같은 노래 mp3 파일을 "음악 파일 고르기"로 넣어 두면 그때도 그 노래로 울려요. 폰 설정 → 애플리케이션 → Spotify → 배터리 → "제한 없음"으로 두면 스포티파이가 덜 꺼져요.'), ytRow, el('p', 'hint', '유튜브 링크에 시간(?t=30 같은 것)이 있으면 그 부분부터 울려요. 유튜브 영상은 전화 화면에 작게 보이면서 울려요. 앱을 내려 둔 상태에서는 유튜브가 소리를 막을 수 있어서, 그때는 기본 벨소리도 같이 울려요.'), bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
     el('p', 'hint', '받을 때까지 울리고, 거절하면 5분 뒤에 다시 걸어요. 앱이 내려가 있을 때는 폰 알림으로도 울려요(알림을 켜 둔 경우). 벨소리 파일은 이 기기에만 저장돼요.'));
   b.insertBefore(f, reset);
 };
