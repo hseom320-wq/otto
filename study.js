@@ -132,6 +132,7 @@ function renderPlan(b) {
   // 자유 타이머 + 설정
   const free = el('button', 'btn ghost wide', '계획 없이 50분 공부하기'); free.onclick = () => startFocus({ id: null, subject: '자습', text: '자습', range: '' });
   b.appendChild(free);
+  if (window.quizButton) b.appendChild(quizButton()); // 수현 쪽지 시험·오답 (quiz.js)
   if (window.miniButton) b.appendChild(miniButton()); // 열품타 같은 다른 앱을 켜 둔 채 한울냥 작은 창 (mini.js)
   const fb = finalButtons(); if (fb) b.appendChild(fb);
   b.appendChild(weekBox());

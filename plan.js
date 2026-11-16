@@ -223,7 +223,10 @@ function renderChip() {
   const dd = s.exams.length ? '시험 날' : s.dday != null ? `D-${s.dday}` : '';
   const n = s.tasks.length;
   b.hidden = false; b.className = 'final-chip' + (s.late.length ? ' late' : s.allDone ? ' ok' : '');
-  b.innerHTML = `<b>${esc(dd)}</b>기말${n ? ` · 오늘 ${n - s.left}/${n}` : ''}${s.late.length ? ` · 밀림 ${s.late.length}` : ''}`;
+  // 오늘 공부한 시간도 같이 (공부 탭·시청실·작은 창에서 기록한 것)
+  const d0 = new Date(), sm = ((S.slog || {})[`${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}`]) || 0;
+  const st = sm ? ` · 공부 ${sm >= 60 ? `${Math.floor(sm / 60)}시간 ${sm % 60}분` : `${sm}분`}` : '';
+  b.innerHTML = `<b>${esc(dd)}</b>기말${n ? ` · 오늘 ${n - s.left}/${n}` : ''}${s.late.length ? ` · 밀림 ${s.late.length}` : ''}${st}`;
   b.setAttribute('aria-label', `기말 브리핑 열기. ${dd}${n ? `, 오늘 할 일 ${n}개 중 ${n - s.left}개 끝냄` : ''}${s.late.length ? `, 밀린 일 ${s.late.length}개` : ''}`);
 }
 function toggleFinal(id) {
@@ -314,6 +317,9 @@ window.finalDays = () => {
 
 // 다른 기능(혼잣말 등)이 다음 시험을 알 수 있게
 window.nextExamInfo = () => { const s = status(); return s && s.next ? { subject: s.next.exams[0].name, n: s.dday } : null; };
+// 시험 날 목록과 기간 (수현 전화·시험 기간 모드가 씀)
+window.examDays = () => DAYS.filter(d => d.exams.length).map(d => ({ date: d.date, exams: d.exams.map(x => ({ name: x.name, period: x.period, start: x.start })) }));
+window.examMeta = () => (P && P.meta) || null;
 
 // ---------- 대화(Gemini)에도 기말 상황을 알려 준다 ----------
 const basePrompt = window.promptExtra;

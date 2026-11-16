@@ -37,6 +37,14 @@ let DATA = null, C = null; // C = 오늘의 캐릭터 데이터
 
 // ---------------- 날짜 ----------------
 function today() { const d = new Date(Date.now() - S.dayStart * 36e5); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+// 시험 기간 모드: 정한 날까지 매일 엘리베이터에서 고르지 않고 바로 그 비서(기본 남수현)에게 간다
+if (!S.examMode) S.examMode = { on: true, until: '', code: 'ns' };
+const examUntil = () => S.examMode.until || (window.examMeta && examMeta() && examMeta().end) || '2026-12-09';
+function examAuto() {
+  const m = S.examMode; if (!m || !m.on || today() > examUntil()) return false;
+  if (!(S.pick && S.pick.day === today())) { S.pick = { day: today(), code: m.code || 'ns' }; save(); }
+  return true;
+}
 function nowText() { const d = new Date(); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WD[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 const uid = () => Math.random().toString(36).slice(2, 8);
 
@@ -650,6 +658,7 @@ async function init() {
     setBubble(fill(pick(C.app.taps || C.app.praise)), true);
     if (window.popSticker && Math.random() < .6) popSticker(pick(['happy', 'sweat', 'confused']));
   };
+  examAuto();
   if (S.pick && S.pick.day === today()) { enter(S.pick.code); show('home'); }
   else { renderLift(); show('lift'); }
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
@@ -670,6 +679,7 @@ async function init() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible' || !DATA) return;
   cleanTodos();
+  if (examAuto() && $('home').classList.contains('on')) { renderHome(); return; }
   if (!(S.pick && S.pick.day === today()) && $('home').classList.contains('on')) { closeSheet(); renderLift(); show('lift'); }
 });
 // 화면을 돌리면(세로↔가로) 맞는 그림으로 바꾼다
