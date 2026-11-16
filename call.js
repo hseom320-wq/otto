@@ -5,6 +5,7 @@
 //   - "공부할게"       → 전화를 끊고 바로 집중 타이머(공부 화면)를 띄운다
 //   - "한 번 더 전화해" → 5분 뒤에 다시 건다
 // 거절하면 5분 뒤에 다시 건다.
+// 매일 새벽(기본 5:30)에도 건다: 일어났는지, 바로 공부할지, 5분 뒤에 다시 걸지.
 // 밤 전화에서는 받자마자 오늘 공부한 시간(과목별)과 내일 시험/D-day를 짧게 정리해 준다.
 // 시험 날 아침에는 따로 한 번 더 건다(기본 06:40): 오늘 시험 과목·교시를 알려 주고 준비물을 챙기라고 한다.
 // 벨소리: 기본은 앱이 만든 벨소리, 설정에서 내 기기에 있는 음악 파일(예: 컬러링으로 쓰는 노래)을 골라 쓸 수 있다.
@@ -17,13 +18,19 @@ const ST_KEY = 'hanul-ncall';           // 이 기기의 전화 상태 {day, don
 const DB = 'hanul-files', STORE = 'f';  // 벨소리 파일
 const NS = () => DATA && DATA.characters.find(c => c.code === 'ns');
 // 전화 종류: night(매일 밤) / exam(시험 날 아침). 상태는 종류마다 따로 둔다
-const KEYS = { night: ST_KEY, exam: ST_KEY + '-exam' };
+const KEYS = { night: ST_KEY, exam: ST_KEY + '-exam', morning: ST_KEY + '-morning' };
+const ORDER = ['exam', 'morning', 'night'];
+// 무슨 일이 있었는지 짧게 남겨 둔다 (설정에서 보고, 전화가 안 왔을 때 원인을 찾는 데 쓴다)
+const LOG_KEY = ST_KEY + '-log';
+function logEv(t) { try { const l = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); const d = new Date(); l.push(`${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())} ${t}`); localStorage.setItem(LOG_KEY, JSON.stringify(l.slice(-12))); } catch (e) {} }
 let kind = 'night';
 const readSt = (k = kind) => { try { return JSON.parse(localStorage.getItem(KEYS[k])) || {}; } catch (e) { return {}; } };
 const writeSt = (o, k = kind) => { try { localStorage.setItem(KEYS[k], JSON.stringify(o)); } catch (e) {} };
 if (!S.ncall) S.ncall = { on: true, time: '23:30', tone: '', v: 2 };
 // 처음에 오전 11:30으로 잘못 넣었던 것을 밤 11:30으로 고친다 (직접 바꾼 시각은 그대로)
 if (S.ncall.v !== 2) { if (S.ncall.time === '11:30') S.ncall.time = '23:30'; S.ncall.v = 2; save(); }
+// 예전 버전은 알림 창에서 대기 소리를 멈추면 '앱을 내려 둬도 울리기'가 저절로 꺼졌다 → 한 번 다시 켠다
+if (S.ncall.v2 !== 3) { S.ncall.bg = true; S.ncall.v2 = 3; save(); }
 
 // 수현 대사 ({me}: 내 이름)
 const L = {
@@ -33,6 +40,10 @@ const L = {
   study: ['오, 웬일. 타이머 켜 줄 테니까 바로 앉아.', '진짜? 그럼 지금 켠다. 50분, 딴짓하면 안다.'],
   again: ['…5분. 딱 5분이다. 다시 건다.', '하. 알았어. 5분 뒤에 또 건다, 안 받으면 문 두드린다.'],
   decline: '…안 받냐. 5분 뒤에 또 건다.',
+  // 매일 새벽 (기본 5:30)
+  mhello: ['야, 일어나. {time}이다.', '…일어났냐? 목소리 왜 그래. {time}이거든.', '일어나라. 알람 끈 거 다 안다. {time}이다.'],
+  mask: '그래서. 일어날 거야, 바로 공부할 거야, 아니면 5분 더 자고 내가 또 걸어?',
+  mwake: ['오케이. 세수하고 물 한 잔. 끊는다.', '진짜지? 다시 누우면 문 두드린다. 끊어.', '잘했다. 아침 거르지 마. 끊는다.'],
   // 시험 날 아침
   xhello: ['야, 일어났냐. 오늘 시험이다.', '…받았네. 오늘 시험 날인 거 알지.', '일어나. 오늘 시험이다, 시험.'],
   xask: '일어났으면 일어났다고 해. 아니면 5분 뒤에 또 건다.',
@@ -57,6 +68,15 @@ function nightSummary(day) {
   if (ex) t += ` 내일 ${ex.exams.map(x => `${x.period}교시 ${x.name}`).join(', ')} 시험이다.`;
   else { const n = window.nextExamInfo && nextExamInfo(); if (n && n.n > 0) t += ` ${n.subject}까지 D-${n.n}.`; }
   return t;
+}
+// 새벽 전화: 오늘 할 일·시험
+function morningSummary(day) {
+  const ex = examToday(day);
+  if (ex) return `오늘 시험이다. ${ex.exams.map(x => `${x.period}교시 ${x.name}`).join(', ')}.`;
+  const st = window.finalStatus && finalStatus(); let t = '';
+  if (st && st.tasks && st.tasks.length) t += `오늘 기말 할 거 ${st.left}개 남았다. `;
+  const n = window.nextExamInfo && nextExamInfo(); if (n && n.n > 0) t += `${n.subject}까지 D-${n.n}.`;
+  return t || '오늘도 하나라도 하자.';
 }
 function examToday(day) { return window.examDays ? examDays().find(d => d.date === day) || null : null; }
 const line = (k, o) => { const t = Array.isArray(L[k]) ? pick(L[k]) : L[k]; return t.replace(/\{(\w+)\}/g, (x, key) => (o && o[key] != null ? o[key] : x)); };
@@ -86,6 +106,7 @@ document.getElementById('app').appendChild(v);
 const q = s => v.querySelector(s);
 const CHOICES = {
   night: [['wake', '지금 일어날게'], ['study', '공부할게'], ['again', '5분 뒤에 한 번 더 전화해 줘']],
+  morning: [['wake', '일어났어'], ['study', '바로 공부할게'], ['again', '5분 뒤에 한 번 더 전화해 줘']],
   exam: [['wake', '일어났어, 챙길게'], ['again', '5분 뒤에 다시 전화해 줘']],
 };
 
@@ -255,7 +276,9 @@ q('.nc-yes').onclick = () => {
   // 인사 → 정리 → 묻기
   const steps = kind === 'exam'
     ? [line('xhello'), (() => { const ex = examToday(day); return (ex ? `${ex.exams.map(x => `${x.period}교시 ${x.name}`).join(', ')}. ` : '') + line('xpack'); })(), L.xask]
+    : kind === 'morning' ? [line('mhello', { time: timeWord(hm) }), morningSummary(day), L.mask]
     : [line('hello', { time: timeWord(hm) }), nightSummary(day), L.ask];
+  logEv('받음');
   say(steps[0]);
   let at = 3000;
   steps.slice(1).forEach((t, i) => { setTimeout(() => { if (!talking || decided) return; say(t); if (i === steps.length - 2) q('.nc-choices').hidden = false; }, at); at += Math.max(3200, t.length * 110); });
@@ -264,7 +287,7 @@ q('.nc-no').onclick = () => { stopRing(); later(); say(L.decline); setTimeout(()
 q('.nc-end').onclick = () => { if (!decided) later(); hangUp(); }; // 고르지 않고 끊으면 5분 뒤 다시
 function choose(c) {
   q('.nc-choices').hidden = true; decided = true;
-  if (c === 'wake') { finish(); say(line(kind === 'exam' ? 'xwake' : 'wake')); setTimeout(() => hangUp(), 3000); }
+  if (c === 'wake') { finish(); say(line(kind === 'exam' ? 'xwake' : kind === 'morning' ? 'mwake' : 'wake')); setTimeout(() => hangUp(), 3000); }
   else if (c === 'study') {
     finish(); say(line('study'));
     setTimeout(() => hangUp(() => { if (window.startFocusFree) startFocusFree(); else if (window.openSheet) openSheet('study'); }), 2600);
@@ -275,11 +298,13 @@ function choose(c) {
 const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 // 전화의 "날"은 걸기로 한 날로 둔다 (밤 11:30에 시작한 전화를 자정 넘어 받아도 그날 것으로)
 let callDay = '';
-function finish() { writeSt({ day: callDay || dayKey(), done: true, nextAt: 0 }); }
-function later() { writeSt({ day: callDay || dayKey(), done: false, nextAt: Date.now() + 5 * 60e3 }); }
+// 받아 보기(테스트)로 온 전화는 실제 예약에 영향을 주지 않는다 (예전엔 테스트에서 "일어날게"를 누르면 그날 밤 전화가 안 왔다)
+let testing = false;
+function finish() { if (testing) return; writeSt({ day: callDay || dayKey(), done: true, nextAt: 0 }); logEv('끝 (오늘은 더 안 걸기)'); }
+function later() { if (testing) { toast('받아 보기 전화라 다시 걸지는 않아요'); return; } writeSt({ day: callDay || dayKey(), done: false, nextAt: Date.now() + 5 * 60e3 }); logEv('5분 뒤에 다시'); }
 const recallAt = st => (st.nextAt && !st.done && Date.now() - st.nextAt < 3 * 3600e3 ? st.nextAt : 0); // 다시 걸 전화 (자정을 넘어도)
-const timeOf = k => (k === 'exam' ? (S.ncall.examTime || '06:40') : (S.ncall.time || '23:30'));
-const kindOn = k => S.ncall.on && (k === 'night' || (S.ncall.exam !== false && !!examToday(dayKey())));
+const timeOf = k => (k === 'exam' ? (S.ncall.examTime || '06:40') : k === 'morning' ? (S.ncall.mTime || '05:30') : (S.ncall.time || '23:30'));
+const kindOn = k => S.ncall.on && (k === 'night' || (k === 'morning' ? S.ncall.morning !== false : (S.ncall.exam !== false && !!examToday(dayKey()))));
 function todayAt(k = 'night') { const [h, m] = timeOf(k).split(':').map(Number), t = new Date(); t.setHours(h, m, 0, 0); return t.getTime(); }
 function dueAt(k = 'night') {
   const st = readSt(k), r = recallAt(st);
@@ -292,13 +317,15 @@ let wake = null;
 function check() {
   if (!S.ncall || !S.ncall.on || !DATA) return;
   const now = Date.now(); let soonest = 0;
-  for (const k of ['exam', 'night']) {
+  for (const k of ORDER) {
     const st = readSt(k), r = recallAt(st);
     const at = r || (!kindOn(k) || (st.day === dayKey() && st.done) ? 0 : todayAt(k)); if (!at) continue;
     if (at > now && (!soonest || at < soonest)) soonest = at;
-    // 처음 전화는 정한 시각부터 20분 안에 앱이 켜져 있을 때만, 다시 거는 전화는 3시간 안에는 언제든
-    if (!ringing && !talking && now >= at && (r || now - at < 20 * 60e3)) { callDay = r ? st.day : dayKey(); kind = k; ring(k); if (!r) writeSt({ day: callDay, done: false, nextAt: at }, k); }
+    // 처음 전화는 정한 시각부터 1시간 안(폰이 앱을 잠깐 재웠다 깨워도 걸리게), 다시 거는 전화는 3시간 안에는 언제든
+    if (!ringing && !talking && now >= at && (r || now - at < 60 * 60e3)) { callDay = r ? st.day : dayKey(); kind = k; testing = false; logEv(`${k === 'night' ? '밤' : k === 'morning' ? '새벽' : '시험 날'} 전화 울림${now - at > 2 * 60e3 ? ` (${Math.round((now - at) / 60e3)}분 늦게, 앱이 자고 있었음)` : ''}`); ring(k); if (!r) writeSt({ day: callDay, done: false, nextAt: at }, k); }
   }
+  // 앱이 내려가 있는데 대기 소리가 꺼져 있으면 다시 켠다
+  if (document.hidden && !keep && !ringing && !talking) startKeep();
   const at = soonest;
   // 10분 전부터 화면이 꺼지지 않게 (앱이 앞에 있을 때만 된다)
   const soon = at - now > 0 && at - now < 10 * 60e3;
@@ -306,15 +333,16 @@ function check() {
   if (!soon && wake && !ringing && !talking) { try { wake.release(); } catch (e) {} wake = null; }
 }
 setInterval(check, 5000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { stopKeep(); check(); if (ringing) closeNote(); } else startKeep(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { keepOff = false; stopKeep(); check(); if (ringing) closeNote(); } else startKeep(); });
 // 안드로이드는 내려 둔 웹앱을 5분쯤 지나면 재운다(타이머가 멈춘다). 소리를 내고 있는 앱은 재우지 않아서,
 // 앱을 내려 둘 때 다음 전화가 14시간 안에 있으면 사람 귀에는 거의 안 들리는 아주 작은 소리를 계속 틀어 깨어 있게 한다.
 // 이때 폰 알림 창에 "남수현 전화 기다리는 중"이 뜬다. 설정에서 끌 수 있다(끄면 내려 둔 지 몇 분 뒤부터는 못 울릴 수 있다).
-let keep = null, keepUrl = '';
+let keep = null, keepUrl = '', keepOff = false;
 function nextCall() {
   if (!S.ncall || !S.ncall.on) return 0;
   const now = Date.now(), list = [];
-  for (const k of ['exam', 'night']) { const at = dueAt(k); if (at && (at > now || recallAt(readSt(k)))) list.push(at); }
+  for (const k of ORDER) { const at = dueAt(k); if (at && (at > now || recallAt(readSt(k)))) list.push(at); }
+  if (S.ncall.morning !== false) list.push(todayAt('morning') + 24 * 3600e3);
   // 내일 시험이면 내일 아침 전화, 아니면 내일 밤 전화
   const tm = new Date(); tm.setDate(tm.getDate() + 1); const tk = `${tm.getFullYear()}-${pad(tm.getMonth() + 1)}-${pad(tm.getDate())}`;
   if (S.ncall.exam !== false && examToday(tk)) list.push(todayAt('exam') + 24 * 3600e3);
@@ -330,7 +358,7 @@ function hum() { // 아주 작은 잡음 1초짜리 소리 파일을 만든다 (
   return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
 }
 function startKeep() {
-  if (keep || ringing || talking || S.ncall.bg === false) return;
+  if (keep || keepOff || ringing || talking || S.ncall.bg === false) return;
   const at = nextCall(); if (!at || at - Date.now() > 14 * 3600e3) return;
   keepUrl = keepUrl || hum();
   keep = new Audio(keepUrl); keep.loop = true;
@@ -338,9 +366,12 @@ function startKeep() {
     try {
       const t = new Date(at);
       navigator.mediaSession.metadata = new MediaMetadata({ title: '남수현 전화 기다리는 중', artist: `${timeWord(`${pad(t.getHours())}:${pad(t.getMinutes())}`)}에 전화가 와요`, album: '한울아파트', artwork: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }] });
-      navigator.mediaSession.setActionHandler('pause', () => { stopKeep(); S.ncall.bg = false; save(); }); // 알림에서 멈추면 이 기능을 끈 걸로
+      navigator.mediaSession.setActionHandler('pause', () => { stopKeep(); keepOff = true; logEv('대기 알림에서 멈춤 (앱을 다시 열 때까지 대기 안 함)'); });
     } catch (e) {}
-  }).catch(() => { keep = null; });
+    logEv('대기 시작');
+  }).catch(e => { keep = null; logEv('대기 소리를 못 틀었음 (' + (e && e.name || '?') + ')'); });
+  // 다른 앱(음악 등)이 소리를 가져가서 멈추면 잠시 뒤 다시 튼다
+  keep.addEventListener('pause', () => { if (!keep || keepOff) return; setTimeout(() => { if (keep && document.hidden && !ringing && !talking) keep.play().catch(() => {}); }, 4000); });
 }
 function stopKeep() {
   if (!keep) return;
@@ -348,9 +379,10 @@ function stopKeep() {
   try { navigator.mediaSession.metadata = null; } catch (e) {}
 }
 // 그래도 재워졌다가 깨어나면 바로 확인
-document.addEventListener('resume', check);
+document.addEventListener('resume', () => { logEv('앱이 자다가 깨어남'); check(); });
+addEventListener('freeze', () => logEv('폰이 앱을 재움'));
 setTimeout(check, 3000);
-window.ncallTest = k => { writeSt({ day: dayKey(), done: false, nextAt: Date.now() }, k || 'night'); check(); };
+window.ncallTest = k => { if (ringing || talking) return; callDay = dayKey(); testing = true; ring(typeof k === 'string' ? k : 'night'); };
 
 // ---------- 설정 ----------
 const baseSet = SHEETS.set.render;
@@ -362,6 +394,13 @@ SHEETS.set.render = function () {
   const lab = el('label', 'sw', '매일 전화 받기'); lab.prepend(on);
   const tm = el('input', 'in tm-in'); tm.type = 'time'; tm.value = S.ncall.time; tm.setAttribute('aria-label', '전화 시각');
   const row = el('div', 'row'); row.append(lab, tm);
+  // 매일 새벽 전화
+  const mon = el('input'); mon.type = 'checkbox'; mon.checked = S.ncall.morning !== false;
+  const mlab = el('label', 'sw', '매일 새벽 전화'); mlab.prepend(mon);
+  const mtm = el('input', 'in tm-in'); mtm.type = 'time'; mtm.value = S.ncall.mTime || '05:30'; mtm.setAttribute('aria-label', '새벽 전화 시각');
+  const mrow = el('div', 'row'); mrow.append(mlab, mtm);
+  mon.onchange = () => { S.ncall.morning = mon.checked; save(); toast(mon.checked ? `매일 ${timeWord(mtm.value)}에도 전화해요` : '새벽 전화를 껐어요'); };
+  mtm.onchange = () => { if (mtm.value) { S.ncall.mTime = mtm.value; save(); toast(`매일 ${timeWord(mtm.value)}에 전화해요`); } };
   // 시험 날 아침 전화
   const xon = el('input'); xon.type = 'checkbox'; xon.checked = S.ncall.exam !== false;
   const xlab = el('label', 'sw', '시험 날 아침에도 전화'); xlab.prepend(xon);
@@ -427,8 +466,14 @@ SHEETS.set.render = function () {
   bg.onchange = () => { S.ncall.bg = bg.checked; save(); };
   const now = el('button', 'btn ghost wide', '지금 전화 받아 보기');
   now.onclick = () => { closeSheet(); setTimeout(window.ncallTest, 400); };
-  f.append(row, ldLab, el('p', 'hint', '앱이 낼 수 있는 가장 큰 소리로 울리고, 스포티파이·유튜브는 음량 100%로 올려요(끊으면 원래대로). 폰 전체 미디어 음량은 앱이 못 바꿔서, 미디어 음량이 0이면 안 들려요. 갤럭시 "모드 및 루틴"으로 밤 11:29에 미디어 음량을 최대로 바꾸게 해 두면 확실해요.'), xrow, el('p', 'hint', '밤 전화에서는 오늘 공부한 시간(과목별)과 내일 시험·D-day를 먼저 말해 줘요. 시험 날 아침 전화는 오늘 시험 과목·교시와 준비물을 알려 줘요.'), xtest, tone, preset, spRow, el('p', 'hint', '스포티파이 곡은 폰의 스포티파이 앱에서 울려서 광고가 없어요(프리미엄 필요). 받으면 멈추고, 원래 듣던 노래가 있었으면 그 자리부터 다시 틀어요. 자는 동안 폰이 스포티파이 앱을 꺼서 못 찾으면, 순서대로 음악 파일 → 유튜브 → 기본 벨소리로 울리면서 15초마다 스포티파이를 다시 찾아요. 같은 노래 mp3 파일을 "음악 파일 고르기"로 넣어 두면 그때도 그 노래로 울려요. 폰 설정 → 애플리케이션 → Spotify → 배터리 → "제한 없음"으로 두면 스포티파이가 덜 꺼져요.'), ytRow, el('p', 'hint', '유튜브 링크에 시간(?t=30 같은 것)이 있으면 그 부분부터 울려요. 유튜브 영상은 전화 화면에 작게 보이면서 울려요. 앱을 내려 둔 상태에서는 유튜브가 소리를 막을 수 있어서, 그때는 기본 벨소리도 같이 울려요.'), bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
+  f.append(row, mrow, ldLab, el('p', 'hint', '앱이 낼 수 있는 가장 큰 소리로 울리고, 스포티파이·유튜브는 음량 100%로 올려요(끊으면 원래대로). 폰 전체 미디어 음량은 앱이 못 바꿔서, 미디어 음량이 0이면 안 들려요. 갤럭시 "모드 및 루틴"으로 밤 11:29에 미디어 음량을 최대로 바꾸게 해 두면 확실해요.'), xrow, el('p', 'hint', '밤 전화에서는 오늘 공부한 시간(과목별)과 내일 시험·D-day를 먼저 말해 줘요. 시험 날 아침 전화는 오늘 시험 과목·교시와 준비물을 알려 줘요.'), xtest, tone, preset, spRow, el('p', 'hint', '스포티파이 곡은 폰의 스포티파이 앱에서 울려서 광고가 없어요(프리미엄 필요). 받으면 멈추고, 원래 듣던 노래가 있었으면 그 자리부터 다시 틀어요. 자는 동안 폰이 스포티파이 앱을 꺼서 못 찾으면, 순서대로 음악 파일 → 유튜브 → 기본 벨소리로 울리면서 15초마다 스포티파이를 다시 찾아요. 같은 노래 mp3 파일을 "음악 파일 고르기"로 넣어 두면 그때도 그 노래로 울려요. 폰 설정 → 애플리케이션 → Spotify → 배터리 → "제한 없음"으로 두면 스포티파이가 덜 꺼져요.'), ytRow, el('p', 'hint', '유튜브 링크에 시간(?t=30 같은 것)이 있으면 그 부분부터 울려요. 유튜브 영상은 전화 화면에 작게 보이면서 울려요. 앱을 내려 둔 상태에서는 유튜브가 소리를 막을 수 있어서, 그때는 기본 벨소리도 같이 울려요.'), bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
     el('p', 'hint', '받을 때까지 울리고, 거절하면 5분 뒤에 다시 걸어요. 앱이 내려가 있을 때는 폰 알림으로도 울려요(알림을 켜 둔 경우). 벨소리 파일은 이 기기에만 저장돼요.'));
+  const nx = nextCall();
+  const nd = nx ? new Date(nx) : null;
+  const logs = (() => { try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch (e) { return []; } })();
+  const diag = el('details', 'sync-help', `<summary>전화 상태 보기</summary><p>다음 전화: ${nd ? `${nd.getMonth() + 1}/${nd.getDate()} ${timeWord(`${pad(nd.getHours())}:${pad(nd.getMinutes())}`)}` : '없음'}${S.ncall.bg === false ? ' · 앱을 내려 두면 못 울릴 수 있음(아래 설정 꺼짐)' : ''}</p>
+    <p>최근 기록:<br>${logs.length ? logs.slice().reverse().map(esc).join('<br>') : '아직 없음'}</p><p>전화가 안 왔으면 이 기록을 캡처해서 보내 주세요. "폰이 앱을 재움"이 있으면 배터리 설정에서 한울아파트를 "제한 없음"으로 바꿔 주세요.</p>`);
+  f.appendChild(diag);
   b.insertBefore(f, reset);
 };
 })();
