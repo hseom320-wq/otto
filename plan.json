@@ -78,7 +78,13 @@
    "targetGrade": 2,
    "targetScore": 75,
    "range": "교과서 79쪽~끝 (105~106쪽 1~9번 제외) · 종합문제 프린트: 미분(2), 적분(1)(2)",
-   "textbook": "YBM 「미적분Ⅰ」"
+   "textbook": "YBM 「미적분Ⅰ」",
+   "scoring": {
+    "essay": 0,
+    "short": 10,
+    "choice": 90
+   },
+   "format": "단답형 10점 · 선택형 90점"
   },
   {
    "id": "hanji",
@@ -98,7 +104,13 @@
    "targetScore": 95,
    "unitsAssumed": true,
    "range": "교과서 Ⅰ~Ⅲ단원 · 해당 범위 학습지",
-   "textbook": "비상교육 「한국지리 탐구」 (정성훈 외)"
+   "textbook": "비상교육 「한국지리 탐구」 (정성훈 외)",
+   "scoring": {
+    "essay": 0,
+    "short": 20,
+    "choice": 80
+   },
+   "format": "단답형 20점 · 선택형 80점"
   },
   {
    "id": "yun",
@@ -120,7 +132,13 @@
    "targetGrade": 2,
    "targetScore": 95,
    "range": "교과서 Ⅰ-2, Ⅳ, Ⅴ, Ⅵ 단원 · 해당 범위 학습지",
-   "textbook": "미래엔 「현대사회와 윤리」 (정창우 외)"
+   "textbook": "미래엔 「현대사회와 윤리」 (정창우 외)",
+   "scoring": {
+    "essay": 0,
+    "short": 20,
+    "choice": 80
+   },
+   "format": "단답형 20점 · 선택형 80점"
   },
   {
    "id": "il",
@@ -140,7 +158,13 @@
    "targetScore": 85,
    "scoreLabel": "목표 총점",
    "range": "일본어 교과서 5과(84~87, 96~97쪽), 6과(100~103, 112~113쪽), 7과(116~119, 128~129쪽), 8과(132~137, 144~145쪽) · 심화일본어 교과서 1과(16~21쪽) · 해당 범위 학습지",
-   "textbook": "천재교과서 「심화 일본어」"
+   "textbook": "천재교과서 「심화 일본어」",
+   "scoring": {
+    "essay": 0,
+    "short": 0,
+    "choice": 100
+   },
+   "format": "선택형 100점"
   },
   {
    "id": "dong",
@@ -162,7 +186,13 @@
    "targetGrade": 1,
    "targetScore": 100,
    "range": "교과서 93~155쪽 (11/13 축소, 처음 공지는 92~169쪽) · 해당 범위 학습지",
-   "textbook": "비상교육 「동아시아 역사 기행」 (이병인 외)"
+   "textbook": "비상교육 「동아시아 역사 기행」 (이병인 외)",
+   "scoring": {
+    "essay": 0,
+    "short": 0,
+    "choice": 100
+   },
+   "format": "선택형 100점"
   },
   {
    "id": "eng",
@@ -184,7 +214,13 @@
    "targetGrade": 2,
    "targetScore": 80,
    "range": "교과서 3과(62~71, 77쪽), 6과(134~149쪽) · 수업 중 배부된 학습지 전체 · 2026년 10월 고2 학평 영어 20~25, 29~42번",
-   "textbook": "천재교과서 「High School English Ⅱ」"
+   "textbook": "천재교과서 「High School English Ⅱ」",
+   "scoring": {
+    "essay": 0,
+    "short": 0,
+    "choice": 100
+   },
+   "format": "선택형 100점"
   },
   {
    "id": "dok",
@@ -206,7 +242,13 @@
    "targetGrade": 1,
    "targetScore": 95,
    "range": "A: 교과서 96~171쪽, 배부한 프린트 전체, 10월 학력평가 비문학 지문 11~30번 문제 · B: 배부한 프린트 4회분",
-   "textbook": "해냄에듀 「독서와 작문」 (송승훈 외)"
+   "textbook": "해냄에듀 「독서와 작문」 (송승훈 외)",
+   "scoring": {
+    "essay": 0,
+    "short": 0,
+    "choice": 100
+   },
+   "format": "선택형 100점"
   },
   {
    "id": "eon",

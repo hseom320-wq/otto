@@ -281,7 +281,7 @@ SHEETS.final = {
     const rs = (P.subjects || []).filter(x => x.exam && x.range && x.exam.date >= s.td).sort((x, y) => (x.exam.date + x.exam.period).localeCompare(y.exam.date + y.exam.period));
     if (rs.length) {
       const d = el('details', 'range-box', `<summary>시험 범위 (${rs.length}과목)</summary>`);
-      rs.forEach(x => d.appendChild(el('p', '', `<b>${esc(x.name)}</b> <small>${md(x.exam.date)} ${x.exam.period}교시${x.textbook ? ` · ${esc(x.textbook)}` : ''}</small><br>${esc(x.range)}`)));
+      rs.forEach(x => d.appendChild(el('p', '', `<b>${esc(x.name)}</b> <small>${md(x.exam.date)} ${x.exam.period}교시${x.textbook ? ` · ${esc(x.textbook)}` : ''}</small><br>${x.format ? `<small>${esc(x.format)} · ${x.exam.minutes}분</small><br>` : ''}${esc(x.range)}`)));
       b.appendChild(d);
     }
     f.appendChild(open);
@@ -329,6 +329,7 @@ window.examDays = () => DAYS.filter(d => d.exams.length).map(d => ({ date: d.dat
 window.examMeta = () => (P && P.meta) || null;
 // 과목 시험 범위 (plan.json subjects[].range)
 window.examRange = name => { const x = P && (P.subjects || []).find(s => s.name === name || s.id === name); return (x && x.range) || ''; };
+window.examFormat = name => { const x = P && (P.subjects || []).find(s => s.name === name || s.id === name); return (x && x.format) || ''; };
 window.examBook = name => { const x = P && (P.subjects || []).find(s => s.name === name || s.id === name); return (x && x.textbook) || ''; };
 
 // ---------- 대화(Gemini)에도 기말 상황을 알려 준다 ----------
@@ -339,7 +340,7 @@ window.promptExtra = function (c) {
   const ex = s.exams.length ? `오늘 시험: ${s.exams.map(examText).join(', ')}` : s.next ? `다음 시험: ${s.next.exams.map(x => x.name).join(', ')} (${s.next.date}, D-${s.dday})` : '';
   const tk = s.tasks.map(t => `- [${t.done ? 'x' : ' '}] ${kindName(t.kind)}: ${t.text}`).join('\n') || '(없음)';
   const lt = s.late.slice(0, 8).map(t => `- ${t.date} ${kindName(t.kind)}: ${t.text}`).join('\n') || '(없음)';
-  const rg = (P.subjects || []).filter(x => x.exam && x.range && x.exam.date >= s.td).map(x => `- ${x.name} (${x.exam.date} ${x.exam.period}교시${x.textbook ? `, 교과서 ${x.textbook}` : ''}): ${x.range}`).join('\n');
+  const rg = (P.subjects || []).filter(x => x.exam && x.range && x.exam.date >= s.td).map(x => `- ${x.name} (${x.exam.date} ${x.exam.period}교시${x.textbook ? `, 교과서 ${x.textbook}` : ''}${x.format ? `, 배점 ${x.format}` : ''}): ${x.range}`).join('\n');
   return `${base}\n[기말 작전 일지] ${ex} · 오늘 공부 가능한 시간: ${s.slot || '(없음)'}\n[기말 계획의 오늘 할 일]\n${tk}\n[기말 계획에서 밀린 일 ${s.late.length}개]\n${lt}${rg ? `\n[기말 시험 범위]\n${rg}` : ''}`;
 };
 
