@@ -54,6 +54,7 @@ function setup() {
   bodyQ.innerHTML = `
     <p class="qz-h">과목</p>
     <div class="qz-chips">${subs.map(x => `<button data-s="${esc(x)}"${x === subj ? ' class="on"' : ''}>${esc(x)}</button>`).join('')}<input class="in qz-sub" placeholder="직접 쓰기" value="${subs.includes(subj) ? '' : esc(subj)}" aria-label="과목 직접 쓰기"></div>
+    ${window.examRange && examRange(subj) ? `<p class="qz-range">시험 범위: ${esc(examRange(subj))}</p>` : ''}
     <p class="qz-h">무엇으로 낼까요</p>
     <div class="qz-pics">${pics.map((p, i) => `<span><img src="${p.url}" alt=""><button data-del="${i}" aria-label="사진 빼기">×</button></span>`).join('')}<label class="qz-add">＋ 사진<input type="file" accept="image/*" multiple hidden></label></div>
     <textarea class="in qz-text" rows="4" placeholder="또는 필기·교과서 내용을 붙여 넣기 (사진과 같이 써도 돼요)"></textarea>
@@ -63,7 +64,7 @@ function setup() {
     ${S.wrong.length ? `<button class="btn ghost wide qz-rev">오답 다시 풀기 (오늘 ${due}개 · 전체 ${S.wrong.length}개)</button>` : ''}
     ${hasAI() ? '' : '<p class="hint">문제를 만들려면 설정에 Gemini 키가 있어야 해요. 오답 다시 풀기는 키 없이도 돼요.</p>'}`;
   say(pickS('start'));
-  bodyQ.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { subj = b.dataset.s; bodyQ.querySelectorAll('[data-s]').forEach(x => x.classList.toggle('on', x === b)); bodyQ.querySelector('.qz-sub').value = ''; });
+  bodyQ.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { subj = b.dataset.s; keepText(); setup(); });
   bodyQ.querySelector('.qz-sub').oninput = e => { subj = e.target.value.trim(); bodyQ.querySelectorAll('[data-s]').forEach(x => x.classList.remove('on')); };
   bodyQ.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { S.quizN = +b.dataset.n; save(); bodyQ.querySelectorAll('[data-n]').forEach(x => x.classList.toggle('on', x === b)); });
   bodyQ.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { URL.revokeObjectURL(pics[+b.dataset.del].url); pics.splice(+b.dataset.del, 1); keepText(); setup(); });
@@ -103,7 +104,8 @@ async function make() {
   try {
     const content = [];
     for (const p of pics) content.push({ type: 'image', source: { media_type: 'image/jpeg', data: await shrink(p.file) } });
-    content.push({ type: 'text', text: `과목: ${subj}\n문제 수: ${n}\n${text ? `\n[붙여 넣은 내용]\n${text}` : ''}` });
+    const rg = window.examRange ? examRange(subj) : '';
+    content.push({ type: 'text', text: `과목: ${subj}\n문제 수: ${n}${rg ? `\n학교 시험 범위: ${rg} (자료가 이 범위 밖이면 그 부분은 빼고 낸다)` : ''}\n${text ? `\n[붙여 넣은 내용]\n${text}` : ''}` });
     const j = await askJSON({
       system: `너는 한국 고등학교 내신 시험 출제 도우미다. 사용자가 준 자료(사진·글)에 있는 내용만으로 ${subj} 4지선다 문제 ${n}개를 만든다.
 - 자료에 없는 사실은 쓰지 않는다. 자료가 흐리거나 부족하면 확실한 부분만으로 만든다(문제 수가 모자라도 된다).

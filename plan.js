@@ -265,7 +265,7 @@ SHEETS.final = {
     b.appendChild(card);
     if (s.exams.length) {
       b.appendChild(el('h4', 'sub-h', '오늘 시험'));
-      s.exams.forEach(x => { const r = el('div', 'item'); r.innerHTML = `<span class="ck ghost"></span><span class="tm">${esc(x.start)}</span><span class="tx">${esc(x.name)}<small>${x.period}교시 · ${esc(x.start)}–${esc(x.end)} · ${x.minutes}분</small></span>`; b.appendChild(r); });
+      s.exams.forEach(x => { const r = el('div', 'item'); const rg = window.examRange(x.name); r.innerHTML = `<span class="ck ghost"></span><span class="tm">${esc(x.start)}</span><span class="tx">${esc(x.name)}<small>${x.period}교시 · ${esc(x.start)}–${esc(x.end)} · ${x.minutes}분${rg ? `<br>범위: ${esc(rg)}` : ''}</small></span>`; b.appendChild(r); });
     }
     if (s.tasks.length) {
       b.appendChild(el('h4', 'sub-h', `오늘 할 일 ${s.tasks.length - s.left}/${s.tasks.length}`));
@@ -277,6 +277,13 @@ SHEETS.final = {
     }
     const open = el('button', 'btn wide', '기말 작전 일지 열기');
     open.onclick = () => { closeSheet(); openPlanView(); };
+    // 남은 시험의 범위
+    const rs = (P.subjects || []).filter(x => x.exam && x.range && x.exam.date >= s.td).sort((x, y) => (x.exam.date + x.exam.period).localeCompare(y.exam.date + y.exam.period));
+    if (rs.length) {
+      const d = el('details', 'range-box', `<summary>시험 범위 (${rs.length}과목)</summary>`);
+      rs.forEach(x => d.appendChild(el('p', '', `<b>${esc(x.name)}</b> <small>${md(x.exam.date)} ${x.exam.period}교시</small><br>${esc(x.range)}`)));
+      b.appendChild(d);
+    }
     f.appendChild(open);
     f.appendChild(el('p', 'hint', '여기서 체크한 건 기말 작전 일지에도 똑같이 표시돼요.'));
   },
@@ -320,6 +327,8 @@ window.nextExamInfo = () => { const s = status(); return s && s.next ? { subject
 // 시험 날 목록과 기간 (수현 전화·시험 기간 모드가 씀)
 window.examDays = () => DAYS.filter(d => d.exams.length).map(d => ({ date: d.date, exams: d.exams.map(x => ({ name: x.name, period: x.period, start: x.start })) }));
 window.examMeta = () => (P && P.meta) || null;
+// 과목 시험 범위 (plan.json subjects[].range)
+window.examRange = name => { const x = P && (P.subjects || []).find(s => s.name === name || s.id === name); return (x && x.range) || ''; };
 
 // ---------- 대화(Gemini)에도 기말 상황을 알려 준다 ----------
 const basePrompt = window.promptExtra;
@@ -329,7 +338,8 @@ window.promptExtra = function (c) {
   const ex = s.exams.length ? `오늘 시험: ${s.exams.map(examText).join(', ')}` : s.next ? `다음 시험: ${s.next.exams.map(x => x.name).join(', ')} (${s.next.date}, D-${s.dday})` : '';
   const tk = s.tasks.map(t => `- [${t.done ? 'x' : ' '}] ${kindName(t.kind)}: ${t.text}`).join('\n') || '(없음)';
   const lt = s.late.slice(0, 8).map(t => `- ${t.date} ${kindName(t.kind)}: ${t.text}`).join('\n') || '(없음)';
-  return `${base}\n[기말 작전 일지] ${ex} · 오늘 공부 가능한 시간: ${s.slot || '(없음)'}\n[기말 계획의 오늘 할 일]\n${tk}\n[기말 계획에서 밀린 일 ${s.late.length}개]\n${lt}`;
+  const rg = (P.subjects || []).filter(x => x.exam && x.range && x.exam.date >= s.td).map(x => `- ${x.name} (${x.exam.date} ${x.exam.period}교시): ${x.range}`).join('\n');
+  return `${base}\n[기말 작전 일지] ${ex} · 오늘 공부 가능한 시간: ${s.slot || '(없음)'}\n[기말 계획의 오늘 할 일]\n${tk}\n[기말 계획에서 밀린 일 ${s.late.length}개]\n${lt}${rg ? `\n[기말 시험 범위]\n${rg}` : ''}`;
 };
 
 // ---------- 시작 ----------

@@ -697,3 +697,9 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .pc-box > b { font-size: 14px; }
 .pc-stat { margin: 4px 0 8px; font-size: 13px; color: #9fd7b5; }
 .pc-stat.bad { color: #ffb3a6; }
+
+.range-box { margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); }
+.range-box summary { cursor: pointer; font-weight: 700; font-size: 14px; }
+.range-box p { margin: 10px 0 0; font-size: 13.5px; line-height: 1.6; color: #d6dbe6; word-break: keep-all; }
+.range-box small { color: var(--mute); }
+.qz-range { margin: 8px 2px 0; font-size: 12.5px; line-height: 1.55; color: #b9c7ff; word-break: keep-all; }
