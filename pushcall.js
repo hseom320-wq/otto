@@ -41,7 +41,12 @@ name: 한울 전화
 on:
   schedule:
 ${cronLines().join('\n')}
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      test:
+        description: '지금 바로 테스트 알림 보내기'
+        type: boolean
+        default: true
 permissions:
   contents: read
 jobs:
@@ -60,6 +65,8 @@ jobs:
       - run: npm install --no-save --no-audit --no-fund --silent web-push@3.6.7
         working-directory: .github/hanul
       - run: node .github/hanul/send.mjs
+        env:
+          HANUL_TEST: \${{ github.event.inputs.test }}
 `;
 }
 const SENDER = `// 한울아파트 수현 전화 — 정한 시각이 됐고 오늘 그 전화를 아직 안 끝냈으면 폰으로 푸시를 보낸다 (앱이 만들어 넣은 파일)
@@ -69,8 +76,8 @@ const cfg = JSON.parse(fs.readFileSync('push.json', 'utf8'));
 const kst = new Date(Date.now() + 9 * 3600e3);
 const ymd = d => d.toISOString().slice(0, 10);
 const now = kst.getUTCHours() * 60 + kst.getUTCMinutes();
-let due = null;
-for (const [k, c] of Object.entries(cfg.calls || {})) {
+let due = process.env.HANUL_TEST === 'true' ? 'test' : null; // Actions 화면의 Run workflow 로 돌리면 바로 테스트 알림
+for (const [k, c] of due ? [] : Object.entries(cfg.calls || {})) {
   if (!c.on) continue;
   const [h, m] = c.time.split(':').map(Number);
   let diff = now - (h * 60 + m), day = ymd(kst);
@@ -82,7 +89,7 @@ for (const [k, c] of Object.entries(cfg.calls || {})) {
   due = k; break;
 }
 if (!due) { console.log('보낼 전화 없음', ymd(kst), now); process.exit(0); }
-const payload = JSON.stringify({ kind: 'ncall', call: due, title: '📞 남수현', body: due === 'exam' ? '오늘 시험이다. 전화 받아.' : '전화 왔어요. 눌러서 받기' });
+const payload = JSON.stringify({ kind: 'ncall', call: due === 'test' ? 'night' : due, title: '📞 남수현', body: due === 'test' ? '테스트 전화예요. 눌러서 받아 보기' : due === 'exam' ? '오늘 시험이다. 전화 받아.' : '전화 왔어요. 눌러서 받기' });
 for (const s of cfg.subs || []) {
   try {
     await webpush.sendNotification(s.sub, payload, { TTL: 900, urgency: 'high', vapidDetails: { subject: /^(https:|mailto:)/.test(cfg.app || '') ? cfg.app : 'https://github.com/', publicKey: s.pub, privateKey: s.d } });

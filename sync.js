@@ -227,8 +227,8 @@ SHEETS.set.render = function () {
     const s1 = el('a', 'btn ghost wide sync-step', '① GitHub에 비공개 저장소 만들기');
     s1.href = `https://github.com/new?name=${REPO_NAME}&visibility=private&description=${encodeURIComponent('한울아파트 기록 보관 (비공개)')}`; s1.target = '_blank'; s1.rel = 'noopener';
     const s2 = el('a', 'btn ghost wide sync-step', '② 토큰 만들기');
-    s2.href = `https://github.com/settings/personal-access-tokens/new?name=hanul-sync&description=${encodeURIComponent('한울아파트 기기 연동 (hanul-data 저장소 하나만)')}&target_name=${OWNER}&expires_in=366&contents=write`; s2.target = '_blank'; s2.rel = 'noopener';
-    const tip = el('p', 'hint', '②에서는 <b>Repository access → Only select repositories → hanul-data</b>만 고르고, 맨 아래 <b>Generate token</b>을 누른 뒤 나온 토큰을 복사해요.');
+    s2.href = `https://github.com/settings/personal-access-tokens/new?name=hanul-sync&description=${encodeURIComponent('한울아파트 기기 연동 (hanul-data 저장소 하나만)')}&target_name=${OWNER}&expires_in=366&contents=write&workflows=write`; s2.target = '_blank'; s2.rel = 'noopener';
+    const tip = el('p', 'hint', '②에서는 <b>Repository access → Only select repositories → hanul-data</b>만 고르고, 권한에 <b>Contents</b>와 <b>Workflows</b>가 Read and write인지 확인한 뒤 맨 아래 <b>Generate token</b>을 누르고 나온 토큰을 복사해요.');
     const tok = el('input', 'in'); tok.type = 'password'; tok.placeholder = '③ 복사한 토큰 붙여 넣기 (github_pat_…)'; tok.autocomplete = 'off'; tok.setAttribute('aria-label', '토큰');
     const more = el('details', 'sync-help', '<summary>저장소 이름을 바꿨으면</summary>');
     const repo = el('input', 'in'); repo.value = `${OWNER}/${REPO_NAME}`; repo.autocomplete = 'off'; repo.setAttribute('aria-label', '저장소');
