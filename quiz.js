@@ -105,7 +105,8 @@ async function make() {
     const content = [];
     for (const p of pics) content.push({ type: 'image', source: { media_type: 'image/jpeg', data: await shrink(p.file) } });
     const rg = window.examRange ? examRange(subj) : '';
-    content.push({ type: 'text', text: `과목: ${subj}\n문제 수: ${n}${rg ? `\n학교 시험 범위: ${rg} (자료가 이 범위 밖이면 그 부분은 빼고 낸다)` : ''}\n${text ? `\n[붙여 넣은 내용]\n${text}` : ''}` });
+    const bk = window.examBook ? examBook(subj) : '';
+    content.push({ type: 'text', text: `과목: ${subj}\n문제 수: ${n}${bk ? `\n교과서: ${bk}` : ''}${rg ? `\n학교 시험 범위: ${rg} (자료가 이 범위 밖이면 그 부분은 빼고 낸다)` : ''}\n${text ? `\n[붙여 넣은 내용]\n${text}` : ''}` });
     const j = await askJSON({
       system: `너는 한국 고등학교 내신 시험 출제 도우미다. 사용자가 준 자료(사진·글)에 있는 내용만으로 ${subj} 4지선다 문제 ${n}개를 만든다.
 - 자료에 없는 사실은 쓰지 않는다. 자료가 흐리거나 부족하면 확실한 부분만으로 만든다(문제 수가 모자라도 된다).
