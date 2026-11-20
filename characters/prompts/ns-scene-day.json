@@ -1,0 +1,38 @@
+{
+ "character": "ns",
+ "scene": "day",
+ "label": "낮 · 👓캠퍼스룩 · 비스듬히 내려다본 구도, 필기하다 고개만 돌려 옅은 눈웃음",
+ "source": "NovelAI Diffusion V4.5 (nai-diffusion-4-5-full)",
+ "based_on": "characters/kit/ns_outfits.json#e",
+ "seed": 3796055516,
+ "width": 832,
+ "height": 1216,
+ "steps": 28,
+ "scale": 6.0,
+ "cfg_rescale": 0.5,
+ "sampler": "k_euler_ancestral",
+ "noise_schedule": "karras",
+ "vibe": {
+  "image": "characters/vibes/ns-a.webp",
+  "strength": 0.35,
+  "information_extracted": 1.0
+ },
+ "prompt": "masterpiece, best quality, amazing quality, very aesthetic, incredibly absurdres, highres, novel illustration, best illustration, no text, game cg, glossy skin, 1.5::detailed shadows::, 1.4::thick outlines::, 1.3::cel shading::, perfect anatomy, 1.3::backlighting::, 1.3::rim light::, 1.4::high contrast::, year 2025, year 2024, 0.5::artist:m m pb::, 0.9::artist:ratatatat74 ::, artist:channel (caststation), artist:modare, 1.3::artist:kithera::, 1.3::artist:yd (orange maru)::, 1.7::artist:sushispin::, 2::jaggy lines::, -6::artist collaboration::, depth of field, solo, 1.3::solo focus::, character focus, 1girl, short hair, 1.4::black hair::, blue eyes, ear piercing, stud earrings, 1.3::black choker::, plain choker, large breasts, 1.2::wide hips::, thick thighs, curvy, hourglass figure, blurry background, 1.3::glasses::, 1.2::beige cardigan::, cardigan, white blouse, collared shirt, long sleeves, black slacks, black pants, loafers, 1.2::tote bag::, casual, 1.3::upper body::, 1.1::hips::, 1.4::dutch angle::, 1.3::from above::, 1.2::from side::, standing, 1.2::facing left::, 1.3::holding notebook::, 1.3::writing::, holding pen, 1.2::turning head::, looking at viewer, 1.2::looking over eyewear::, 1.1::light smile::, closed mouth, half-closed eyes, day, indoors, library, bookshelf, 1.2::sunlight through window::, daylight, 1.3::warm lighting::, 1.2::orange tint::, morning sunlight, 1.3::blurry background::, -2::upscaled, blurry::, -1::clean text::, -1::censored::, -2::multiple views::, -2::multiple others::, -3::simple illustration::, very aesthetic, masterpiece, no text",
+ "negative": "nsfw, lowres, artistic error, film grain, scan artifacts, worst quality, bad quality, jpeg artifacts, very displeasing, chromatic aberration, dithering, halftone, screentone, multiple views, logo, too many watermarks, negative space, blank page, text, logo, watermark, too many watermarks, reference, signature, artist name, dated, artistic error, scan artifacts, jpeg artifacts, upscaled, aliasing, film grain, heavy film grain, dithering, chromatic aberration, digital dissolve, halftone, screentones, artist:xinzoruo, artist:milkpanda, artist:kurukurumagical, artist collaboration, one-hour drawing challenge, toon (style), 1990s (style), 4koma, 2koma, overexposed, washed out, flat lighting, dark, dim lighting, low light, hoop earrings, dangle earrings, drop earrings, pendant, necklace, jewelry, spiked choker, collar, o-ring, heart choker, lace choker, cross, 1.4::blue hair::, colored hair, gradient hair, multicolored hair, streaked hair, mutation, deformed, distorted, disfigured, bad anatomy, unnatural hair, bad face, mob face, bad eyes, empty eyes, bad proportions, bad limbs, amputee, bad arm, bad hands, bad hand structure, extra digits, fewer digits, bad leg, extra leg, distorted composition, bad perspective, multiple views, disorganized colors, unfinished, incomplete, displeasing, very displeasing, unsatisfactory, inadequate, deficient, subpar, poor, blurry, lowres, worst quality, bad quality, fewer details, multiple others, heavy chromatic aberration, outer glow, colored inner hair, mismatched pupils, chibi, unrealistic colors, negative space, duplicate, cross-eyed, bad portrait, bad illustration, lazy eye, extra eyes, asymmetrical eyes, long neck, muted color, bad neck, cleavage, male with breasts, manboobs, trap, genderswap (mtf), crossdressing (mtf), genderswap, crossdressing, from behind, other focus, ambiguous gender, very big eyes, eyes invisible through hair, colored eyelashes, thin eyelashes, lower eyelashes only, cutout eyelashes, mismatched eyelashes, long eyelashes, teeth, glans, upper teeth only, tongue, tongue out, sketch, 1.4::blue tint::, 1.3::cool lighting::, 1.2::blue theme::, 1.3::legs::, full body, knees",
+ "skip_cfg_above_sigma": 19,
+ "variety_plus": true,
+ "upscale": {
+  "method": "img2img",
+  "size": [
+   832,
+   1792
+  ],
+  "strength": 0.45,
+  "noise": 0,
+  "seed": 3796055516,
+  "final": [
+   1080,
+   2340
+  ]
+ }
+}

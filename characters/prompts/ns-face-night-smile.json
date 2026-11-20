@@ -1,0 +1,21 @@
+{
+ "character": "ns",
+ "scene": "night",
+ "expression": "smile",
+ "source": "NovelAI Director Tools (emotion)",
+ "emotion": "happy",
+ "defry": 3,
+ "based_on": "assets/ns/scene/night.webp",
+ "crop": [
+  0,
+  288,
+  704,
+  704
+ ],
+ "patch": {
+  "x": 83,
+  "y": 451,
+  "w": 505,
+  "h": 368
+ }
+}

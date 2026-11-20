@@ -1,0 +1,13 @@
+{
+ "prompt": "masterpiece, best quality, amazing quality, very aesthetic, incredibly absurdres, highres, no humans, scenery, 1.3::album cover::, 1.2::centered composition::, symmetrical, night, 1.3::apartment complex::, korean apartment, many lit windows, warm window light, 1.2::city lights::, starry sky, crescent moon, 1.2::headphones::, music notes, soft glow, 1.2::cozy::, purple and blue sky, amber light, 1.3::cel shading::, game cg, detailed background, -2::upscaled, blurry::, -3::simple illustration::",
+ "negative": "nsfw, lowres, artistic error, film grain, scan artifacts, worst quality, bad quality, jpeg artifacts, very displeasing, chromatic aberration, dithering, halftone, screentone, multiple views, logo, too many watermarks, negative space, , text, logo, watermark, signature, letters, words, 1girl, 1boy, people, human, character, face",
+ "seed": 1712747963,
+ "width": 1088,
+ "height": 1088,
+ "steps": 28,
+ "scale": 6.0,
+ "cfg_rescale": 0.5,
+ "sampler": "k_euler_ancestral",
+ "noise_schedule": "karras",
+ "source": "NovelAI Diffusion V4.5 (nai-diffusion-4-5-full)"
+}
