@@ -336,8 +336,8 @@ setInterval(check, 5000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { keepOff = false; stopKeep(); check(); if (ringing) closeNote(); } else startKeep(); });
 // 안드로이드는 내려 둔 웹앱을 5분쯤 지나면 재운다(타이머가 멈춘다). 소리를 내고 있는 앱은 재우지 않아서,
 // 앱을 내려 둘 때 다음 전화가 14시간 안에 있으면 사람 귀에는 거의 안 들리는 아주 작은 소리를 계속 틀어 깨어 있게 한다.
-// 이때 폰 알림 창에 "남수현 전화 기다리는 중"이 뜬다. 설정에서 끌 수 있다(끄면 내려 둔 지 몇 분 뒤부터는 못 울릴 수 있다).
-let keep = null, keepUrl = '', keepOff = false;
+// 설정에서 끌 수 있다(끄면 내려 둔 지 몇 분 뒤부터는 못 울릴 수 있다).
+let keep = null, keepOff = false;
 function nextCall() {
   if (!S.ncall || !S.ncall.on) return 0;
   const now = Date.now(), list = [];
@@ -349,35 +349,42 @@ function nextCall() {
   list.push(todayAt('night') + 24 * 3600e3);
   return Math.min(...list);
 }
-function hum() { // 아주 작은 잡음 1초짜리 소리 파일을 만든다 (16비트, 8000Hz)
-  const n = 8000, buf = new ArrayBuffer(44 + n * 2), d = new DataView(buf);
-  const w = (o, t) => [...t].forEach((c, i) => d.setUint8(o + i, c.charCodeAt(0)));
-  w(0, 'RIFF'); d.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
-  d.setUint32(24, 8000, true); d.setUint32(28, 16000, true); d.setUint16(32, 2, true); d.setUint16(34, 16, true); w(36, 'data'); d.setUint32(40, n * 2, true);
-  for (let i = 0; i < n; i++) d.setInt16(44 + i * 2, Math.round((Math.random() * 2 - 1) * 60), true); // 약 -55dB
-  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
-}
+// 대기 소리는 Web Audio로 낸다: <audio>는 스포티파이 같은 앱이 소리를 가져가면 멈춰 버려서(그러면 폰이 앱을 재운다),
+// 다른 앱 소리와 섞여서 같이 나는 Web Audio를 쓴다. 귀에는 거의 안 들리는 작은 잡음.
+let keepFailLogged = false, needTap = false;
 function startKeep() {
   if (keep || keepOff || ringing || talking || S.ncall.bg === false) return;
   const at = nextCall(); if (!at || at - Date.now() > 14 * 3600e3) return;
-  keepUrl = keepUrl || hum();
-  keep = new Audio(keepUrl); keep.loop = true;
-  keep.play().then(() => {
-    try {
-      const t = new Date(at);
-      navigator.mediaSession.metadata = new MediaMetadata({ title: '남수현 전화 기다리는 중', artist: `${timeWord(`${pad(t.getHours())}:${pad(t.getMinutes())}`)}에 전화가 와요`, album: '한울아파트', artwork: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }] });
-      navigator.mediaSession.setActionHandler('pause', () => { stopKeep(); keepOff = true; logEv('대기 알림에서 멈춤 (앱을 다시 열 때까지 대기 안 함)'); });
-    } catch (e) {}
-    logEv('대기 시작');
-  }).catch(e => { keep = null; logEv('대기 소리를 못 틀었음 (' + (e && e.name || '?') + ')'); });
-  // 다른 앱(음악 등)이 소리를 가져가서 멈추면 잠시 뒤 다시 튼다
-  keep.addEventListener('pause', () => { if (!keep || keepOff) return; setTimeout(() => { if (keep && document.hidden && !ringing && !talking) keep.play().catch(() => {}); }, 4000); });
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state !== 'running') AC.resume().catch(() => {});
+    const n = AC.sampleRate, buf = AC.createBuffer(1, n, n), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1);
+    const src = AC.createBufferSource(), g = AC.createGain();
+    src.buffer = buf; src.loop = true; g.gain.value = .0025; // 약 -52dB
+    src.connect(g); g.connect(AC.destination); src.start();
+    keep = { src, g };
+  } catch (e) { keep = null; }
+  // 소리 장치가 안 깨어나면(앱이 다시 열린 뒤 화면을 한 번도 안 누른 경우) 대기를 못 한다 → 다음에 앱을 열면 한 번 누르라고 알려 준다
+  setTimeout(() => {
+    if (!keep) return;
+    if (AC.state === 'running') { if (!keepFailLogged) logEv('대기 시작'); keepFailLogged = true; needTap = false; return; }
+    stopKeep(); needTap = true;
+    if (!keepFailLogged) { logEv('대기 못 함: 앱을 연 뒤 화면을 한 번도 안 눌러서 소리를 못 냄'); keepFailLogged = true; }
+  }, 800);
 }
 function stopKeep() {
   if (!keep) return;
-  try { keep.pause(); } catch (e) {} keep = null;
-  try { navigator.mediaSession.metadata = null; } catch (e) {}
+  try { keep.src.stop(); keep.src.disconnect(); keep.g.disconnect(); } catch (e) {}
+  keep = null;
 }
+// 앱이 다시 보이면: 대기를 못 했던 경우 화면을 한 번 눌러 달라고 한다 (누르면 소리 장치가 깨어난다)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  keepFailLogged = false;
+  if (needTap && S.ncall.on && S.ncall.bg !== false) setTimeout(() => toast('밤·새벽 전화를 받으려면 화면을 한 번 눌러 주세요'), 800);
+});
+addEventListener('pointerdown', () => { needTap = false; }, true);
 // 그래도 재워졌다가 깨어나면 바로 확인
 document.addEventListener('resume', () => { logEv('앱이 자다가 깨어남'); check(); });
 addEventListener('freeze', () => logEv('폰이 앱을 재움'));
@@ -473,7 +480,7 @@ SHEETS.set.render = function () {
   bg.onchange = () => { S.ncall.bg = bg.checked; save(); };
   const now = el('button', 'btn ghost wide', '지금 전화 받아 보기');
   now.onclick = () => { closeSheet(); setTimeout(window.ncallTest, 400); };
-  f.append(row, mrow, ldLab, el('p', 'hint', '앱이 낼 수 있는 가장 큰 소리로 울리고, 스포티파이·유튜브는 음량 100%로 올려요(끊으면 원래대로). 폰 전체 미디어 음량은 앱이 못 바꿔서, 미디어 음량이 0이면 안 들려요. 갤럭시 "모드 및 루틴"으로 밤 11:29에 미디어 음량을 최대로 바꾸게 해 두면 확실해요.'), xrow, el('p', 'hint', '밤 전화에서는 오늘 공부한 시간(과목별)과 내일 시험·D-day를 먼저 말해 줘요. 시험 날 아침 전화는 오늘 시험 과목·교시와 준비물을 알려 줘요.'), xtest, tone, preset, spRow, el('p', 'hint', '스포티파이 곡은 폰의 스포티파이 앱에서 울려서 광고가 없어요(프리미엄 필요). 받으면 멈추고, 원래 듣던 노래가 있었으면 그 자리부터 다시 틀어요. 자는 동안 폰이 스포티파이 앱을 꺼서 못 찾으면, 순서대로 음악 파일 → 유튜브 → 기본 벨소리로 울리면서 15초마다 스포티파이를 다시 찾아요. 같은 노래 mp3 파일을 "음악 파일 고르기"로 넣어 두면 그때도 그 노래로 울려요. 폰 설정 → 애플리케이션 → Spotify → 배터리 → "제한 없음"으로 두면 스포티파이가 덜 꺼져요.'), ytRow, el('p', 'hint', '유튜브 링크에 시간(?t=30 같은 것)이 있으면 그 부분부터 울려요. 유튜브 영상은 전화 화면에 작게 보이면서 울려요. 앱을 내려 둔 상태에서는 유튜브가 소리를 막을 수 있어서, 그때는 기본 벨소리도 같이 울려요.'), bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 알림 창에 "남수현 전화 기다리는 중"이 떠요(폰이 앱을 재우지 않게 아주 작은 소리를 틀어 둬서, 배터리를 조금 더 써요). 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
+  f.append(row, mrow, ldLab, el('p', 'hint', '앱이 낼 수 있는 가장 큰 소리로 울리고, 스포티파이·유튜브는 음량 100%로 올려요(끊으면 원래대로). 폰 전체 미디어 음량은 앱이 못 바꿔서, 미디어 음량이 0이면 안 들려요. 갤럭시 "모드 및 루틴"으로 밤 11:29에 미디어 음량을 최대로 바꾸게 해 두면 확실해요.'), xrow, el('p', 'hint', '밤 전화에서는 오늘 공부한 시간(과목별)과 내일 시험·D-day를 먼저 말해 줘요. 시험 날 아침 전화는 오늘 시험 과목·교시와 준비물을 알려 줘요.'), xtest, tone, preset, spRow, el('p', 'hint', '스포티파이 곡은 폰의 스포티파이 앱에서 울려서 광고가 없어요(프리미엄 필요). 받으면 멈추고, 원래 듣던 노래가 있었으면 그 자리부터 다시 틀어요. 자는 동안 폰이 스포티파이 앱을 꺼서 못 찾으면, 순서대로 음악 파일 → 유튜브 → 기본 벨소리로 울리면서 15초마다 스포티파이를 다시 찾아요. 같은 노래 mp3 파일을 "음악 파일 고르기"로 넣어 두면 그때도 그 노래로 울려요. 폰 설정 → 애플리케이션 → Spotify → 배터리 → "제한 없음"으로 두면 스포티파이가 덜 꺼져요.'), ytRow, el('p', 'hint', '유튜브 링크에 시간(?t=30 같은 것)이 있으면 그 부분부터 울려요. 유튜브 영상은 전화 화면에 작게 보이면서 울려요. 앱을 내려 둔 상태에서는 유튜브가 소리를 막을 수 있어서, 그때는 기본 벨소리도 같이 울려요.'), bgLab, el('p', 'hint', '홈 버튼으로 앱을 내려 두거나 다른 앱을 써도 울려요. 그동안 폰이 앱을 재우지 않게 귀에 거의 안 들리는 작은 소리를 틀어 둬요(스포티파이를 들어도 같이 나요, 배터리를 조금 더 써요). 앱을 연 뒤에는 화면을 한 번 눌러 둬야 해요. 최근 앱 목록에서 앱을 밀어서 완전히 닫으면 못 걸어요.'), now,
     el('p', 'hint', '받을 때까지 울리고, 거절하면 5분 뒤에 다시 걸어요. 앱이 내려가 있을 때는 폰 알림으로도 울려요(알림을 켜 둔 경우). 벨소리 파일은 이 기기에만 저장돼요.'));
   const nx = nextCall();
   const nd = nx ? new Date(nx) : null;
